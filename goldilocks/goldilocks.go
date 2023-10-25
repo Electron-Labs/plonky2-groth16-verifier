@@ -21,6 +21,9 @@ func init() {
 }
 
 func lessThan(api frontend.API, rangeChecker frontend.Rangechecker, i1 frontend.Variable, i2 frontend.Variable, n int) {
+	if n > 64 {
+		panic("LessThan doesnt work for n>64 for now")
+	}
 	rangeChecker.Check(i1, n)
 	rangeChecker.Check(i2, n)
 	comp1 := api.Add(i1, strconv.FormatUint(uint64(math.Pow(2, float64(n))), 10))
