@@ -20,7 +20,7 @@ func init() {
 	solver.RegisterHint(ModulusHint)
 }
 
-func new(i frontend.Variable) GoldilocksVariable {
+func getGoldilocks(i frontend.Variable) GoldilocksVariable {
 	return GoldilocksVariable{Limb: i}
 }
 
