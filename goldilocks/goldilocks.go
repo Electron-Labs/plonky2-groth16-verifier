@@ -20,6 +20,10 @@ func init() {
 	solver.RegisterHint(ModulusHint)
 }
 
+func new(i frontend.Variable) GoldilocksVariable {
+	return GoldilocksVariable{Limb: i}
+}
+
 func lessThan(api frontend.API, rangeChecker frontend.Rangechecker, i1 frontend.Variable, i2 frontend.Variable, n int) {
 	if n > 64 {
 		panic("LessThan doesnt work for n>64 for now")
