@@ -14,6 +14,23 @@ type GoldilocksVariable struct {
 	Limb frontend.Variable
 }
 
+func GetGoldilocksVariable(vals uint64) GoldilocksVariable {
+	e := GoldilocksVariable{
+		Limb: vals,
+	}
+
+	return e
+}
+
+func GetGoldilocksVariableArr(vals []uint64) []GoldilocksVariable {
+	var variable []GoldilocksVariable
+	for _, elm := range vals {
+		variable = append(variable, GetGoldilocksVariable(elm))
+	}
+
+	return variable
+}
+
 var MODULUS *big.Int = emulated.Goldilocks{}.Modulus()
 
 func init() {

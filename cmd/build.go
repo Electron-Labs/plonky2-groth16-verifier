@@ -34,13 +34,19 @@ var buildCmd = &cobra.Command{
 		groth16.Setup(r1cs)
 
 		// Load Verifier Data
-		verifier_only_path := "/Users/utsavjain/Desktop/electron_labs/plonky2-groth16-verifier/data/goldilocks/verifier_only.json"
+		verifier_only_path := "/home/profx/plonky2-groth16-verifier/data/goldilocks/verifier_only.json"
 		vd, _ := read_verifier_data_from_file(verifier_only_path)
-		fmt.Printf("%+v\n", vd)
+		// fmt.Printf("%+v\n", vd)
 		// Load Proof
-		proof_path := "/Users/utsavjain/Desktop/electron_labs/plonky2-groth16-verifier/data/goldilocks/proof_with_pis.json"
+		proof_path := "/home/profx/plonky2-groth16-verifier/data/goldilocks/proof_with_pis.json"
 		proof, _ := read_proof_from_file(proof_path)
-		fmt.Printf("%+v\n", proof)
+		// fmt.Printf("%+v\n", proof)
+
+		verifier_only_variable := vd.GetVariable()
+		fmt.Printf("%+v\n", verifier_only_variable)
+
+		proof_variable := proof.GetVariable()
+		fmt.Printf("%+v\n", proof_variable)
 
 		// load common data from json
 		// var myCircuit verifier.Verifier
