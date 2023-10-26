@@ -1,6 +1,8 @@
 package verifier
 
-import "github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
+import (
+	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
+)
 
 type HashOutVariable struct {
 	HashOut []goldilocks.GoldilocksVariable
@@ -67,3 +69,5 @@ type VerifierOnlyVariable struct {
 	ConstantSigmasCap []MerkleCapVariable
 	CircuitDigest     HashOutVariable
 }
+
+type PublicInputsVariable []goldilocks.GoldilocksVariable

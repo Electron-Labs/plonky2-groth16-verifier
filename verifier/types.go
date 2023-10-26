@@ -192,6 +192,17 @@ type VerifierOnly struct {
 	CircuitDigest     HashOut     `json:"circuit_digest"`
 }
 
+type PublicInputs []uint64
+
+func (public_inputs PublicInputs) GetVariable() PublicInputsVariable {
+	var public_inputs_variables PublicInputsVariable
+	for _, elm := range public_inputs {
+		e := goldilocks.GetGoldilocksVariable(elm)
+		public_inputs_variables = append(public_inputs_variables, e)
+	}
+	return public_inputs_variables
+}
+
 func (verifier_only *VerifierOnly) GetVariable() VerifierOnlyVariable {
 	var verifierOnlyVariable VerifierOnlyVariable
 	for _, elm := range verifier_only.ConstantSigmasCap {

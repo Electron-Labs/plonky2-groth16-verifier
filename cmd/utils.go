@@ -51,3 +51,17 @@ func read_proof_from_file(path string) (verifier.Proof, error) {
 	}
 	return proof, nil
 }
+
+func read_public_inputs_from_file(path string) (verifier.PublicInputs, error) {
+	jsonPublicInputsData, err := ioutil.ReadFile(path)
+	if err != nil {
+		fmt.Println("Error reading verifier only json file:", err)
+		return verifier.PublicInputs{}, err
+	}
+	var pub_inputs verifier.PublicInputs
+	if err := json.Unmarshal(jsonPublicInputsData, &pub_inputs); err != nil {
+		fmt.Println("Error unmarshaling JSON:", err)
+		return verifier.PublicInputs{}, err
+	}
+	return pub_inputs, nil
+}

@@ -1,15 +1,14 @@
 package verifier
 
 import (
-	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
 	"github.com/consensys/gnark/frontend"
 )
 
 type Runner struct {
-	Proof        Proof        `gnark:"-"`
-	VerifierOnly VerifierOnly `gnark:"-"`
+	Proof        ProofVariable
+	VerifierOnly VerifierOnlyVariable
 	CommonData   CommonData
-	PubInputs    []goldilocks.GoldilocksVariable `gnark:",public"`
+	PubInputs    PublicInputsVariable `gnark:",public"`
 }
 
 func (circuit *Runner) Define(api frontend.API) error {

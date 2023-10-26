@@ -14,6 +14,10 @@ type GoldilocksVariable struct {
 	Limb frontend.Variable
 }
 
+type ProofVariable2 struct {
+	X frontend.Variable
+}
+
 func GetGoldilocksVariable(vals uint64) GoldilocksVariable {
 	e := GoldilocksVariable{
 		Limb: vals,
@@ -58,7 +62,7 @@ func RangeCheck(api frontend.API, rangeChecker frontend.Rangechecker, x frontend
 }
 
 func Reduce(api frontend.API, rangeChecker frontend.Rangechecker, x frontend.Variable) GoldilocksVariable {
-	result, err := api.Compiler().NewHint(ModulusHint, 2, x)
+	result, err := api.Compiler().NewHint(ModulusHint, int(2), x)
 	if err != nil {
 		panic(err)
 	}

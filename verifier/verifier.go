@@ -3,6 +3,7 @@ package verifier
 import (
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/std/rangecheck"
 )
 
 type FriReductionStrategy struct {
@@ -83,12 +84,8 @@ func createVerifier(api frontend.API, common_data CommonData) *Verifier {
 	}
 }
 
-func (circuit *Verifier) Verify(proof Proof, verifier_only VerifierOnly, pub_inputs []goldilocks.GoldilocksVariable) error {
-	return nil
-}
-
-func (circuit *Verifier) Define(api frontend.API) error {
-	// rangeChecker := rangecheck.New(api)
-	// goldilocks.Reduce(api, rangeChecker, circuit.X)
+func (circuit *Verifier) Verify(proof ProofVariable, verifier_only VerifierOnlyVariable, pub_inputs PublicInputsVariable) error {
+	rangeChecker := rangecheck.New(circuit.api)
+	goldilocks.Reduce(circuit.api, rangeChecker, proof.OpeningProof.PowWitness.Limb)
 	return nil
 }

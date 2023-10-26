@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier"
 	"github.com/consensys/gnark-crypto/ecc"
@@ -14,7 +15,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var config_path string
 var common_data_path string
 
 // buildCmd represents the build command
@@ -31,22 +31,20 @@ var buildCmd = &cobra.Command{
 		}
 
 		r1cs, _ := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &myCircuit)
-		groth16.Setup(r1cs)
+		pk, vk, _ := groth16.Setup(r1cs)
 
-		// Load Verifier Data
-		verifier_only_path := "/home/profx/plonky2-groth16-verifier/data/goldilocks/verifier_only.json"
-		vd, _ := read_verifier_data_from_file(verifier_only_path)
-		// fmt.Printf("%+v\n", vd)
-		// Load Proof
-		proof_path := "/home/profx/plonky2-groth16-verifier/data/goldilocks/proof_with_pis.json"
-		proof, _ := read_proof_from_file(proof_path)
-		// fmt.Printf("%+v\n", proof)
+		fmt.Println(r1cs)
+		fmt.Println(pk)
+		fmt.Println(vk)
 
-		verifier_only_variable := vd.GetVariable()
-		fmt.Printf("%+v\n", verifier_only_variable)
+		f_r1cs, _ := os.Create("data/r1cs")
+		r1cs.WriteTo(f_r1cs)
 
-		proof_variable := proof.GetVariable()
-		fmt.Printf("%+v\n", proof_variable)
+		f_vk, _ := os.Create("data/vk")
+		vk.WriteTo(f_vk)
+
+		f_pk, _ := os.Create("data/pk")
+		pk.WriteTo(f_pk)
 
 		// load common data from json
 		// var myCircuit verifier.Verifier
