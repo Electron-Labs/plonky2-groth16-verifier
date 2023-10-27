@@ -139,7 +139,7 @@ func (poly_coeffs *PolynomialCoeffs) GetVariable() PolynomialCoeffsVariable {
 
 type FriProof struct {
 	CommitPhaseMerkleCap []MerkleCap      `json:"commit_phase_merkle_caps"`
-	QueryRroundProofs    []FriQueryRound  `json:"query_round_proofs"`
+	QueryRoundProofs     []FriQueryRound  `json:"query_round_proofs"`
 	FinalPoly            PolynomialCoeffs `json:"final_poly"`
 	PowWitness           uint64           `json:"pow_witness"`
 }
@@ -150,7 +150,7 @@ func (fri_proof *FriProof) GetVariable() FriProofVariable {
 		e := elm.GetVariable()
 		friProofVariable.CommitPhaseMerkleCap = append(friProofVariable.CommitPhaseMerkleCap, e)
 	}
-	for _, elm := range fri_proof.QueryRroundProofs {
+	for _, elm := range fri_proof.QueryRoundProofs {
 		e := elm.GetVariable()
 		friProofVariable.QueryRroundProofs = append(friProofVariable.QueryRroundProofs, e)
 	}

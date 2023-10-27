@@ -23,7 +23,7 @@ type FriParams struct {
 	Config             FriConfig `json:"config"`
 	Hiding             bool      `json:"hiding"`
 	DegreeBits         uint64    `json:"degree_bits"`
-	ReductionArityBits []uint64  `json:"recution_arity_bits"`
+	ReductionArityBits []uint64  `json:"reduction_arity_bits"`
 }
 
 type CircuitConfig struct {
@@ -68,6 +68,7 @@ type CommonData struct {
 	NumPublicInputs      uint64        `json:"num_public_inputs"`
 	KIs                  []uint64      `json:"k_is"`
 	NumPartialProducts   uint64        `json:"num_partial_products"`
+	NumLookupPolys       uint64        `json:"num_lookup_polys"`
 	NumLookupSelectors   uint64        `json:"num_lookup_selectors"`
 	Luts                 []LookupTable `json:"luts"`
 }
