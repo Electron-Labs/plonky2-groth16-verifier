@@ -24,6 +24,9 @@ var buildCmd = &cobra.Command{
 	Long:  `Builds gnark groth16 circuit corresponding to provided common_data and plonky2 config.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("build called with common data at %s\n ", common_data_path)
+
+		getCircuitConstants(common_data_path)
+
 		cd, _ := read_common_data_from_file(common_data_path)
 
 		myCircuit := verifier.Runner{
