@@ -8,9 +8,7 @@ type HashOutVariable struct {
 	HashOut []goldilocks.GoldilocksVariable
 }
 
-type MerkleCapVariable struct {
-	Elements []goldilocks.GoldilocksVariable
-}
+type MerkleCapVariable []HashOutVariable
 
 type MerkleProofVariable struct {
 	Siblings []HashOutVariable
@@ -58,15 +56,15 @@ type FriProofVariable struct {
 }
 
 type ProofVariable struct {
-	WiresCap                  []MerkleCapVariable
-	PlonkZsPartialProductsCap []MerkleCapVariable
-	QuotientPolysCap          []MerkleCapVariable
+	WiresCap                  MerkleCapVariable
+	PlonkZsPartialProductsCap MerkleCapVariable
+	QuotientPolysCap          MerkleCapVariable
 	Openings                  OpeningSetVariable
 	OpeningProof              FriProofVariable
 }
 
 type VerifierOnlyVariable struct {
-	ConstantSigmasCap []MerkleCapVariable
+	ConstantSigmasCap MerkleCapVariable
 	CircuitDigest     HashOutVariable
 }
 

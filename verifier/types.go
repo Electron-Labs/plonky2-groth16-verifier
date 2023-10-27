@@ -17,13 +17,14 @@ func (hashout *HashOut) GetVariable() HashOutVariable {
 	return hashOutVariable
 }
 
-type MerkleCap struct {
-	Elements []uint64 `json:"elements"`
-}
+type MerkleCap []HashOut
 
 func (merkle_cap *MerkleCap) GetVariable() MerkleCapVariable {
 	var merkleCapVariable MerkleCapVariable
-	merkleCapVariable.Elements = goldilocks.GetGoldilocksVariableArr(merkle_cap.Elements)
+	for _, elm := range *merkle_cap {
+		e := elm.GetVariable()
+		merkleCapVariable = append(merkleCapVariable, e)
+	}
 
 	return merkleCapVariable
 }
@@ -160,27 +161,18 @@ func (fri_proof *FriProof) GetVariable() FriProofVariable {
 }
 
 type Proof struct {
-	WiresCap                  []MerkleCap `json:"wires_cap"`
-	PlonkZsPartialProductsCap []MerkleCap `json:"plonk_zs_partial_products_cap"`
-	QuotientPolysCap          []MerkleCap `json:"quotient_polys_cap"`
-	Openings                  OpeningSet  `json:"openings"`
-	OpeningProof              FriProof    `json:"opening_proof"`
+	WiresCap                  MerkleCap  `json:"wires_cap"`
+	PlonkZsPartialProductsCap MerkleCap  `json:"plonk_zs_partial_products_cap"`
+	QuotientPolysCap          MerkleCap  `json:"quotient_polys_cap"`
+	Openings                  OpeningSet `json:"openings"`
+	OpeningProof              FriProof   `json:"opening_proof"`
 }
 
 func (proof *Proof) GetVariable() ProofVariable {
 	var proofVariable ProofVariable
-	for _, elm := range proof.WiresCap {
-		e := elm.GetVariable()
-		proofVariable.WiresCap = append(proofVariable.WiresCap, e)
-	}
-	for _, elm := range proof.PlonkZsPartialProductsCap {
-		e := elm.GetVariable()
-		proofVariable.PlonkZsPartialProductsCap = append(proofVariable.PlonkZsPartialProductsCap, e)
-	}
-	for _, elm := range proof.QuotientPolysCap {
-		e := elm.GetVariable()
-		proofVariable.QuotientPolysCap = append(proofVariable.QuotientPolysCap, e)
-	}
+	proofVariable.WiresCap = proof.WiresCap.GetVariable()
+	proofVariable.PlonkZsPartialProductsCap = proof.PlonkZsPartialProductsCap.GetVariable()
+	proofVariable.QuotientPolysCap = proof.QuotientPolysCap.GetVariable()
 	proofVariable.Openings = proof.Openings.GetVariable()
 	proofVariable.OpeningProof = proof.OpeningProof.GetVariable()
 
@@ -188,8 +180,8 @@ func (proof *Proof) GetVariable() ProofVariable {
 }
 
 type VerifierOnly struct {
-	ConstantSigmasCap []MerkleCap `json:"constants_sigmas_cap"`
-	CircuitDigest     HashOut     `json:"circuit_digest"`
+	ConstantSigmasCap MerkleCap `json:"constants_sigmas_cap"`
+	CircuitDigest     HashOut   `json:"circuit_digest"`
 }
 
 type PublicInputs []uint64
@@ -205,10 +197,7 @@ func (public_inputs PublicInputs) GetVariable() PublicInputsVariable {
 
 func (verifier_only *VerifierOnly) GetVariable() VerifierOnlyVariable {
 	var verifierOnlyVariable VerifierOnlyVariable
-	for _, elm := range verifier_only.ConstantSigmasCap {
-		e := elm.GetVariable()
-		verifierOnlyVariable.ConstantSigmasCap = append(verifierOnlyVariable.ConstantSigmasCap, e)
-	}
+	verifierOnlyVariable.ConstantSigmasCap = verifier_only.ConstantSigmasCap.GetVariable()
 	verifierOnlyVariable.CircuitDigest = verifier_only.CircuitDigest.GetVariable()
 
 	return verifierOnlyVariable
