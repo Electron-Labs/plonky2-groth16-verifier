@@ -4,8 +4,14 @@ import (
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
 )
 
+const HASH_OUT = 4
+
 type HashOutVariable struct {
 	HashOut []goldilocks.GoldilocksVariable
+}
+
+func (hashOut *HashOutVariable) make() {
+	hashOut.HashOut = make([]goldilocks.GoldilocksVariable, HASH_OUT)
 }
 
 type MerkleCapVariable []HashOutVariable

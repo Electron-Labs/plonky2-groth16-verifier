@@ -73,15 +73,37 @@ type CommonData struct {
 	Luts                 []LookupTable `json:"luts"`
 }
 
-type Verifier struct {
-	api         frontend.API
-	common_data CommonData
+type CircuitConstants struct {
+	CAP_LEN                     uint64
+	CONSTANTS                   uint64
+	PLONK_SIGMAS                uint64
+	WIRES                       uint64
+	PLONK_ZS                    uint64
+	PARTIAL_PRODUCTS            uint64
+	QUOTIENT_POLYS              uint64
+	LOOKUP_ZS                   uint64
+	COMMIT_PHASE_MERKLE_CAPS    uint64
+	NUM_QUERY_ROUNDS            uint64
+	NUM_INITIAL_EVAL_PROOFS     uint64 // const : 4
+	NUM_EVALS_1                 uint64
+	NUM_EVALS_2                 uint64
+	NUM_EVALS_3                 uint64
+	NUM_EVALS_4                 uint64
+	INITIAL_EVAL_PROOF_SIBLINGS uint64
+	NUM_STEPS                   uint64
+	LEVEL_EVALS                 []uint64
+	LEVEL_SIBLINGS              []uint64 //= [siblings_len_for_each_level (0..NUM_STEPS)]
+	FINAL_POLY_COEFFS           uint64
+	NUM_PUBLIC_INPUTS           uint64
 }
 
-func createVerifier(api frontend.API, common_data CommonData) *Verifier {
+type Verifier struct {
+	api frontend.API
+}
+
+func createVerifier(api frontend.API) *Verifier {
 	return &Verifier{
-		api:         api,
-		common_data: common_data,
+		api: api,
 	}
 }
 

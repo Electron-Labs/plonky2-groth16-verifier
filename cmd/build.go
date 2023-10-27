@@ -25,20 +25,18 @@ var buildCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("build called with common data at %s\n ", common_data_path)
 
-		getCircuitConstants(common_data_path)
+		circuitConstants := getCircuitConstants(common_data_path)
 
-		cd, _ := read_common_data_from_file(common_data_path)
-
-		myCircuit := verifier.Runner{
-			CommonData: cd,
-		}
+		var myCircuit verifier.Runner
+		myCircuit.Make(circuitConstants)
+		fmt.Printf("%+v\n", myCircuit.Proof)
 
 		r1cs, _ := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &myCircuit)
 		pk, vk, _ := groth16.Setup(r1cs)
 
-		fmt.Println(r1cs)
-		fmt.Println(pk)
-		fmt.Println(vk)
+		// fmt.Println(r1cs)
+		// fmt.Println(pk)
+		// fmt.Println(vk)
 
 		f_r1cs, _ := os.Create("data/r1cs")
 		r1cs.WriteTo(f_r1cs)
@@ -48,6 +46,46 @@ var buildCmd = &cobra.Command{
 
 		f_pk, _ := os.Create("data/pk")
 		pk.WriteTo(f_pk)
+
+		proof, _ := read_proof_from_file("./data/goldilocks/proof_with_pis.json")
+		verifier_only, _ := read_verifier_data_from_file("./data/goldilocks/verifier_only.json")
+		public_inputs, _ := read_public_inputs_from_file("./data/goldilocks/pub_inputs.json")
+
+		proof_variable := proof.GetVariable()
+		vd_variable := verifier_only.GetVariable()
+		public_inputs_variable := public_inputs.GetVariable()
+
+		assignment := &verifier.Runner{
+			Proof:        proof_variable,
+			VerifierOnly: vd_variable,
+			PubInputs:    public_inputs_variable,
+		}
+
+		witness, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField())
+		if err != nil {
+			fmt.Println("witness wrong: ", err)
+			os.Exit(1)
+		}
+		// fmt.Println(witness)
+		public, _ := witness.Public()
+		// schema, _ := frontend.NewSchema(assignment)
+		// wtns_json, err := witness.ToJSON(schema)
+		// if err != nil {
+		// 	fmt.Println("witness json wrong: ", err)
+		// 	os.Exit(1)
+		// }
+		// fmt.Println(string(wtns_json))
+
+		g16p, err := groth16.Prove(r1cs, pk, witness)
+		if err != nil {
+			fmt.Println("prove wrong: ", err)
+			os.Exit(1)
+		}
+		err = groth16.Verify(g16p, vk, public)
+		if err != nil {
+			fmt.Println("verify wrong: ", err)
+			os.Exit(1)
+		}
 
 		// load common data from json
 		// var myCircuit verifier.Verifier

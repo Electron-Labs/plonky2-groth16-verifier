@@ -68,30 +68,7 @@ func read_public_inputs_from_file(path string) (verifier.PublicInputs, error) {
 	return pub_inputs, nil
 }
 
-type CircuitConstants struct {
-	CAP_LEN                     uint64
-	CONSTANTS                   uint64
-	PLONK_SIGMAS                uint64
-	WIRES                       uint64
-	PLONK_ZS                    uint64
-	PARTIAL_PRODUCTS            uint64
-	QUOTIENT_POLYS              uint64
-	LOOKUP_ZS                   uint64
-	COMMIT_PHASE_MERKLE_CAPS    uint64
-	NUM_QUERY_ROUNDS            uint64
-	NUM_INITIAL_EVAL_PROOFS     uint64 // const : 4
-	NUM_EVALS_1                 uint64
-	NUM_EVALS_2                 uint64
-	NUM_EVALS_3                 uint64
-	NUM_EVALS_4                 uint64
-	INITIAL_EVAL_PROOF_SIBLINGS uint64
-	NUM_STEPS                   uint64
-	LEVEL_EVALS                 []uint64
-	LEVEL_SIBLINGS              []uint64 //= [siblings_len_for_each_level (0..NUM_STEPS)]
-	FINAL_POLY_COEFFS           uint64
-}
-
-func getCircuitConstants(common_data_path string) CircuitConstants {
+func getCircuitConstants(common_data_path string) verifier.CircuitConstants {
 	var common_data verifier.CommonData
 	jsonCommonData, _ := ioutil.ReadFile(common_data_path)
 	if err := json.Unmarshal(jsonCommonData, &common_data); err != nil {
@@ -124,7 +101,7 @@ func getCircuitConstants(common_data_path string) CircuitConstants {
 	for _, num := range common_data.FriParams.ReductionArityBits {
 		sum += num
 	}
-	return CircuitConstants{
+	return verifier.CircuitConstants{
 		CAP_LEN:                     uint64((math.Pow(2, float64(common_data.FriParams.Config.CapHeight)))),
 		CONSTANTS:                   uint64(common_data.NumConstants),
 		PLONK_SIGMAS:                uint64(common_data.Config.NumRoutedWires),
@@ -145,6 +122,7 @@ func getCircuitConstants(common_data_path string) CircuitConstants {
 		LEVEL_EVALS:                 evals,
 		LEVEL_SIBLINGS:              siblings,
 		FINAL_POLY_COEFFS:           uint64((1 << int(common_data.FriParams.DegreeBits-sum))),
+		NUM_PUBLIC_INPUTS:           common_data.NumPublicInputs,
 	}
 }
 
