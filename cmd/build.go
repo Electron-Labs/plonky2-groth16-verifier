@@ -29,7 +29,6 @@ var buildCmd = &cobra.Command{
 
 		var myCircuit verifier.Runner
 		myCircuit.Make(circuitConstants)
-		fmt.Printf("%+v\n", myCircuit.Proof)
 
 		r1cs, _ := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &myCircuit)
 		pk, vk, _ := groth16.Setup(r1cs)

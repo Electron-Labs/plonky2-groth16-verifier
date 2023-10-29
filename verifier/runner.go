@@ -18,6 +18,7 @@ func (circuit *Runner) Define(api frontend.API) error {
 	return nil
 }
 
+// TODO: very ugly function; structure it better
 func (circuit *Runner) Make(constants CircuitConstants) {
 	circuit.Proof.WiresCap = make(MerkleCapVariable, constants.CAP_LEN)
 	for i := range circuit.Proof.WiresCap {
@@ -61,11 +62,23 @@ func (circuit *Runner) Make(constants CircuitConstants) {
 				circuit.Proof.OpeningProof.QueryRroundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings[k].make()
 			}
 		}
+
+		circuit.Proof.OpeningProof.QueryRroundProofs[i].Steps = make([]FriQueryStepVariable, constants.NUM_STEPS)
+		for j := range circuit.Proof.OpeningProof.QueryRroundProofs[i].Steps {
+			circuit.Proof.OpeningProof.QueryRroundProofs[i].Steps[j].Evals = make([]goldilocks.GoldilocksExtension2Variable, constants.LEVEL_EVALS[j])
+			circuit.Proof.OpeningProof.QueryRroundProofs[i].Steps[j].MerkleProof.Siblings = make([]HashOutVariable, constants.LEVEL_SIBLINGS[j])
+			for k := range circuit.Proof.OpeningProof.QueryRroundProofs[i].Steps[j].MerkleProof.Siblings {
+				circuit.Proof.OpeningProof.QueryRroundProofs[i].Steps[j].MerkleProof.Siblings[k].make()
+			}
+		}
 	}
 
 	circuit.Proof.OpeningProof.FinalPoly.Coeffs = make([]goldilocks.GoldilocksExtension2Variable, constants.FINAL_POLY_COEFFS)
 
 	circuit.VerifierOnly.ConstantSigmasCap = make(MerkleCapVariable, constants.CAP_LEN)
+	for i := range circuit.VerifierOnly.ConstantSigmasCap {
+		circuit.VerifierOnly.ConstantSigmasCap[i].make()
+	}
 	circuit.VerifierOnly.CircuitDigest.make()
 
 	circuit.PubInputs = make(PublicInputsVariable, constants.NUM_PUBLIC_INPUTS)
