@@ -19,6 +19,7 @@ func (circuit *Runner) Define(api frontend.API) error {
 }
 
 // TODO: very ugly function; structure it better
+// TODO: requires intensive testing with various config/proofs combinations
 func (circuit *Runner) Make(constants CircuitConstants) {
 	circuit.Proof.WiresCap = make(MerkleCapVariable, constants.CAP_LEN)
 	for i := range circuit.Proof.WiresCap {
@@ -51,24 +52,24 @@ func (circuit *Runner) Make(constants CircuitConstants) {
 		}
 	}
 
-	circuit.Proof.OpeningProof.QueryRroundProofs = make([]FriQueryRoundVariable, constants.NUM_QUERY_ROUNDS)
+	circuit.Proof.OpeningProof.QueryRoundProofs = make([]FriQueryRoundVariable, constants.NUM_QUERY_ROUNDS)
 	num_evals := []uint64{constants.NUM_EVALS_1, constants.NUM_EVALS_2, constants.NUM_EVALS_3, constants.NUM_EVALS_4}
-	for i := range circuit.Proof.OpeningProof.QueryRroundProofs {
-		circuit.Proof.OpeningProof.QueryRroundProofs[i].InitialTreeProof.EvalsProofs = make([]EvalProofVariable, constants.NUM_INITIAL_EVAL_PROOFS)
-		for j := range circuit.Proof.OpeningProof.QueryRroundProofs[i].InitialTreeProof.EvalsProofs {
-			circuit.Proof.OpeningProof.QueryRroundProofs[i].InitialTreeProof.EvalsProofs[j].X = make([]goldilocks.GoldilocksVariable, num_evals[j])
-			circuit.Proof.OpeningProof.QueryRroundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings = make([]HashOutVariable, constants.INITIAL_EVAL_PROOF_SIBLINGS)
-			for k := range circuit.Proof.OpeningProof.QueryRroundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings {
-				circuit.Proof.OpeningProof.QueryRroundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings[k].make()
+	for i := range circuit.Proof.OpeningProof.QueryRoundProofs {
+		circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs = make([]EvalProofVariable, constants.NUM_INITIAL_EVAL_PROOFS)
+		for j := range circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs {
+			circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].X = make([]goldilocks.GoldilocksVariable, num_evals[j])
+			circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings = make([]HashOutVariable, constants.INITIAL_EVAL_PROOF_SIBLINGS)
+			for k := range circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings {
+				circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings[k].make()
 			}
 		}
 
-		circuit.Proof.OpeningProof.QueryRroundProofs[i].Steps = make([]FriQueryStepVariable, constants.NUM_STEPS)
-		for j := range circuit.Proof.OpeningProof.QueryRroundProofs[i].Steps {
-			circuit.Proof.OpeningProof.QueryRroundProofs[i].Steps[j].Evals = make([]goldilocks.GoldilocksExtension2Variable, constants.LEVEL_EVALS[j])
-			circuit.Proof.OpeningProof.QueryRroundProofs[i].Steps[j].MerkleProof.Siblings = make([]HashOutVariable, constants.LEVEL_SIBLINGS[j])
-			for k := range circuit.Proof.OpeningProof.QueryRroundProofs[i].Steps[j].MerkleProof.Siblings {
-				circuit.Proof.OpeningProof.QueryRroundProofs[i].Steps[j].MerkleProof.Siblings[k].make()
+		circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps = make([]FriQueryStepVariable, constants.NUM_STEPS)
+		for j := range circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps {
+			circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps[j].Evals = make([]goldilocks.GoldilocksExtension2Variable, constants.LEVEL_EVALS[j])
+			circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps[j].MerkleProof.Siblings = make([]HashOutVariable, constants.LEVEL_SIBLINGS[j])
+			for k := range circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps[j].MerkleProof.Siblings {
+				circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps[j].MerkleProof.Siblings[k].make()
 			}
 		}
 	}

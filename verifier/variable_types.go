@@ -56,7 +56,7 @@ type PolynomialCoeffsVariable struct {
 
 type FriProofVariable struct {
 	CommitPhaseMerkleCap []MerkleCapVariable
-	QueryRroundProofs    []FriQueryRoundVariable
+	QueryRoundProofs     []FriQueryRoundVariable
 	FinalPoly            PolynomialCoeffsVariable
 	PowWitness           goldilocks.GoldilocksVariable
 }

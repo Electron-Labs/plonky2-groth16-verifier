@@ -152,7 +152,7 @@ func (fri_proof *FriProof) GetVariable() FriProofVariable {
 	}
 	for _, elm := range fri_proof.QueryRoundProofs {
 		e := elm.GetVariable()
-		friProofVariable.QueryRroundProofs = append(friProofVariable.QueryRroundProofs, e)
+		friProofVariable.QueryRoundProofs = append(friProofVariable.QueryRoundProofs, e)
 	}
 	friProofVariable.FinalPoly = fri_proof.FinalPoly.GetVariable()
 	friProofVariable.PowWitness = goldilocks.GetGoldilocksVariable(fri_proof.PowWitness)
