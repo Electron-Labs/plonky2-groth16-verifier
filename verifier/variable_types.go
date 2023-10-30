@@ -13,7 +13,7 @@ type HashOutVariable struct {
 
 func (hashOut *HashOutVariable) applyRangeCheck(rangeCheck func(frontend.API, frontend.Rangechecker, frontend.Variable), api frontend.API, rangeChecker frontend.Rangechecker) {
 	for _, h := range hashOut.HashOut {
-		rangeCheck(api, rangeChecker, h)
+		rangeCheck(api, rangeChecker, h.Limb)
 	}
 }
 

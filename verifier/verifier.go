@@ -188,6 +188,12 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 
 	goldilocks.RangeCheck(api, rangeChecker, proof.OpeningProof.PowWitness.Limb)
 
+	// 3. All verifier data elements should be in field too
+	for _, x := range verifier_only.ConstantSigmasCap {
+		x.applyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
+	}
+	verifier_only.CircuitDigest.applyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
+
 	return nil
 }
 
