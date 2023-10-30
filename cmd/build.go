@@ -23,7 +23,7 @@ var buildCmd = &cobra.Command{
 	Short: "Build gnark groth16 circuit",
 	Long:  `Builds gnark groth16 circuit corresponding to provided common_data and plonky2 config.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("build called with common data at %s\n ", common_data_path)
+		fmt.Printf("build called:\n common data: %s\n ", common_data_path)
 
 		circuitConstants := getCircuitConstants(common_data_path)
 
@@ -33,58 +33,59 @@ var buildCmd = &cobra.Command{
 		r1cs, _ := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &myCircuit)
 		pk, vk, _ := groth16.Setup(r1cs)
 
-		// fmt.Println(r1cs)
-		// fmt.Println(pk)
-		// fmt.Println(vk)
-
-		f_r1cs, _ := os.Create("data/r1cs")
+		f_r1cs, err := os.Create("data/r1cs.bin")
+		if err != nil {
+			fmt.Println("Failed to create r1cs file:", err)
+			os.Exit(1)
+		}
 		r1cs.WriteTo(f_r1cs)
 
-		f_vk, _ := os.Create("data/vk")
+		f_vk, err := os.Create("data/vk.bin")
+		if err != nil {
+			fmt.Println("Failed to create vk file:", err)
+			os.Exit(1)
+		}
 		vk.WriteTo(f_vk)
 
-		f_pk, _ := os.Create("data/pk")
+		f_pk, _ := os.Create("data/pk.bin")
+		if err != nil {
+			fmt.Println("Failed to create pk file:", err)
+			os.Exit(1)
+		}
 		pk.WriteTo(f_pk)
 
-		proof, _ := read_proof_from_file("./data/goldilocks/proof_with_pis.json")
-		verifier_only, _ := read_verifier_data_from_file("./data/goldilocks/verifier_only.json")
-		public_inputs, _ := read_public_inputs_from_file("./data/goldilocks/pub_inputs.json")
+		// proof, _ := read_proof_from_file("./data/goldilocks/proof_with_pis.json")
+		// verifier_only, _ := read_verifier_data_from_file("./data/goldilocks/verifier_only.json")
+		// public_inputs, _ := read_public_inputs_from_file("./data/goldilocks/pub_inputs.json")
 
-		proof_variable := proof.GetVariable()
-		vd_variable := verifier_only.GetVariable()
-		public_inputs_variable := public_inputs.GetVariable()
+		// proof_variable := proof.GetVariable()
+		// vd_variable := verifier_only.GetVariable()
+		// public_inputs_variable := public_inputs.GetVariable()
 
-		assignment := &verifier.Runner{
-			Proof:        proof_variable,
-			VerifierOnly: vd_variable,
-			PubInputs:    public_inputs_variable,
-		}
+		// assignment := &verifier.Runner{
+		// 	Proof:        proof_variable,
+		// 	VerifierOnly: vd_variable,
+		// 	PubInputs:    public_inputs_variable,
+		// }
 
-		witness, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField())
-		if err != nil {
-			fmt.Println("witness wrong: ", err)
-			os.Exit(1)
-		}
-		// fmt.Println(witness)
-		public, _ := witness.Public()
-		// schema, _ := frontend.NewSchema(assignment)
-		// wtns_json, err := witness.ToJSON(schema)
+		// witness, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField())
 		// if err != nil {
-		// 	fmt.Println("witness json wrong: ", err)
+		// 	fmt.Println("witness wrong: ", err)
 		// 	os.Exit(1)
 		// }
-		// fmt.Println(string(wtns_json))
 
-		g16p, err := groth16.Prove(r1cs, pk, witness)
-		if err != nil {
-			fmt.Println("prove wrong: ", err)
-			os.Exit(1)
-		}
-		err = groth16.Verify(g16p, vk, public)
-		if err != nil {
-			fmt.Println("verify wrong: ", err)
-			os.Exit(1)
-		}
+		// public, _ := witness.Public()
+
+		// g16p, err := groth16.Prove(r1cs, pk, witness)
+		// if err != nil {
+		// 	fmt.Println("prove wrong: ", err)
+		// 	os.Exit(1)
+		// }
+		// err = groth16.Verify(g16p, vk, public)
+		// if err != nil {
+		// 	fmt.Println("verify wrong: ", err)
+		// 	os.Exit(1)
+		// }
 
 		// load common data from json
 		// var myCircuit verifier.Verifier

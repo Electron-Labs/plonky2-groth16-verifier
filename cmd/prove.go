@@ -5,15 +5,21 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier"
+	"github.com/consensys/gnark-crypto/ecc"
+	"github.com/consensys/gnark/backend/groth16"
+	"github.com/consensys/gnark/frontend"
 	"github.com/spf13/cobra"
 )
 
-var proof_path string
+var plonky2_proof_path string
 var verifier_only_path string
 var public_inputs_path string
 var proving_key_path string
 var r1cs_path string
+var vk_path string
 
 // proveCmd represents the prove command
 var proveCmd = &cobra.Command{
@@ -21,7 +27,9 @@ var proveCmd = &cobra.Command{
 	Short: "Generate groth16 proof",
 	Long:  `Generates a groth16 proof corresponding to a plonky2 proof and given public inputs.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		proof, _ := read_proof_from_file(proof_path)
+		fmt.Printf("Proof gen called:\n proof: %s\n pub_inputs: %s\n pkey: %s\n r1cs: %s\n",
+			plonky2_proof_path, public_inputs_path, proving_key_path, r1cs_path)
+		proof, _ := read_proof_from_file(plonky2_proof_path)
 		verifier_only, _ := read_verifier_data_from_file(verifier_only_path)
 		public_inputs, _ := read_public_inputs_from_file(public_inputs_path)
 
@@ -29,15 +37,66 @@ var proveCmd = &cobra.Command{
 		vd_variable := verifier_only.GetVariable()
 		public_inputs_variable := public_inputs.GetVariable()
 
-		fmt.Println(proof_variable)
-		fmt.Println(vd_variable)
-		fmt.Println(public_inputs_variable)
+		assignment := &verifier.Runner{
+			Proof:        proof_variable,
+			VerifierOnly: vd_variable,
+			PubInputs:    public_inputs_variable,
+		}
+
+		witness, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField())
+		if err != nil {
+			fmt.Println("witness wrong: ", err)
+			os.Exit(1)
+		}
+
+		// public, _ := witness.Public()
+
+		r1cs := groth16.NewCS(ecc.BN254)
+		r1csFile, err := os.Open(r1cs_path)
+		if err != nil {
+			fmt.Println("r1cs file open wrong: ", err)
+			os.Exit(1)
+		}
+		r1cs.ReadFrom(r1csFile)
+
+		pk := groth16.NewProvingKey(ecc.BN254)
+		pkFile, err := os.Open(proving_key_path)
+		if err != nil {
+			fmt.Println("pkFile open wrong: ", err)
+			os.Exit(1)
+		}
+		pk.ReadFrom(pkFile)
+
+		vk := groth16.NewVerifyingKey(ecc.BN254)
+		vkFile, err := os.Open(vk_path)
+		if err != nil {
+			fmt.Println("vkFile open wrong: ", err)
+			os.Exit(1)
+		}
+		vk.ReadFrom(vkFile)
+
+		g16p, err := groth16.Prove(r1cs, pk, witness)
+		g16p_file, err := os.Create("./data/g16p")
+		if err != nil {
+			fmt.Println("g16p file open wrong: ", err)
+			os.Exit(1)
+		}
+		g16p.WriteTo(g16p_file)
+		if err != nil {
+			fmt.Println("prove wrong: ", err)
+			os.Exit(1)
+		}
+		// err = groth16.Verify(g16p, vk, public)
+		// if err != nil {
+		// 	fmt.Println("verify wrong: ", err)
+		// 	os.Exit(1)
+		// }
 	},
 }
 
 func init() {
-	proveCmd.Flags().StringVarP(&proof_path, "proof_path", "p", "", "JSON File path to plonky2 proof")
-	_ = buildCmd.MarkFlagRequired("proof_path")
+	proveCmd.Flags().StringVarP(&plonky2_proof_path, "plonky2_proof_path", "p", "", "JSON File path to plonky2 proof")
+	_ = buildCmd.MarkFlagRequired("plonky2_proof_path")
 	proveCmd.Flags().StringVarP(&verifier_only_path, "verifier_only_path", "v", "", "JSON File path to verifier only data")
 	_ = buildCmd.MarkFlagRequired("verifier_only_path")
 	proveCmd.Flags().StringVarP(&public_inputs_path, "public_inputs_path", "i", "", "JSON File path to public inputs")
@@ -46,6 +105,8 @@ func init() {
 	_ = buildCmd.MarkFlagRequired("proving_key_path")
 	proveCmd.Flags().StringVarP(&r1cs_path, "r1cs_path", "r", "", "JSON File path to r1cs")
 	_ = buildCmd.MarkFlagRequired("r1cs_path")
+	proveCmd.Flags().StringVarP(&vk_path, "vk_path", "e", "", "JSON File path to vkey")
+	_ = buildCmd.MarkFlagRequired("vk_path")
 	rootCmd.AddCommand(proveCmd)
 
 	// Here you will define your flags and configuration settings.
