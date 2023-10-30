@@ -107,8 +107,92 @@ func createVerifier(api frontend.API) *Verifier {
 	}
 }
 
+// Range check everything is in goldilocks field
+func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proof ProofVariable, verifier_only VerifierOnlyVariable, pub_inputs PublicInputsVariable) error {
+	// 1. Inputs should all be within goldilocks field
+	for _, x := range pub_inputs {
+		goldilocks.RangeCheck(api, rangeChecker, x.Limb)
+	}
+
+	// 2. All proof elements should be within goldilocks field
+	for _, x := range proof.WiresCap {
+		x.applyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
+	}
+	for _, x := range proof.PlonkZsPartialProductsCap {
+		x.applyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
+	}
+	for _, x := range proof.QuotientPolysCap {
+		x.applyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
+	}
+
+	for _, x := range proof.Openings.Constants {
+		x.RangeCheck(api, rangeChecker)
+	}
+	for _, x := range proof.Openings.PlonkSigmas {
+		x.RangeCheck(api, rangeChecker)
+	}
+	for _, x := range proof.Openings.Wires {
+		x.RangeCheck(api, rangeChecker)
+	}
+	for _, x := range proof.Openings.PlonkZs {
+		x.RangeCheck(api, rangeChecker)
+	}
+	for _, x := range proof.Openings.PlonkZsNext {
+		x.RangeCheck(api, rangeChecker)
+	}
+	for _, x := range proof.Openings.PartialProducts {
+		x.RangeCheck(api, rangeChecker)
+	}
+	for _, x := range proof.Openings.QuotientPolys {
+		x.RangeCheck(api, rangeChecker)
+	}
+	for _, x := range proof.Openings.LookupZs {
+		x.RangeCheck(api, rangeChecker)
+	}
+	for _, x := range proof.Openings.LookupZsNext {
+		x.RangeCheck(api, rangeChecker)
+	}
+
+	for _, x := range proof.OpeningProof.CommitPhaseMerkleCap {
+		for _, m := range x {
+			m.applyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
+		}
+	}
+
+	for _, q := range proof.OpeningProof.QueryRoundProofs {
+		// initial tree proof
+		for _, e := range q.InitialTreeProof.EvalsProofs {
+			for _, x := range e.X {
+				goldilocks.RangeCheck(api, rangeChecker, x.Limb)
+			}
+			for _, m := range e.Y.Siblings {
+				m.applyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
+			}
+		}
+
+		// steps
+		for _, s := range q.Steps {
+			// evals
+			for _, e := range s.Evals {
+				e.RangeCheck(api, rangeChecker)
+			}
+			for _, m := range s.MerkleProof.Siblings {
+				m.applyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
+			}
+		}
+	}
+
+	for _, o := range proof.OpeningProof.FinalPoly.Coeffs {
+		o.RangeCheck(api, rangeChecker)
+	}
+
+	goldilocks.RangeCheck(api, rangeChecker, proof.OpeningProof.PowWitness.Limb)
+
+	return nil
+}
+
 func (circuit *Verifier) Verify(proof ProofVariable, verifier_only VerifierOnlyVariable, pub_inputs PublicInputsVariable) error {
 	rangeChecker := rangecheck.New(circuit.api)
-	goldilocks.Reduce(circuit.api, rangeChecker, proof.OpeningProof.PowWitness.Limb)
+	fieldCheckInputs(circuit.api, rangeChecker, proof, verifier_only, pub_inputs)
 	return nil
 }
