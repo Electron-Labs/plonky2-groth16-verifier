@@ -58,7 +58,7 @@ func lessThan(api frontend.API, rangeChecker frontend.Rangechecker, i1 frontend.
 }
 
 func RangeCheck(api frontend.API, rangeChecker frontend.Rangechecker, x frontend.Variable) {
-	lessThan(api, rangeChecker, MODULUS, x, 64)
+	lessThan(api, rangeChecker, (*&big.Int{}).Add(big.NewInt(1), MODULUS), x, 64)
 }
 
 func Reduce(api frontend.API, rangeChecker frontend.Rangechecker, x frontend.Variable) GoldilocksVariable {
