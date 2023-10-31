@@ -1,8 +1,17 @@
 package goldilocks
 
+import (
+	"github.com/consensys/gnark/frontend"
+)
+
 type GoldilocksExtension2Variable struct {
 	A GoldilocksVariable
 	B GoldilocksVariable
+}
+
+func (goldilocks_extension2 *GoldilocksExtension2Variable) RangeCheck(api frontend.API, rangeChecker frontend.Rangechecker) {
+	RangeCheck(api, rangeChecker, goldilocks_extension2.A.Limb)
+	RangeCheck(api, rangeChecker, goldilocks_extension2.B.Limb)
 }
 
 func GetGoldilocksExtensionVariable(vals []uint64) GoldilocksExtension2Variable {
