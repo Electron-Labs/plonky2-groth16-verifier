@@ -1,0 +1,174 @@
+package goldilocks
+
+import (
+	"testing"
+
+	"github.com/consensys/gnark-crypto/ecc"
+	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/frontend/cs/r1cs"
+	"github.com/consensys/gnark/std/rangecheck"
+	"github.com/consensys/gnark/test"
+)
+
+type TestLessThanCircuit struct {
+	I1 frontend.Variable
+	I2 frontend.Variable
+	N  int
+}
+
+func (circuit *TestLessThanCircuit) Define(api frontend.API) error {
+	rangeChecker := rangecheck.New(api)
+	lessThan(api, rangeChecker, circuit.I1, circuit.I2, circuit.N)
+	return nil
+}
+
+func TestLessThan(t *testing.T) {
+	assert := test.NewAssert(t)
+
+	type testData struct {
+		i1      uint64
+		i2      uint64
+		n       int
+		correct bool
+	}
+
+	tests := []testData{
+		{i1: 500, i2: 1000, n: 10, correct: true},
+		{i1: 5698, i2: 15000, n: 14, correct: true},
+		{i1: 1<<64 - 1<<32 - 5000, i2: 1<<64 - 1<<32 + 1, n: 64, correct: true},
+		{i1: 15, i2: 10, n: 4, correct: false},
+		{i1: 1005, i2: 1005, n: 10, correct: false},
+		{i1: 567, i2: 600, n: 5, correct: false},
+	}
+
+	for _, t_i := range tests {
+		circuit := TestLessThanCircuit{
+			N: t_i.n,
+		}
+		r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &circuit)
+		if err != nil {
+			t.Fatal("Error in compiling circuit: ", err)
+		}
+		var witness TestLessThanCircuit
+		witness.I1 = t_i.i1
+		witness.I2 = t_i.i2
+		w, err := frontend.NewWitness(&witness, ecc.BN254.ScalarField())
+		if err != nil {
+			t.Fatal("Error in witness: ", err, "\n test: ", t_i)
+		}
+		err = r1cs.IsSolved(w)
+		if t_i.correct {
+			if err != nil {
+				t.Fatal("Circuit not solved: ", err, "\n test: ", t_i)
+			}
+			assert.CheckCircuit(&circuit, test.WithValidAssignment(&witness), test.WithCurves(ecc.BN254))
+		} else {
+			if err == nil {
+				t.Log("Circuit solved when it should have failed\n test: ", t_i)
+				t.Fail()
+			}
+		}
+	}
+}
+
+type TestRangeCheckCircuit struct {
+	V frontend.Variable
+}
+
+func (circuit *TestRangeCheckCircuit) Define(api frontend.API) error {
+	rangeChecker := rangecheck.New(api)
+	RangeCheck(api, rangeChecker, circuit.V)
+	return nil
+}
+
+func TestRangeCheck(t *testing.T) {
+	assert := test.NewAssert(t)
+
+	type testData struct {
+		v       uint64
+		correct bool
+	}
+
+	tests := []testData{
+		{v: 500, correct: true},
+		{v: 1<<64 - 1, correct: false},
+		{v: 1<<64 - 1<<32 + 2, correct: false},
+		{v: 1<<64 - 1<<32, correct: true},
+		{v: 18446744069414581458, correct: true},
+	}
+
+	for _, t_i := range tests {
+		var circuit TestRangeCheckCircuit
+		r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &circuit)
+		if err != nil {
+			t.Fatal("Error in compiling circuit: ", err)
+		}
+		var witness TestRangeCheckCircuit
+		witness.V = t_i.v
+		w, err := frontend.NewWitness(&witness, ecc.BN254.ScalarField())
+		if err != nil {
+			t.Fatal("Error in witness: ", err, "\n test: ", t_i)
+		}
+		err = r1cs.IsSolved(w)
+		if t_i.correct {
+			if err != nil {
+				t.Fatal("Circuit not solved: ", err, "\n test: ", t_i)
+			}
+			assert.CheckCircuit(&circuit, test.WithValidAssignment(&witness), test.WithCurves(ecc.BN254))
+		} else {
+			if err == nil {
+				t.Log("Circuit solved when it should have failed\n test: ", t_i)
+				t.Fail()
+			}
+		}
+	}
+}
+
+type TestReduceCircuit struct {
+	V        frontend.Variable
+	ReducedV frontend.Variable
+}
+
+func (circuit *TestReduceCircuit) Define(api frontend.API) error {
+	rangeChecker := rangecheck.New(api)
+	reducedV := Reduce(api, rangeChecker, circuit.V)
+	api.AssertIsEqual(reducedV.Limb, circuit.ReducedV)
+	return nil
+}
+
+func TestReduce(t *testing.T) {
+	assert := test.NewAssert(t)
+
+	type testData struct {
+		v        string
+		reducedV string
+	}
+
+	tests := []testData{
+		{v: "500", reducedV: "500"},
+		{v: "18446744073709551615", reducedV: "4294967294"},
+		{v: "18446744069414584321", reducedV: "0"},
+		{v: "18446744069414584320", reducedV: "18446744069414584320"},
+		{v: "184467440694145814589", reducedV: "18446744069414555700"},
+	}
+
+	for _, t_i := range tests {
+		var circuit TestReduceCircuit
+		r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &circuit)
+		if err != nil {
+			t.Fatal("Error in compiling circuit: ", err)
+		}
+		var witness TestReduceCircuit
+		witness.V = t_i.v
+		witness.ReducedV = t_i.reducedV
+		w, err := frontend.NewWitness(&witness, ecc.BN254.ScalarField())
+		if err != nil {
+			t.Fatal("Error in witness: ", err, "\n test: ", t_i)
+		}
+		err = r1cs.IsSolved(w)
+		if err != nil {
+			t.Fatal("Circuit not solved: ", err, "\n test: ", t_i)
+		}
+		assert.CheckCircuit(&circuit, test.WithValidAssignment(&witness), test.WithCurves(ecc.BN254))
+	}
+}

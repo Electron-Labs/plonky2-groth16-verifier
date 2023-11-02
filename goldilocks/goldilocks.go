@@ -1,9 +1,7 @@
 package goldilocks
 
 import (
-	"math"
 	"math/big"
-	"strconv"
 
 	"github.com/consensys/gnark/constraint/solver"
 	"github.com/consensys/gnark/frontend"
@@ -51,14 +49,19 @@ func lessThan(api frontend.API, rangeChecker frontend.Rangechecker, i1 frontend.
 	}
 	rangeChecker.Check(i1, n)
 	rangeChecker.Check(i2, n)
-	comp1 := api.Add(i1, strconv.FormatUint(uint64(math.Pow(2, float64(n))), 10))
+	var comp1 frontend.Variable
+	if n < 64 {
+		comp1 = api.Add(i1, 1<<n)
+	} else {
+		comp1 = api.Add(i1, "18446744073709551616")
+	}
 	comp := api.Sub(comp1, i2)
 	comp_binary := api.ToBinary(comp, n+1)
-	api.AssertIsEqual(comp_binary[n], 1)
+	api.AssertIsEqual(comp_binary[n], 0)
 }
 
 func RangeCheck(api frontend.API, rangeChecker frontend.Rangechecker, x frontend.Variable) {
-	lessThan(api, rangeChecker, (*&big.Int{}).Add(big.NewInt(1), MODULUS), x, 64)
+	lessThan(api, rangeChecker, x, (&big.Int{}).Add(big.NewInt(1), MODULUS), 64)
 }
 
 func Reduce(api frontend.API, rangeChecker frontend.Rangechecker, x frontend.Variable) GoldilocksVariable {
