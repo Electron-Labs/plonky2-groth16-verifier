@@ -37,6 +37,7 @@ var MODULUS *big.Int = emulated.Goldilocks{}.Modulus()
 
 func init() {
 	solver.RegisterHint(ModulusHint)
+	solver.RegisterHint(InverseHint)
 }
 
 func getGoldilocks(i frontend.Variable) GoldilocksVariable {
@@ -87,5 +88,58 @@ func ModulusHint(_ *big.Int, inputs []*big.Int, results []*big.Int) error {
 	remainder := new(big.Int).Rem(input, MODULUS)
 	results[0] = quotient
 	results[1] = remainder
+	return nil
+}
+
+func Add(
+	api frontend.API,
+	rangeChecker frontend.Rangechecker,
+	in1 GoldilocksVariable,
+	in2 GoldilocksVariable,
+) GoldilocksVariable {
+	res := api.Add(in1.Limb, in2.Limb)
+	return Reduce(api, rangeChecker, res)
+}
+
+func Mul(
+	api frontend.API,
+	rangeChecker frontend.Rangechecker,
+	in1 GoldilocksVariable,
+	in2 GoldilocksVariable,
+) GoldilocksVariable {
+	res := api.Mul(in1.Limb, in2.Limb)
+	return Reduce(api, rangeChecker, res)
+}
+
+func Sub(
+	api frontend.API,
+	rangeChecker frontend.Rangechecker,
+	in1 GoldilocksVariable,
+	in2 GoldilocksVariable,
+) GoldilocksVariable {
+	res := api.Add(api.Sub(in1.Limb, in2.Limb), MODULUS)
+	return Reduce(api, rangeChecker, res)
+}
+
+func Inv(
+	api frontend.API,
+	rangeChecker frontend.Rangechecker,
+	in GoldilocksVariable,
+) GoldilocksVariable {
+	res, err := api.Compiler().NewHint(InverseHint, 1, in.Limb)
+	if err != nil {
+		panic(err)
+	}
+	inv := GoldilocksVariable{Limb: res[0]}
+	api.AssertIsEqual(Mul(api, rangeChecker, in, inv).Limb, 1)
+	return inv
+}
+
+func InverseHint(_ *big.Int, inputs []*big.Int, outputs []*big.Int) error {
+	output := outputs[0]
+
+	output.Set(inputs[0])
+
+	output.ModInverse(output, MODULUS)
 	return nil
 }

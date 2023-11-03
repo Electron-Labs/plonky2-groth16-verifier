@@ -1,6 +1,7 @@
 package goldilocks
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc"
@@ -161,6 +162,133 @@ func TestReduce(t *testing.T) {
 		var witness TestReduceCircuit
 		witness.V = t_i.v
 		witness.ReducedV = t_i.reducedV
+		w, err := frontend.NewWitness(&witness, ecc.BN254.ScalarField())
+		if err != nil {
+			t.Fatal("Error in witness: ", err, "\n test: ", t_i)
+		}
+		err = r1cs.IsSolved(w)
+		if err != nil {
+			t.Fatal("Circuit not solved: ", err, "\n test: ", t_i)
+		}
+		assert.CheckCircuit(&circuit, test.WithValidAssignment(&witness), test.WithCurves(ecc.BN254))
+	}
+}
+
+type TestArithmeticCircuit struct {
+	In1    GoldilocksVariable
+	In2    GoldilocksVariable
+	AddRes GoldilocksVariable
+	MulRes GoldilocksVariable
+	SubRes GoldilocksVariable
+}
+
+func (circuit *TestArithmeticCircuit) Define(api frontend.API) error {
+	rangeChecker := rangecheck.New(api)
+	api.AssertIsEqual(Add(api, rangeChecker, circuit.In1, circuit.In2).Limb, circuit.AddRes.Limb)
+	api.AssertIsEqual(Mul(api, rangeChecker, circuit.In1, circuit.In2).Limb, circuit.MulRes.Limb)
+	api.AssertIsEqual(Sub(api, rangeChecker, circuit.In1, circuit.In2).Limb, circuit.SubRes.Limb)
+	return nil
+}
+
+func TestArithmetic(t *testing.T) {
+	assert := test.NewAssert(t)
+
+	type testData struct {
+		in1    big.Int
+		in2    big.Int
+		addRes big.Int
+		mulRes big.Int
+		subRes big.Int
+	}
+
+	getTest := func(in1 string, in2 string) testData {
+		var ret testData
+		ret.in1.SetString(in1, 10)
+		ret.in2.SetString(in2, 10)
+		ret.addRes.Mod(ret.addRes.Add(&ret.in1, &ret.in2), MODULUS)
+		ret.mulRes.Mod(ret.mulRes.Mul(&ret.in1, &ret.in2), MODULUS)
+		ret.subRes.Mod(ret.subRes.Sub(&ret.in1, &ret.in2), MODULUS)
+		return ret
+	}
+
+	tests := []testData{
+		getTest("5", "36"),
+		getTest("18446744069414584271", "9873211"),
+		getTest("18446744069414584320", "1"),
+		getTest("1984351684", "65498741"),
+		getTest("0", "18446744069414584320"),
+	}
+
+	var circuit TestArithmeticCircuit
+	r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &circuit)
+	if err != nil {
+		t.Fatal("Error in compiling circuit: ", err)
+	}
+
+	for _, t_i := range tests {
+		var witness TestArithmeticCircuit
+		witness.In1 = GetGoldilocksVariable(t_i.in1.Uint64())
+		witness.In2 = GetGoldilocksVariable(t_i.in2.Uint64())
+		witness.AddRes = GetGoldilocksVariable(t_i.addRes.Uint64())
+		witness.MulRes = GetGoldilocksVariable(t_i.mulRes.Uint64())
+		witness.SubRes = GetGoldilocksVariable(t_i.subRes.Uint64())
+		w, err := frontend.NewWitness(&witness, ecc.BN254.ScalarField())
+		if err != nil {
+			t.Fatal("Error in witness: ", err, "\n test: ", t_i)
+		}
+		err = r1cs.IsSolved(w)
+		if err != nil {
+			t.Fatal("Circuit not solved: ", err, "\n test: ", t_i)
+		}
+		assert.CheckCircuit(&circuit, test.WithValidAssignment(&witness), test.WithCurves(ecc.BN254))
+	}
+}
+
+type TestInverseCircuit struct {
+	In     GoldilocksVariable
+	InvRes GoldilocksVariable
+}
+
+func (circuit *TestInverseCircuit) Define(api frontend.API) error {
+	rangeChecker := rangecheck.New(api)
+	api.AssertIsEqual(Inv(api, rangeChecker, circuit.In).Limb, circuit.InvRes.Limb)
+	return nil
+}
+
+func TestInverse(t *testing.T) {
+	assert := test.NewAssert(t)
+
+	type testData struct {
+		in     big.Int
+		invRes big.Int
+	}
+
+	getTest := func(in string) testData {
+		var ret testData
+		ret.in.SetString(in, 10)
+		ret.invRes.ModInverse(&ret.in, MODULUS)
+		return ret
+	}
+
+	tests := []testData{
+		getTest("5"),
+		getTest("1984351684"),
+		getTest("65498741"),
+		getTest("18446744069414584271"),
+		getTest("18446744069414584320"),
+		getTest("1"),
+	}
+
+	var circuit TestInverseCircuit
+	r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &circuit)
+	if err != nil {
+		t.Fatal("Error in compiling circuit: ", err)
+	}
+
+	for _, t_i := range tests {
+		var witness TestInverseCircuit
+		witness.In = GetGoldilocksVariable(t_i.in.Uint64())
+		witness.InvRes = GetGoldilocksVariable(t_i.invRes.Uint64())
 		w, err := frontend.NewWitness(&witness, ecc.BN254.ScalarField())
 		if err != nil {
 			t.Fatal("Error in witness: ", err, "\n test: ", t_i)
