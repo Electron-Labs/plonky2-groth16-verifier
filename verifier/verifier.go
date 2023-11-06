@@ -202,10 +202,17 @@ func hashPublicInputs(api frontend.API, rangeChecker frontend.Rangechecker, publ
 	return hasher.HashNoPad(publicInputs)
 }
 
+func getChallenges(api frontend.API, rangeChecker frontend.Rangechecker, proof ProofVariable, publicInputHash HashOutVariable, circuitDigest HashOutVariable) ProofChallengesVariable {
+	var challenges ProofChallengesVariable
+	return challenges
+}
+
 func (circuit *Verifier) Verify(proof ProofVariable, verifier_only VerifierOnlyVariable, pub_inputs PublicInputsVariable) error {
 	rangeChecker := rangecheck.New(circuit.api)
 	fieldCheckInputs(circuit.api, rangeChecker, proof, verifier_only, pub_inputs)
 	pubInputsHash := hashPublicInputs(circuit.api, rangeChecker, pub_inputs)
 	circuit.api.Println(pubInputsHash)
+	challenges := getChallenges(circuit.api, rangeChecker, proof, pubInputsHash, verifier_only.CircuitDigest)
+	circuit.api.Println(challenges)
 	return nil
 }

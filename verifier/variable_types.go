@@ -82,3 +82,19 @@ type VerifierOnlyVariable struct {
 }
 
 type PublicInputsVariable []goldilocks.GoldilocksVariable
+
+type FriChallengesVariable struct {
+	FriAlpha        goldilocks.GoldilocksExtension2Variable
+	FriBetas        []goldilocks.GoldilocksExtension2Variable
+	FriPowResponse  goldilocks.GoldilocksVariable
+	FriQueryIndices []frontend.Variable
+}
+
+type ProofChallengesVariable struct {
+	PlonkBetas    []goldilocks.GoldilocksVariable
+	PlonkGammas   []goldilocks.GoldilocksVariable
+	PlonkAlphas   []goldilocks.GoldilocksVariable
+	PlonkDeltas   []goldilocks.GoldilocksVariable
+	PlonkZeta     goldilocks.GoldilocksExtension2Variable
+	FriChallenges FriChallengesVariable
+}
