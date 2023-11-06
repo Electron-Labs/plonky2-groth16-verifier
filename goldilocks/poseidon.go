@@ -34,6 +34,9 @@ func Mds(api frontend.API, rangeChecker frontend.Rangechecker, in []GoldilocksVa
 }
 
 func Permute(api frontend.API, rangeChecker frontend.Rangechecker, inputs []GoldilocksVariable) []GoldilocksVariable {
+	if len(inputs) != SPONGE_WIDTH {
+		panic("Invalid number of inputs")
+	}
 	full_rounds_half := 4
 	partial_rounds := 22
 	constants := POSEIDON_CONSTANTS()
@@ -80,4 +83,39 @@ func Permute(api frontend.API, rangeChecker frontend.Rangechecker, inputs []Gold
 		r += 1
 	}
 	return state
+}
+
+type Permutation struct {
+	api          frontend.API
+	rangeChecker frontend.Rangechecker
+	state        []GoldilocksVariable
+}
+
+func NewPermutation(api frontend.API, rangeChecker frontend.Rangechecker) Permutation {
+	state := make([]GoldilocksVariable, SPONGE_WIDTH)
+	for i := 0; i < SPONGE_WIDTH; i++ {
+		state[i] = GoldilocksVariable{Limb: 0}
+	}
+	return Permutation{
+		api:          api,
+		rangeChecker: rangeChecker,
+		state:        state,
+	}
+}
+
+func (hasher *Permutation) Set(inputs []GoldilocksVariable) {
+	if len(inputs) > SPONGE_WIDTH {
+		panic("Invalid number of inputs")
+	}
+	for i, v := range inputs {
+		hasher.state[i] = v
+	}
+}
+
+func (hasher *Permutation) Permute() {
+	hasher.state = Permute(hasher.api, hasher.rangeChecker, hasher.state)
+}
+
+func (hasher *Permutation) Squeeze() []GoldilocksVariable {
+	return hasher.state[:SPONGE_RATE]
 }

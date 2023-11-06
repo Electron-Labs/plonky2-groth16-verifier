@@ -9,6 +9,7 @@ import (
 const MAX_WIDTH = 12
 const N_ROUNDS = 30
 const SPONGE_WIDTH = 12
+const SPONGE_RATE = 8
 
 func parseOneDimensionArray(s string) []*big.Int {
 	ss := strings.ReplaceAll(s, "[", "")

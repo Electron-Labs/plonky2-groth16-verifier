@@ -197,8 +197,15 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 	return nil
 }
 
+func hashPublicInputs(api frontend.API, rangeChecker frontend.Rangechecker, publicInputs PublicInputsVariable) HashOutVariable {
+	hasher := NewHasher(api, rangeChecker)
+	return hasher.HashNoPad(publicInputs)
+}
+
 func (circuit *Verifier) Verify(proof ProofVariable, verifier_only VerifierOnlyVariable, pub_inputs PublicInputsVariable) error {
 	rangeChecker := rangecheck.New(circuit.api)
 	fieldCheckInputs(circuit.api, rangeChecker, proof, verifier_only, pub_inputs)
+	pubInputsHash := hashPublicInputs(circuit.api, rangeChecker, pub_inputs)
+	circuit.api.Println(pubInputsHash)
 	return nil
 }
