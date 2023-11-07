@@ -44,7 +44,7 @@ func getGoldilocks(i frontend.Variable) GoldilocksVariable {
 	return GoldilocksVariable{Limb: i}
 }
 
-func LessThan(api frontend.API, rangeChecker frontend.Rangechecker, i1 frontend.Variable, i2 frontend.Variable, n int) {
+func LessThan(api frontend.API, rangeChecker frontend.Rangechecker, i1 frontend.Variable, i2 frontend.Variable, n int) frontend.Variable {
 	if n > 64 {
 		panic("LessThan doesnt work for n>64 for now")
 	}
@@ -58,11 +58,11 @@ func LessThan(api frontend.API, rangeChecker frontend.Rangechecker, i1 frontend.
 	}
 	comp := api.Sub(comp1, i2)
 	comp_binary := api.ToBinary(comp, n+1)
-	api.AssertIsEqual(comp_binary[n], 0)
+	return api.Sub(1, comp_binary[n])
 }
 
 func RangeCheck(api frontend.API, rangeChecker frontend.Rangechecker, x frontend.Variable) {
-	LessThan(api, rangeChecker, x, (&big.Int{}).Add(big.NewInt(1), MODULUS), 64)
+	api.AssertIsEqual(LessThan(api, rangeChecker, x, (&big.Int{}).Add(big.NewInt(1), MODULUS), 64), 1)
 }
 
 func Reduce(api frontend.API, rangeChecker frontend.Rangechecker, x frontend.Variable) GoldilocksVariable {
@@ -71,7 +71,7 @@ func Reduce(api frontend.API, rangeChecker frontend.Rangechecker, x frontend.Var
 		panic(err)
 	}
 	// 190 Explanation? (So that (quotient * MODULUS) doesnt overflow)
-	rangeChecker.Check(result[0], 190)
+	rangeChecker.Check(result[0], 64) // limitng the quotient to 64 bits to reduce to number of constraints
 	api.AssertIsEqual(api.Add(api.Mul(result[0], MODULUS), result[1]), x)
 
 	RangeCheck(api, rangeChecker, result[1])
@@ -97,7 +97,9 @@ func Add(
 	in2 GoldilocksVariable,
 ) GoldilocksVariable {
 	res := api.Add(in1.Limb, in2.Limb)
-	return Reduce(api, rangeChecker, res)
+	lt := LessThan(api, rangeChecker, res, MODULUS, 64)
+	res = api.Select(lt, res, api.Sub(res, MODULUS))
+	return GoldilocksVariable{Limb: res}
 }
 
 func Mul(
@@ -117,7 +119,9 @@ func Sub(
 	in2 GoldilocksVariable,
 ) GoldilocksVariable {
 	res := api.Add(api.Sub(in1.Limb, in2.Limb), MODULUS)
-	return Reduce(api, rangeChecker, res)
+	lt := LessThan(api, rangeChecker, res, MODULUS, 64)
+	res = api.Select(lt, res, api.Sub(res, MODULUS))
+	return GoldilocksVariable{Limb: res}
 }
 
 func Inv(

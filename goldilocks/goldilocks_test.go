@@ -19,7 +19,7 @@ type TestLessThanCircuit struct {
 
 func (circuit *TestLessThanCircuit) Define(api frontend.API) error {
 	rangeChecker := rangecheck.New(api)
-	LessThan(api, rangeChecker, circuit.I1, circuit.I2, circuit.N)
+	api.AssertIsEqual(LessThan(api, rangeChecker, circuit.I1, circuit.I2, circuit.N), 1)
 	return nil
 }
 
