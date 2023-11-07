@@ -44,7 +44,7 @@ func getGoldilocks(i frontend.Variable) GoldilocksVariable {
 	return GoldilocksVariable{Limb: i}
 }
 
-func lessThan(api frontend.API, rangeChecker frontend.Rangechecker, i1 frontend.Variable, i2 frontend.Variable, n int) {
+func LessThan(api frontend.API, rangeChecker frontend.Rangechecker, i1 frontend.Variable, i2 frontend.Variable, n int) {
 	if n > 64 {
 		panic("LessThan doesnt work for n>64 for now")
 	}
@@ -62,11 +62,11 @@ func lessThan(api frontend.API, rangeChecker frontend.Rangechecker, i1 frontend.
 }
 
 func RangeCheck(api frontend.API, rangeChecker frontend.Rangechecker, x frontend.Variable) {
-	lessThan(api, rangeChecker, x, (&big.Int{}).Add(big.NewInt(1), MODULUS), 64)
+	LessThan(api, rangeChecker, x, (&big.Int{}).Add(big.NewInt(1), MODULUS), 64)
 }
 
 func Reduce(api frontend.API, rangeChecker frontend.Rangechecker, x frontend.Variable) GoldilocksVariable {
-	result, err := api.Compiler().NewHint(ModulusHint, int(2), x)
+	result, err := api.Compiler().NewHint(ModulusHint, int(2), x, MODULUS)
 	if err != nil {
 		panic(err)
 	}
@@ -80,12 +80,11 @@ func Reduce(api frontend.API, rangeChecker frontend.Rangechecker, x frontend.Var
 }
 
 func ModulusHint(_ *big.Int, inputs []*big.Int, results []*big.Int) error {
-	if len(inputs) != 1 {
-		panic("ReduceHint expects 1 input operand")
+	if len(inputs) != 2 {
+		panic("ReduceHint expects 2 input operand")
 	}
-	input := inputs[0]
-	quotient := new(big.Int).Div(input, MODULUS)
-	remainder := new(big.Int).Rem(input, MODULUS)
+	quotient := new(big.Int).Div(inputs[0], inputs[1])
+	remainder := new(big.Int).Rem(inputs[0], inputs[1])
 	results[0] = quotient
 	results[1] = remainder
 	return nil

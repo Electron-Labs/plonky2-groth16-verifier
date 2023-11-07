@@ -63,6 +63,12 @@ func (challenger *Challenger) ObserveCap(cap MerkleCapVariable) {
 	}
 }
 
+func (challenger *Challenger) ObserveOpenings(openings FriOpeningsVariable) {
+	for _, v := range openings.Batches {
+		challenger.ObserveExtensionElements(v.Values)
+	}
+}
+
 func (challenger *Challenger) GetChallenge() goldilocks.GoldilocksVariable {
 	if challenger.outputIdx == 0 || challenger.inputIdx != 0 {
 		challenger.duplex()

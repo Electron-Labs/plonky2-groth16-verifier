@@ -6,6 +6,8 @@ import (
 	"github.com/consensys/gnark/std/rangecheck"
 )
 
+const NUM_COINS_LOOKUP = 4
+
 type FriReductionStrategy struct {
 	// TODO: supports only constant Arity Bits right now, expand further
 	ConstantArityBits []uint64 `json:"ConstantArityBits"`
@@ -107,6 +109,19 @@ func createVerifier(api frontend.API) *Verifier {
 	}
 }
 
+// returns a%b in a constrained way
+func modulus(api frontend.API, rangeChecker frontend.Rangechecker, a frontend.Variable, b frontend.Variable) frontend.Variable {
+	result, err := api.Compiler().NewHint(goldilocks.ModulusHint, 2, a, b)
+	if err != nil {
+		panic(err)
+	}
+	api.AssertIsEqual(api.Add(api.Mul(result[0], b), result[1]), a)
+
+	goldilocks.LessThan(api, rangeChecker, result[1], b, 64)
+
+	return result[1]
+}
+
 // Range check everything is in goldilocks field
 func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proof ProofVariable, verifier_only VerifierOnlyVariable, pub_inputs PublicInputsVariable) error {
 	// 1. Inputs should all be within goldilocks field
@@ -202,8 +217,137 @@ func hashPublicInputs(api frontend.API, rangeChecker frontend.Rangechecker, publ
 	return hasher.HashNoPad(publicInputs)
 }
 
+func getFriOpenings(openings OpeningSetVariable) FriOpeningsVariable {
+	var zeta_batch FriOpeningBatchVariable
+	zeta_batch_len := len(openings.Constants) + len(openings.PlonkSigmas) + len(openings.Wires) + len(openings.PlonkZs) + len(openings.PartialProducts) + len(openings.QuotientPolys) + len(openings.LookupZs)
+	zeta_batch.Values = make([]goldilocks.GoldilocksExtension2Variable, zeta_batch_len)
+	i := 0
+	for _, v := range openings.Constants {
+		zeta_batch.Values[i] = v
+		i += 1
+	}
+	for _, v := range openings.PlonkSigmas {
+		zeta_batch.Values[i] = v
+		i += 1
+	}
+	for _, v := range openings.Wires {
+		zeta_batch.Values[i] = v
+		i += 1
+	}
+	for _, v := range openings.PlonkZs {
+		zeta_batch.Values[i] = v
+		i += 1
+	}
+	for _, v := range openings.PartialProducts {
+		zeta_batch.Values[i] = v
+		i += 1
+	}
+	for _, v := range openings.QuotientPolys {
+		zeta_batch.Values[i] = v
+		i += 1
+	}
+	for _, v := range openings.LookupZs {
+		zeta_batch.Values[i] = v
+		i += 1
+	}
+	if i != zeta_batch_len {
+		panic("Incorrect number of openings")
+	}
+
+	var zeta_next_batch FriOpeningBatchVariable
+	zeta_next_batch_len := len(openings.PlonkZsNext) + len(openings.LookupZsNext)
+	zeta_next_batch.Values = make([]goldilocks.GoldilocksExtension2Variable, zeta_next_batch_len)
+	i = 0
+	for _, v := range openings.PlonkZsNext {
+		zeta_next_batch.Values[i] = v
+		i += 1
+	}
+	for _, v := range openings.LookupZsNext {
+		zeta_next_batch.Values[i] = v
+		i += 1
+	}
+	if i != zeta_next_batch_len {
+		panic("Incorrect number of openings")
+	}
+
+	var friOpenings FriOpeningsVariable
+	friOpenings.Batches = make([]FriOpeningBatchVariable, 2)
+	friOpenings.Batches[0] = zeta_batch
+	friOpenings.Batches[1] = zeta_next_batch
+	return friOpenings
+}
+
+func friChallenges(api frontend.API, rangeChecker frontend.Rangechecker, challenger *Challenger, openingProof FriProofVariable) FriChallengesVariable {
+	numQueries := len(openingProof.QueryRoundProofs)
+	ldeSize := (1 << len(openingProof.QueryRoundProofs[0].InitialTreeProof.EvalsProofs[0].Y.Siblings)) * len(openingProof.CommitPhaseMerkleCap[0])
+
+	var friChallenges FriChallengesVariable
+
+	friChallenges.FriAlpha = challenger.GetExtensionChallenge()
+	friChallenges.FriBetas = make([]goldilocks.GoldilocksExtension2Variable, len(openingProof.CommitPhaseMerkleCap))
+	for i, v := range openingProof.CommitPhaseMerkleCap {
+		challenger.ObserveCap(v)
+		friChallenges.FriBetas[i] = challenger.GetExtensionChallenge()
+	}
+
+	challenger.ObserveExtensionElements(openingProof.FinalPoly.Coeffs)
+
+	challenger.ObserveElement(openingProof.PowWitness)
+
+	friChallenges.FriPowResponse = challenger.GetChallenge()
+
+	friChallenges.FriQueryIndices = make([]frontend.Variable, numQueries)
+	for i := 0; i < numQueries; i++ {
+		tmpChallenge := challenger.GetChallenge()
+		friChallenges.FriQueryIndices[i] = modulus(api, rangeChecker, tmpChallenge.Limb, ldeSize)
+	}
+
+	return friChallenges
+}
+
 func getChallenges(api frontend.API, rangeChecker frontend.Rangechecker, proof ProofVariable, publicInputHash HashOutVariable, circuitDigest HashOutVariable) ProofChallengesVariable {
 	var challenges ProofChallengesVariable
+	challenger := NewChallenger(api, rangeChecker)
+	hasLookup := len(proof.Openings.LookupZs) != 0
+
+	challenger.ObserveHash(circuitDigest)
+	challenger.ObserveHash(publicInputHash)
+
+	challenger.ObserveCap(proof.WiresCap)
+
+	numChallenges := len(proof.Openings.PlonkZs)
+
+	challenges.PlonkBetas = challenger.GetNChallenges(numChallenges)
+	challenges.PlonkGammas = challenger.GetNChallenges(numChallenges)
+
+	if hasLookup {
+		numLookupChallenges := NUM_COINS_LOOKUP * numChallenges
+		numAdditionalChallenges := numLookupChallenges - 2*numChallenges
+		additionalChallenges := challenger.GetNChallenges(numAdditionalChallenges)
+		challenges.PlonkDeltas = make([]goldilocks.GoldilocksVariable, numLookupChallenges)
+		for i, v := range challenges.PlonkBetas {
+			challenges.PlonkDeltas[i] = v
+		}
+		for i, v := range challenges.PlonkGammas {
+			challenges.PlonkDeltas[i+numChallenges] = v
+		}
+		for i, v := range additionalChallenges {
+			challenges.PlonkDeltas[i+2*numChallenges] = v
+		}
+	} else {
+		challenges.PlonkDeltas = make([]goldilocks.GoldilocksVariable, 0)
+	}
+
+	challenger.ObserveCap(proof.PlonkZsPartialProductsCap)
+	challenges.PlonkAlphas = challenger.GetNChallenges(numChallenges)
+
+	challenger.ObserveCap(proof.QuotientPolysCap)
+	challenges.PlonkZeta = challenger.GetExtensionChallenge()
+
+	challenger.ObserveOpenings(getFriOpenings(proof.Openings))
+
+	friChallenges := friChallenges(api, rangeChecker, &challenger, proof.OpeningProof)
+	challenges.FriChallenges = friChallenges
 	return challenges
 }
 

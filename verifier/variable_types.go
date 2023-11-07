@@ -83,6 +83,14 @@ type VerifierOnlyVariable struct {
 
 type PublicInputsVariable []goldilocks.GoldilocksVariable
 
+type FriOpeningBatchVariable struct {
+	Values []goldilocks.GoldilocksExtension2Variable
+}
+
+type FriOpeningsVariable struct {
+	Batches []FriOpeningBatchVariable
+}
+
 type FriChallengesVariable struct {
 	FriAlpha        goldilocks.GoldilocksExtension2Variable
 	FriBetas        []goldilocks.GoldilocksExtension2Variable
