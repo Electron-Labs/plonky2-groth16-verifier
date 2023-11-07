@@ -132,7 +132,7 @@ type TestReduceCircuit struct {
 
 func (circuit *TestReduceCircuit) Define(api frontend.API) error {
 	rangeChecker := rangecheck.New(api)
-	reducedV := Reduce(api, rangeChecker, circuit.V)
+	reducedV := Reduce(api, rangeChecker, circuit.V, 128)
 	api.AssertIsEqual(reducedV.Limb, circuit.ReducedV)
 	return nil
 }

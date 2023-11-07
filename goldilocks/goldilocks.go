@@ -65,13 +65,12 @@ func RangeCheck(api frontend.API, rangeChecker frontend.Rangechecker, x frontend
 	api.AssertIsEqual(LessThan(api, rangeChecker, x, (&big.Int{}).Add(big.NewInt(1), MODULUS), 64), 1)
 }
 
-func Reduce(api frontend.API, rangeChecker frontend.Rangechecker, x frontend.Variable) GoldilocksVariable {
+func Reduce(api frontend.API, rangeChecker frontend.Rangechecker, x frontend.Variable, n int) GoldilocksVariable {
 	result, err := api.Compiler().NewHint(ModulusHint, int(2), x, MODULUS)
 	if err != nil {
 		panic(err)
 	}
-	// 190 Explanation? (So that (quotient * MODULUS) doesnt overflow)
-	rangeChecker.Check(result[0], 64) // limitng the quotient to 64 bits to reduce to number of constraints
+	api.ToBinary(result[0], max(1, n-63))
 	api.AssertIsEqual(api.Add(api.Mul(result[0], MODULUS), result[1]), x)
 
 	RangeCheck(api, rangeChecker, result[1])
@@ -109,7 +108,7 @@ func Mul(
 	in2 GoldilocksVariable,
 ) GoldilocksVariable {
 	res := api.Mul(in1.Limb, in2.Limb)
-	return Reduce(api, rangeChecker, res)
+	return Reduce(api, rangeChecker, res, 128)
 }
 
 func Sub(
