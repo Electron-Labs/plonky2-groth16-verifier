@@ -26,10 +26,13 @@ func Constant(api frontend.API, rangeChecker frontend.Rangechecker, in []Goldilo
 }
 
 func Sbox(api frontend.API, rangeChecker frontend.Rangechecker, in GoldilocksVariable) GoldilocksVariable {
-	in2 := Mul(api, rangeChecker, in, in)
-	in4 := Mul(api, rangeChecker, in2, in2)
-	in3 := Mul(api, rangeChecker, in, in2)
-	return Mul(api, rangeChecker, in3, in4)
+	in2NoReduce := api.Mul(in.Limb, in.Limb)
+	in3NoReduce := api.Mul(in.Limb, in2NoReduce)
+	in3 := Reduce(api, rangeChecker, in3NoReduce, 192)
+	in4NoReduce := api.Mul(in.Limb, in3.Limb)
+	in7NoReduce := api.Mul(in3.Limb, in4NoReduce)
+	in7 := Reduce(api, rangeChecker, in7NoReduce, 192)
+	return in7
 }
 
 func Mds(api frontend.API, rangeChecker frontend.Rangechecker, in []GoldilocksVariable) []GoldilocksVariable {
@@ -54,14 +57,20 @@ func PartialFirstConstantLayer(api frontend.API, rangeChecker frontend.Rangechec
 
 func MdsPartialLayerInit(api frontend.API, rangeChecker frontend.Rangechecker, in []GoldilocksVariable) []GoldilocksVariable {
 	out := make([]GoldilocksVariable, len(in))
+	outNoReduce := make([]frontend.Variable, len(in))
 	out[0] = in[0]
+	outNoReduce[0] = in[0].Limb
 	for i := 1; i < SPONGE_WIDTH; i++ {
 		out[i] = GoldilocksVariable{Limb: 0}
+		outNoReduce[i] = 0
 	}
 	for i := 1; i < SPONGE_WIDTH; i++ {
 		for j := 1; j < SPONGE_WIDTH; j++ {
-			out[j] = Add(api, rangeChecker, out[j], Mul(api, rangeChecker, in[i], GoldilocksVariable{Limb: FAST_PARTIAL_ROUND_INITIAL_MATRIX[i-1][j-1]}))
+			outNoReduce[j] = api.Add(outNoReduce[j], api.Mul(in[i].Limb, FAST_PARTIAL_ROUND_INITIAL_MATRIX[i-1][j-1]))
 		}
+	}
+	for i := 0; i < SPONGE_WIDTH; i++ {
+		out[i] = Reduce(api, rangeChecker, outNoReduce[i], 140)
 	}
 	return out
 }

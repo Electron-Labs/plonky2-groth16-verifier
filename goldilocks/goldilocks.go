@@ -50,12 +50,7 @@ func LessThan(api frontend.API, rangeChecker frontend.Rangechecker, i1 frontend.
 	}
 	rangeChecker.Check(i1, n)
 	rangeChecker.Check(i2, n)
-	var comp1 frontend.Variable
-	if n < 64 {
-		comp1 = api.Add(i1, 1<<n)
-	} else {
-		comp1 = api.Add(i1, "18446744073709551616")
-	}
+	comp1 := api.Add(i1, new(big.Int).Lsh(big.NewInt(1), uint(n)))
 	comp := api.Sub(comp1, i2)
 	comp_binary := api.ToBinary(comp, n+1)
 	return api.Sub(1, comp_binary[n])
@@ -70,7 +65,7 @@ func Reduce(api frontend.API, rangeChecker frontend.Rangechecker, x frontend.Var
 	if err != nil {
 		panic(err)
 	}
-	api.ToBinary(result[0], max(1, n-63))
+	rangeChecker.Check(result[0], max(1, n-64))
 	api.AssertIsEqual(api.Add(api.Mul(result[0], MODULUS), result[1]), x)
 
 	RangeCheck(api, rangeChecker, result[1])
