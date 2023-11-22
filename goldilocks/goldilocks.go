@@ -45,11 +45,6 @@ func getGoldilocks(i frontend.Variable) GoldilocksVariable {
 }
 
 func LessThan(api frontend.API, rangeChecker frontend.Rangechecker, i1 frontend.Variable, i2 frontend.Variable, n int) frontend.Variable {
-	if n > 64 {
-		panic("LessThan doesnt work for n>64 for now")
-	}
-	rangeChecker.Check(i1, n)
-	rangeChecker.Check(i2, n)
 	comp1 := api.Add(i1, new(big.Int).Lsh(big.NewInt(1), uint(n)))
 	comp := api.Sub(comp1, i2)
 	comp_binary := api.ToBinary(comp, n+1)
@@ -66,6 +61,7 @@ func Reduce(api frontend.API, rangeChecker frontend.Rangechecker, x frontend.Var
 		panic(err)
 	}
 	rangeChecker.Check(result[0], max(1, n-64))
+	rangeChecker.Check(result[1], 64)
 	api.AssertIsEqual(api.Add(api.Mul(result[0], MODULUS), result[1]), x)
 
 	RangeCheck(api, rangeChecker, result[1])
@@ -91,7 +87,7 @@ func Add(
 	in2 GoldilocksVariable,
 ) GoldilocksVariable {
 	res := api.Add(in1.Limb, in2.Limb)
-	lt := LessThan(api, rangeChecker, res, MODULUS, 64)
+	lt := LessThan(api, rangeChecker, res, MODULUS, 65)
 	res = api.Select(lt, res, api.Sub(res, MODULUS))
 	return GoldilocksVariable{Limb: res}
 }
@@ -113,7 +109,7 @@ func Sub(
 	in2 GoldilocksVariable,
 ) GoldilocksVariable {
 	res := api.Add(api.Sub(in1.Limb, in2.Limb), MODULUS)
-	lt := LessThan(api, rangeChecker, res, MODULUS, 64)
+	lt := LessThan(api, rangeChecker, res, MODULUS, 65)
 	res = api.Select(lt, res, api.Sub(res, MODULUS))
 	return GoldilocksVariable{Limb: res}
 }

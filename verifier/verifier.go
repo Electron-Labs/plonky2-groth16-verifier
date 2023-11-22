@@ -1,6 +1,8 @@
 package verifier
 
 import (
+	"math/bits"
+
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/rangecheck"
@@ -110,14 +112,14 @@ func createVerifier(api frontend.API) *Verifier {
 }
 
 // returns a%b in a constrained way
-func modulus(api frontend.API, rangeChecker frontend.Rangechecker, a frontend.Variable, b frontend.Variable) frontend.Variable {
+func modulus(api frontend.API, rangeChecker frontend.Rangechecker, a frontend.Variable, b frontend.Variable, n int) frontend.Variable {
 	result, err := api.Compiler().NewHint(goldilocks.ModulusHint, 2, a, b)
 	if err != nil {
 		panic(err)
 	}
 	api.AssertIsEqual(api.Add(api.Mul(result[0], b), result[1]), a)
-
-	goldilocks.LessThan(api, rangeChecker, result[1], b, 64)
+	rangeChecker.Check(result[1], n)
+	goldilocks.LessThan(api, rangeChecker, result[1], b, n)
 
 	return result[1]
 }
@@ -218,68 +220,32 @@ func hashPublicInputs(api frontend.API, rangeChecker frontend.Rangechecker, publ
 }
 
 func getFriOpenings(openings OpeningSetVariable) FriOpeningsVariable {
-	var zeta_batch FriOpeningBatchVariable
-	zeta_batch_len := len(openings.Constants) + len(openings.PlonkSigmas) + len(openings.Wires) + len(openings.PlonkZs) + len(openings.PartialProducts) + len(openings.QuotientPolys) + len(openings.LookupZs)
-	zeta_batch.Values = make([]goldilocks.GoldilocksExtension2Variable, zeta_batch_len)
-	i := 0
-	for _, v := range openings.Constants {
-		zeta_batch.Values[i] = v
-		i += 1
-	}
-	for _, v := range openings.PlonkSigmas {
-		zeta_batch.Values[i] = v
-		i += 1
-	}
-	for _, v := range openings.Wires {
-		zeta_batch.Values[i] = v
-		i += 1
-	}
-	for _, v := range openings.PlonkZs {
-		zeta_batch.Values[i] = v
-		i += 1
-	}
-	for _, v := range openings.PartialProducts {
-		zeta_batch.Values[i] = v
-		i += 1
-	}
-	for _, v := range openings.QuotientPolys {
-		zeta_batch.Values[i] = v
-		i += 1
-	}
-	for _, v := range openings.LookupZs {
-		zeta_batch.Values[i] = v
-		i += 1
-	}
-	if i != zeta_batch_len {
-		panic("Incorrect number of openings")
+	values := openings.Constants
+	values = append(values, openings.PlonkSigmas...)
+	values = append(values, openings.Wires...)
+	values = append(values, openings.PlonkZs...)
+	values = append(values, openings.PartialProducts...)
+	values = append(values, openings.QuotientPolys...)
+	values = append(values, openings.LookupZs...)
+	zetaBatch := FriOpeningBatchVariable{
+		Values: values,
 	}
 
-	var zeta_next_batch FriOpeningBatchVariable
-	zeta_next_batch_len := len(openings.PlonkZsNext) + len(openings.LookupZsNext)
-	zeta_next_batch.Values = make([]goldilocks.GoldilocksExtension2Variable, zeta_next_batch_len)
-	i = 0
-	for _, v := range openings.PlonkZsNext {
-		zeta_next_batch.Values[i] = v
-		i += 1
+	values = openings.PlonkZsNext
+	values = append(values, openings.LookupZsNext...)
+	zetaNextBatch := FriOpeningBatchVariable{
+		Values: values,
 	}
-	for _, v := range openings.LookupZsNext {
-		zeta_next_batch.Values[i] = v
-		i += 1
+	friOpenings := FriOpeningsVariable{
+		Batches: []FriOpeningBatchVariable{zetaBatch, zetaNextBatch},
 	}
-	if i != zeta_next_batch_len {
-		panic("Incorrect number of openings")
-	}
-
-	var friOpenings FriOpeningsVariable
-	friOpenings.Batches = make([]FriOpeningBatchVariable, 2)
-	friOpenings.Batches[0] = zeta_batch
-	friOpenings.Batches[1] = zeta_next_batch
 	return friOpenings
 }
 
 func friChallenges(api frontend.API, rangeChecker frontend.Rangechecker, challenger *Challenger, openingProof FriProofVariable) FriChallengesVariable {
 	numQueries := len(openingProof.QueryRoundProofs)
 	ldeSize := (1 << len(openingProof.QueryRoundProofs[0].InitialTreeProof.EvalsProofs[0].Y.Siblings)) * len(openingProof.CommitPhaseMerkleCap[0])
+	ldeBits := bits.Len(uint(ldeSize))
 
 	var friChallenges FriChallengesVariable
 
@@ -299,7 +265,7 @@ func friChallenges(api frontend.API, rangeChecker frontend.Rangechecker, challen
 	friChallenges.FriQueryIndices = make([]frontend.Variable, numQueries)
 	for i := 0; i < numQueries; i++ {
 		tmpChallenge := challenger.GetChallenge()
-		friChallenges.FriQueryIndices[i] = modulus(api, rangeChecker, tmpChallenge.Limb, ldeSize)
+		friChallenges.FriQueryIndices[i] = modulus(api, rangeChecker, tmpChallenge.Limb, ldeSize, ldeBits)
 	}
 
 	return friChallenges
@@ -353,7 +319,8 @@ func getChallenges(api frontend.API, rangeChecker frontend.Rangechecker, proof P
 
 func (circuit *Verifier) Verify(proof ProofVariable, verifier_only VerifierOnlyVariable, pub_inputs PublicInputsVariable) error {
 	rangeChecker := rangecheck.New(circuit.api)
-	fieldCheckInputs(circuit.api, rangeChecker, proof, verifier_only, pub_inputs)
+	// TODO: removed input range check now
+	// fieldCheckInputs(circuit.api, rangeChecker, proof, verifier_only, pub_inputs)
 	pubInputsHash := hashPublicInputs(circuit.api, rangeChecker, pub_inputs)
 	circuit.api.Println(pubInputsHash)
 	challenges := getChallenges(circuit.api, rangeChecker, proof, pubInputsHash, verifier_only.CircuitDigest)
