@@ -76,6 +76,10 @@ var proveCmd = &cobra.Command{
 		vk.ReadFrom(vkFile)
 
 		g16p, err := groth16.Prove(r1cs, pk, witness)
+		if err != nil {
+			fmt.Println("proving error ", err)
+			os.Exit(1)
+		}
 		g16p_file, err := os.Create("./data/g16p")
 		if err != nil {
 			fmt.Println("g16p file open wrong: ", err)
