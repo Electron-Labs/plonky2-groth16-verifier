@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
-	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier"
+	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/r1cs"
@@ -16,9 +16,9 @@ import (
 )
 
 type Vars struct {
-	LocalConstants   [][]uint64       `json:"local_constants"`
-	LocalWires       [][]uint64       `json:"local_wires"`
-	PublicInputsHash verifier.HashOut `json:"public_inputs_hash"`
+	LocalConstants   [][]uint64    `json:"local_constants"`
+	LocalWires       [][]uint64    `json:"local_wires"`
+	PublicInputsHash types.HashOut `json:"public_inputs_hash"`
 }
 
 type TestData struct {

@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
-	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/plonk/gates"
+	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/r1cs"
@@ -17,30 +17,30 @@ import (
 )
 
 type Vars struct {
-	LocalConstants   [][]uint64       `json:"local_constants"`
-	LocalWires       [][]uint64       `json:"local_wires"`
-	PublicInputsHash verifier.HashOut `json:"public_inputs_hash"`
+	LocalConstants   [][]uint64    `json:"local_constants"`
+	LocalWires       [][]uint64    `json:"local_wires"`
+	PublicInputsHash types.HashOut `json:"public_inputs_hash"`
 }
 
 type TestData struct {
-	Common_data      verifier.CommonData `json:"common_data"`
-	X                []uint64            `json:"x"`
-	Vars             Vars                `json:"vars"`
-	Local_zs         [][]uint64          `json:"local_zs"`
-	Next_zs          [][]uint64          `json:"next_zs"`
-	Local_lookup_zs  [][]uint64          `json:"local_lookup_zs"`
-	Next_lookup_zs   [][]uint64          `json:"next_lookup_zs"`
-	Partial_products [][]uint64          `json:"partial_products"`
-	S_sigmas         [][]uint64          `json:"s_sigmas"`
-	Betas            []uint64            `json:"betas"`
-	Gammas           []uint64            `json:"gammas"`
-	Alphas           []uint64            `json:"alphas"`
-	Deltas           []uint64            `json:"deltas"`
-	VPZ              [][]uint64          `json:"vanishing_poly_zetas"`
+	Common_data      types.CommonData `json:"common_data"`
+	X                []uint64         `json:"x"`
+	Vars             Vars             `json:"vars"`
+	Local_zs         [][]uint64       `json:"local_zs"`
+	Next_zs          [][]uint64       `json:"next_zs"`
+	Local_lookup_zs  [][]uint64       `json:"local_lookup_zs"`
+	Next_lookup_zs   [][]uint64       `json:"next_lookup_zs"`
+	Partial_products [][]uint64       `json:"partial_products"`
+	S_sigmas         [][]uint64       `json:"s_sigmas"`
+	Betas            []uint64         `json:"betas"`
+	Gammas           []uint64         `json:"gammas"`
+	Alphas           []uint64         `json:"alphas"`
+	Deltas           []uint64         `json:"deltas"`
+	VPZ              [][]uint64       `json:"vanishing_poly_zetas"`
 }
 
 type TestVPCircuit struct {
-	Common_data      verifier.CommonData
+	Common_data      types.CommonData
 	X                goldilocks.GoldilocksExtension2Variable
 	Vars             gates.EvaluationVars
 	Local_zs         []goldilocks.GoldilocksExtension2Variable

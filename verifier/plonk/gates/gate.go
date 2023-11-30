@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
-	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier"
+	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
 	"github.com/consensys/gnark/frontend"
 )
 
@@ -23,7 +23,7 @@ func EvalFiltered(
 	vars EvaluationVars,
 	row int,
 	selector_index int,
-	group_range verifier.Range,
+	group_range types.Range,
 	num_selectors int,
 	num_lookup_selectors int,
 ) []goldilocks.GoldilocksExtension2Variable {
@@ -94,7 +94,7 @@ func compute_filter(
 	api frontend.API,
 	rangeChecker frontend.Rangechecker,
 	row int,
-	group_range verifier.Range,
+	group_range types.Range,
 	s goldilocks.GoldilocksExtension2Variable,
 	many_selector bool,
 ) goldilocks.GoldilocksExtension2Variable {
@@ -118,7 +118,7 @@ func compute_filter(
 func EvaluateGateConstraints(
 	api frontend.API,
 	rangeChecker frontend.Rangechecker,
-	common_data verifier.CommonData,
+	common_data types.CommonData,
 	vars EvaluationVars,
 ) []goldilocks.GoldilocksExtension2Variable {
 	constraints := make([]goldilocks.GoldilocksExtension2Variable, common_data.NumGateConstraints)

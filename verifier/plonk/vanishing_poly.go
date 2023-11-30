@@ -2,15 +2,15 @@ package plonk
 
 import (
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
-	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/plonk/gates"
+	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
 	"github.com/consensys/gnark/frontend"
 )
 
 func EvalVanishingPoly(
 	api frontend.API,
 	rangeChecker frontend.Rangechecker,
-	common_data verifier.CommonData,
+	common_data types.CommonData,
 	x goldilocks.GoldilocksExtension2Variable,
 	x_pow_deg goldilocks.GoldilocksExtension2Variable,
 	x_minus_one goldilocks.GoldilocksExtension2Variable,

@@ -2,6 +2,7 @@ package verifier
 
 import (
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
+	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
 	"github.com/consensys/gnark/frontend"
 )
 
@@ -17,7 +18,7 @@ func NewHasher(api frontend.API, rangeChecker frontend.Rangechecker) SpongeHashe
 	}
 }
 
-func (hasher *SpongeHasher) HashNoPad(inputs []goldilocks.GoldilocksVariable) HashOutVariable {
+func (hasher *SpongeHasher) HashNoPad(inputs []goldilocks.GoldilocksVariable) types.HashOutVariable {
 	permutation := goldilocks.NewPermutation(hasher.api, hasher.rangeChecker)
 
 	numInputs := len(inputs)
@@ -29,10 +30,10 @@ func (hasher *SpongeHasher) HashNoPad(inputs []goldilocks.GoldilocksVariable) Ha
 		permutation.Permute()
 	}
 
-	var hash HashOutVariable
-	hash.HashOut = make([]goldilocks.GoldilocksVariable, HASH_OUT)
+	var hash types.HashOutVariable
+	hash.HashOut = make([]goldilocks.GoldilocksVariable, types.HASH_OUT)
 	for i, v := range permutation.Squeeze() {
-		if i >= HASH_OUT {
+		if i >= types.HASH_OUT {
 			break
 		}
 		hash.HashOut[i] = v
