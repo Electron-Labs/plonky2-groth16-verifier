@@ -56,6 +56,10 @@ type SelectorsInfo struct {
 	Groups          []Range  `json:"groups"`
 }
 
+func (s *SelectorsInfo) NumSelectors() int {
+	return len(s.Groups)
+}
+
 type LookupTable struct {
 	a uint16
 	b uint16

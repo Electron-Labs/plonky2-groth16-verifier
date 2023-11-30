@@ -114,3 +114,34 @@ func compute_filter(
 	}
 	return res
 }
+
+func EvaluateGateConstraints(
+	api frontend.API,
+	rangeChecker frontend.Rangechecker,
+	common_data verifier.CommonData,
+	vars EvaluationVars,
+) []goldilocks.GoldilocksExtension2Variable {
+	constraints := make([]goldilocks.GoldilocksExtension2Variable, common_data.NumGateConstraints)
+	for i := range constraints {
+		constraints[i] = goldilocks.GetGoldilocksExtensionVariable([]uint64{0, 0})
+	}
+	for i, gate_s := range common_data.Gates {
+		selector_index := common_data.SelectorsInfo.SelectorIndices[i]
+		gate := ParseGate(gate_s)
+		gate_constraints := EvalFiltered(
+			api,
+			rangeChecker,
+			gate,
+			vars,
+			i,
+			int(selector_index),
+			common_data.SelectorsInfo.Groups[selector_index],
+			common_data.SelectorsInfo.NumSelectors(),
+			int(common_data.NumLookupSelectors),
+		)
+		for j, c := range gate_constraints {
+			constraints[j] = goldilocks.AddExt(api, rangeChecker, constraints[j], c)
+		}
+	}
+	return constraints
+}
