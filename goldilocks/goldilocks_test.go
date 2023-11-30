@@ -300,3 +300,132 @@ func TestInverse(t *testing.T) {
 		assert.CheckCircuit(&circuit, test.WithValidAssignment(&witness), test.WithCurves(ecc.BN254))
 	}
 }
+
+type TestExtArithmeticCircuit struct {
+	In1    GoldilocksExtension2Variable
+	In2    GoldilocksExtension2Variable
+	AddRes GoldilocksExtension2Variable
+	MulRes GoldilocksExtension2Variable
+	SubRes GoldilocksExtension2Variable
+}
+
+func (circuit *TestExtArithmeticCircuit) Define(api frontend.API) error {
+	rangeChecker := rangecheck.New(api)
+	add := AddExt(api, rangeChecker, circuit.In1, circuit.In2)
+	mul := MulExt(api, rangeChecker, circuit.In1, circuit.In2)
+	sub := SubExt(api, rangeChecker, circuit.In1, circuit.In2)
+	api.AssertIsEqual(add.A.Limb, circuit.AddRes.A.Limb)
+	api.AssertIsEqual(add.B.Limb, circuit.AddRes.B.Limb)
+	api.AssertIsEqual(mul.A.Limb, circuit.MulRes.A.Limb)
+	api.AssertIsEqual(mul.B.Limb, circuit.MulRes.B.Limb)
+	api.AssertIsEqual(sub.A.Limb, circuit.SubRes.A.Limb)
+	api.AssertIsEqual(sub.B.Limb, circuit.SubRes.B.Limb)
+	return nil
+}
+
+func TestExtArithmetic(t *testing.T) {
+	assert := test.NewAssert(t)
+
+	type testData struct {
+		in1    [2]big.Int
+		in2    [2]big.Int
+		addRes [2]big.Int
+		mulRes [2]big.Int
+		subRes [2]big.Int
+	}
+
+	getTest := func(in1 [2]string, in2 [2]string) testData {
+		var ret testData
+		ret.in1[0].SetString(in1[0], 10)
+		ret.in1[1].SetString(in1[1], 10)
+		ret.in2[0].SetString(in2[0], 10)
+		ret.in2[1].SetString(in2[1], 10)
+		ret.addRes[0].Mod(ret.addRes[0].Add(&ret.in1[0], &ret.in2[0]), MODULUS)
+		ret.addRes[1].Mod(ret.addRes[1].Add(&ret.in1[1], &ret.in2[1]), MODULUS)
+		ret.subRes[0].Mod(ret.subRes[0].Sub(&ret.in1[0], &ret.in2[0]), MODULUS)
+		ret.subRes[1].Mod(ret.subRes[1].Sub(&ret.in1[1], &ret.in2[1]), MODULUS)
+
+		c0_0 := new(big.Int).Mul(&ret.in1[0], &ret.in2[0])
+		c0_1 := new(big.Int).Mul(&ret.in1[1], &ret.in2[1])
+		c0_1.Mul(c0_1, big.NewInt(7))
+		c0 := new(big.Int).Add(c0_0, c0_1)
+
+		c1_0 := new(big.Int).Mul(&ret.in1[0], &ret.in2[1])
+		c1_1 := new(big.Int).Mul(&ret.in1[1], &ret.in2[0])
+		c1 := new(big.Int).Add(c1_0, c1_1)
+
+		ret.mulRes[0].Mod(c0, MODULUS)
+		ret.mulRes[1].Mod(c1, MODULUS)
+
+		return ret
+	}
+
+	tests := []testData{
+		getTest([2]string{"0", "0"}, [2]string{"0", "0"}),
+		getTest([2]string{"1", "1"}, [2]string{"1", "1"}),
+		getTest([2]string{"18446744069414584320", "18446744069414584319"}, [2]string{"1", "1844674406941458432"}),
+		getTest([2]string{"18446744069414584320", "0"}, [2]string{"0", "18446744069414584320"}),
+	}
+
+	var circuit TestExtArithmeticCircuit
+	r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &circuit)
+	if err != nil {
+		t.Fatal("Error in compiling circuit: ", err)
+	}
+
+	for _, t_i := range tests {
+		t.Log(t_i)
+		var witness TestExtArithmeticCircuit
+		witness.In1 = GetGoldilocksExtensionVariable([]uint64{t_i.in1[0].Uint64(), t_i.in1[1].Uint64()})
+		witness.In2 = GetGoldilocksExtensionVariable([]uint64{t_i.in2[0].Uint64(), t_i.in2[1].Uint64()})
+		witness.AddRes = GetGoldilocksExtensionVariable([]uint64{t_i.addRes[0].Uint64(), t_i.addRes[1].Uint64()})
+		witness.MulRes = GetGoldilocksExtensionVariable([]uint64{t_i.mulRes[0].Uint64(), t_i.mulRes[1].Uint64()})
+		witness.SubRes = GetGoldilocksExtensionVariable([]uint64{t_i.subRes[0].Uint64(), t_i.subRes[1].Uint64()})
+		w, err := frontend.NewWitness(&witness, ecc.BN254.ScalarField())
+		if err != nil {
+			t.Fatal("Error in witness: ", err, "\n test: ", t_i)
+		}
+		err = r1cs.IsSolved(w)
+		if err != nil {
+			t.Fatal("Circuit not solved: ", err, "\n test: ", t_i)
+		}
+		assert.CheckCircuit(&circuit, test.WithValidAssignment(&witness), test.WithCurves(ecc.BN254))
+	}
+}
+
+type TestInvExtCircuit struct {
+	In  GoldilocksExtension2Variable
+	Inv GoldilocksExtension2Variable
+}
+
+func (circuit *TestInvExtCircuit) Define(api frontend.API) error {
+	rangeChecker := rangecheck.New(api)
+	inv := InvExt(api, rangeChecker, circuit.In)
+	api.AssertIsEqual(circuit.Inv.A.Limb, inv.A.Limb)
+	api.AssertIsEqual(circuit.Inv.B.Limb, inv.B.Limb)
+	return nil
+}
+
+func TestInvExt(t *testing.T) {
+	assert := test.NewAssert(t)
+
+	var circuit TestInvExtCircuit
+	r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &circuit)
+	if err != nil {
+		t.Fatal("Error in compiling circuit: ", err)
+	}
+	t.Log(r1cs.GetNbConstraints())
+
+	var assignment TestInvExtCircuit
+	assignment.In = GetGoldilocksExtensionVariable([]uint64{2, 1})
+	assignment.Inv = GetGoldilocksExtensionVariable([]uint64{12297829379609722880, 12297829379609722881})
+	w, err := frontend.NewWitness(&assignment, ecc.BN254.ScalarField())
+	if err != nil {
+		t.Fatal("Error in witness: ", err)
+	}
+	err = r1cs.IsSolved(w)
+	if err != nil {
+		t.Fatal("Circuit not solved: ", err)
+	}
+	assert.CheckCircuit(&circuit, test.WithValidAssignment(&assignment), test.WithCurves(ecc.BN254))
+}
