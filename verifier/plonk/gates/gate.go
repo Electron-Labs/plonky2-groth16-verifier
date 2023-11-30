@@ -46,13 +46,17 @@ func EvalFiltered(
 
 func ParseGate(gate_id string) Gate {
 	if strings.Contains(gate_id, "ArithmeticGate") {
-		panic("todo")
+
+		return NewArithmeticGate(gate_id)
+
 	} else if strings.Contains(gate_id, "ArithmeticExtensionGate") {
 		panic("todo")
 	} else if strings.Contains(gate_id, "BaseSumGate") {
 		panic("todo")
 	} else if strings.Contains(gate_id, "ConstantGate") {
-		panic("todo")
+
+		return NewConstantGate(gate_id)
+
 	} else if strings.Contains(gate_id, "CosetInterpolationGate") {
 		panic("todo")
 	} else if strings.Contains(gate_id, "ExponentiationGate") {
@@ -66,11 +70,15 @@ func ParseGate(gate_id string) Gate {
 	} else if strings.Contains(gate_id, "NoopGate") {
 		panic("todo")
 	} else if strings.Contains(gate_id, "PoseidonGate") {
-		panic("todo")
+
+		return NewPoseidonGate(gate_id)
+
 	} else if strings.Contains(gate_id, "PoseidonMdsGate") {
 		panic("todo")
 	} else if strings.Contains(gate_id, "PublicInputGate") {
-		panic("todo")
+
+		return NewPublicInputGate(gate_id)
+
 	} else if strings.Contains(gate_id, "RandomAccessGate") {
 		panic("todo")
 	} else if strings.Contains(gate_id, "ReducingGate") {
