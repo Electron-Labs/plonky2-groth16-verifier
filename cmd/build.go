@@ -25,10 +25,15 @@ var buildCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("build called:\n common data: %s\n ", common_data_path)
 
-		circuitConstants := getCircuitConstants(common_data_path)
+		common_data, err := read_common_data_from_file(common_data_path)
+		if err != nil {
+			fmt.Println("Failed to read common data file:", err)
+			os.Exit(1)
+		}
+		circuitConstraints := getCircuitConstants(common_data)
 
 		var myCircuit verifier.Runner
-		myCircuit.Make(circuitConstants)
+		myCircuit.Make(circuitConstraints, common_data)
 
 		r1cs, _ := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &myCircuit)
 		pk, vk, _ := groth16.Setup(r1cs)

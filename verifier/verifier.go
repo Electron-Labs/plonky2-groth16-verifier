@@ -4,6 +4,8 @@ import (
 	"math/bits"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
+	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/plonk"
+	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/plonk/gates"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/rangecheck"
@@ -36,12 +38,14 @@ type CircuitConstants struct {
 }
 
 type Verifier struct {
-	api frontend.API
+	api        frontend.API
+	commonData types.CommonData
 }
 
-func createVerifier(api frontend.API) *Verifier {
+func createVerifier(api frontend.API, commonData types.CommonData) *Verifier {
 	return &Verifier{
-		api: api,
+		api:        api,
+		commonData: commonData,
 	}
 }
 
@@ -251,6 +255,70 @@ func getChallenges(api frontend.API, rangeChecker frontend.Rangechecker, proof t
 	return challenges
 }
 
+func verifyWithChallenges(
+	api frontend.API,
+	rangeChecker frontend.Rangechecker,
+	proof types.ProofVariable,
+	public_inputs_hash types.HashOutVariable,
+	challenges types.ProofChallengesVariable,
+	verifier_data types.VerifierOnlyVariable,
+	common_data types.CommonData,
+) {
+	local_constants := proof.Openings.Constants
+	local_wires := proof.Openings.Wires
+	vars := gates.EvaluationVars{
+		LocalConstants:   local_constants,
+		LocalWires:       local_wires,
+		PublicInputsHash: public_inputs_hash,
+	}
+	local_zs := proof.Openings.PlonkZs
+	next_zs := proof.Openings.PlonkZsNext
+	local_lookup_zs := proof.Openings.LookupZs
+	next_lookup_zs := proof.Openings.LookupZsNext
+	s_sigmas := proof.Openings.PlonkSigmas
+	partial_products := proof.Openings.PartialProducts
+
+	zeta := challenges.PlonkZeta
+	zeta_pow_deg := goldilocks.ExpPow2Ext(api, rangeChecker, zeta, int(common_data.FriParams.DegreeBits))
+	z_h_zeta := zeta_pow_deg
+	z_h_zeta.A.Limb = api.Sub(z_h_zeta.A.Limb, 1)
+
+	vanishing_polys_zeta := plonk.EvalVanishingPoly(
+		api,
+		rangeChecker,
+		common_data,
+		zeta,
+		zeta_pow_deg,
+		z_h_zeta,
+		vars,
+		local_zs,
+		next_zs,
+		local_lookup_zs,
+		next_lookup_zs,
+		partial_products,
+		s_sigmas,
+		challenges.PlonkBetas,
+		challenges.PlonkGammas,
+		challenges.PlonkAlphas,
+		challenges.PlonkDeltas,
+	)
+
+	quotient_polys_zeta := proof.Openings.QuotientPolys
+
+	chunk_size := int(common_data.QuotientDegreeFactor)
+	num_chunks := (len(quotient_polys_zeta)-1)/chunk_size + 1
+	for i := 0; i < num_chunks; i++ {
+		chunk := quotient_polys_zeta[i*chunk_size : min((i+1)*chunk_size, len(quotient_polys_zeta))]
+		r_w_p := plonk.ReduceWithPowers(api, rangeChecker, chunk, zeta_pow_deg)
+		rhs := goldilocks.MulExt(api, rangeChecker, z_h_zeta, r_w_p)
+		lhs := vanishing_polys_zeta[i]
+		api.AssertIsEqual(lhs.A.Limb, rhs.A.Limb)
+		api.AssertIsEqual(lhs.B.Limb, rhs.B.Limb)
+	}
+
+	// [TODO] implement FRI verification
+}
+
 func (circuit *Verifier) Verify(proof types.ProofVariable, verifier_only types.VerifierOnlyVariable, pub_inputs types.PublicInputsVariable) error {
 	rangeChecker := rangecheck.New(circuit.api)
 	// TODO: removed input range check now
@@ -259,5 +327,6 @@ func (circuit *Verifier) Verify(proof types.ProofVariable, verifier_only types.V
 	circuit.api.Println(pubInputsHash)
 	challenges := getChallenges(circuit.api, rangeChecker, proof, pubInputsHash, verifier_only.CircuitDigest)
 	circuit.api.Println(challenges)
+	verifyWithChallenges(circuit.api, rangeChecker, proof, pubInputsHash, challenges, verifier_only, circuit.commonData)
 	return nil
 }

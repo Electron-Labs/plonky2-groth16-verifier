@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math"
-	"os"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
@@ -69,13 +68,7 @@ func read_public_inputs_from_file(path string) (types.PublicInputs, error) {
 	return pub_inputs, nil
 }
 
-func getCircuitConstants(common_data_path string) verifier.CircuitConstants {
-	var common_data types.CommonData
-	jsonCommonData, _ := ioutil.ReadFile(common_data_path)
-	if err := json.Unmarshal(jsonCommonData, &common_data); err != nil {
-		fmt.Println("Error unmarshaling JSON3:", err)
-		os.Exit(1)
-	}
+func getCircuitConstants(common_data types.CommonData) verifier.CircuitConstants {
 
 	s1 := common_data.NumConstants + common_data.Config.NumRoutedWires
 

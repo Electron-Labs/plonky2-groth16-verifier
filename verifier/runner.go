@@ -10,18 +10,19 @@ type Runner struct {
 	Proof        types.ProofVariable
 	VerifierOnly types.VerifierOnlyVariable
 	PubInputs    types.PublicInputsVariable `gnark:",public"`
+	CommonData   types.CommonData
 }
 
 func (circuit *Runner) Define(api frontend.API) error {
 	// verifier := verifier.createVerifier(api, circuit.common_data)
-	verifier := createVerifier(api)
+	verifier := createVerifier(api, circuit.CommonData)
 	verifier.Verify(circuit.Proof, circuit.VerifierOnly, circuit.PubInputs)
 	return nil
 }
 
 // TODO: very ugly function; structure it better
 // TODO: requires intensive testing with various config/proofs combinations
-func (circuit *Runner) Make(constants CircuitConstants) {
+func (circuit *Runner) Make(constants CircuitConstants, commonData types.CommonData) {
 	circuit.Proof.WiresCap = make(types.MerkleCapVariable, constants.CAP_LEN)
 	for i := range circuit.Proof.WiresCap {
 		circuit.Proof.WiresCap[i].Make()
