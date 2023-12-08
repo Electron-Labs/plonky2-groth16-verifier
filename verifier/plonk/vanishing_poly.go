@@ -13,7 +13,6 @@ func EvalVanishingPoly(
 	common_data types.CommonData,
 	x goldilocks.GoldilocksExtension2Variable,
 	x_pow_deg goldilocks.GoldilocksExtension2Variable,
-	x_minus_one goldilocks.GoldilocksExtension2Variable,
 	vars gates.EvaluationVars,
 	local_zs []goldilocks.GoldilocksExtension2Variable,
 	next_zs []goldilocks.GoldilocksExtension2Variable,
@@ -40,7 +39,7 @@ func EvalVanishingPoly(
 
 	var vanishing_partial_products_terms []goldilocks.GoldilocksExtension2Variable
 
-	l_0_x := EvalL0(api, rangeChecker, int(common_data.FriParams.DegreeBits), x_pow_deg, x_minus_one)
+	l_0_x := EvalL0(api, rangeChecker, int(common_data.FriParams.DegreeBits), x, x_pow_deg)
 
 	for i := 0; i < int(common_data.Config.NumChallenges); i++ {
 		z_x := local_zs[i]

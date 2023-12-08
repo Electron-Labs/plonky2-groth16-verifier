@@ -289,7 +289,6 @@ func verifyWithChallenges(
 		common_data,
 		zeta,
 		zeta_pow_deg,
-		z_h_zeta,
 		vars,
 		local_zs,
 		next_zs,

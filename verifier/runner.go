@@ -23,6 +23,7 @@ func (circuit *Runner) Define(api frontend.API) error {
 // TODO: very ugly function; structure it better
 // TODO: requires intensive testing with various config/proofs combinations
 func (circuit *Runner) Make(constants CircuitConstants, commonData types.CommonData) {
+	circuit.CommonData = commonData
 	circuit.Proof.WiresCap = make(types.MerkleCapVariable, constants.CAP_LEN)
 	for i := range circuit.Proof.WiresCap {
 		circuit.Proof.WiresCap[i].Make()

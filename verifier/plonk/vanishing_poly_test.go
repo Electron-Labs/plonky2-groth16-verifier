@@ -59,14 +59,12 @@ type TestVPCircuit struct {
 func (circuit *TestVPCircuit) Define(api frontend.API) error {
 	rangeChecker := rangecheck.New(api)
 	x_pow_deg := goldilocks.ExpPow2Ext(api, rangeChecker, circuit.X, int(circuit.Common_data.FriParams.DegreeBits))
-	x_minus_one := goldilocks.SubExt(api, rangeChecker, circuit.X, goldilocks.GetGoldilocksExtensionVariable([]uint64{1, 0}))
 	vpz := EvalVanishingPoly(
 		api,
 		rangeChecker,
 		circuit.Common_data,
 		circuit.X,
 		x_pow_deg,
-		x_minus_one,
 		circuit.Vars,
 		circuit.Local_zs,
 		circuit.Next_zs,
