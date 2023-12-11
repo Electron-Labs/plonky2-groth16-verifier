@@ -6,9 +6,19 @@ import (
 )
 
 const HASH_OUT = 4
+const SALT_SIZE = 4
 
 type HashOutVariable struct {
 	HashOut []goldilocks.GoldilocksVariable
+}
+
+func SelectHashOut(api frontend.API, b frontend.Variable, in1 HashOutVariable, in2 HashOutVariable) HashOutVariable {
+	var out HashOutVariable
+	out.HashOut = make([]goldilocks.GoldilocksVariable, HASH_OUT)
+	for i := 0; i < HASH_OUT; i++ {
+		out.HashOut[i].Limb = api.Select(b, in1.HashOut[i].Limb, in2.HashOut[i].Limb)
+	}
+	return out
 }
 
 func (hashOut *HashOutVariable) ApplyRangeCheck(rangeCheck func(frontend.API, frontend.Rangechecker, frontend.Variable), api frontend.API, rangeChecker frontend.Rangechecker) {
@@ -23,6 +33,17 @@ func (hashOut *HashOutVariable) Make() {
 
 type MerkleCapVariable []HashOutVariable
 
+func SelectHashOutRecursive(api frontend.API, b []frontend.Variable, in []HashOutVariable) []HashOutVariable {
+	if len(in) == 2 {
+		return []HashOutVariable{SelectHashOut(api, b[0], in[1], in[0])}
+	}
+	first_bit_select := make([]HashOutVariable, len(in)/2)
+	for i := 0; i < len(first_bit_select); i++ {
+		first_bit_select[i] = SelectHashOut(api, b[0], in[2*i+1], in[2*i])
+	}
+	return SelectHashOutRecursive(api, b[1:], first_bit_select)
+}
+
 type MerkleProofVariable struct {
 	Siblings []HashOutVariable
 }
@@ -33,6 +54,12 @@ type EvalProofVariable struct {
 }
 type FriInitialTreeProofVariable struct {
 	EvalsProofs []EvalProofVariable
+}
+
+func (proof *FriInitialTreeProofVariable) UnsaltedEval(oracle_index int, poly_index int, salted bool) goldilocks.GoldilocksVariable {
+	evals := proof.EvalsProofs[oracle_index].X
+	evals = evals[:len(evals)-SaltSize(salted)]
+	return evals[poly_index]
 }
 
 type FriQueryStepVariable struct {
@@ -105,4 +132,50 @@ type ProofChallengesVariable struct {
 	PlonkDeltas   []goldilocks.GoldilocksVariable
 	PlonkZeta     goldilocks.GoldilocksExtension2Variable
 	FriChallenges FriChallengesVariable
+}
+
+type FriOracleInfo struct {
+	NumPolys int
+	Blinding bool
+}
+
+type FriPolynomialInfo struct {
+	OracleIndex     int
+	PolynomialIndex int
+}
+
+func FromRange(oracle_index int, polynomial_indices Range) []FriPolynomialInfo {
+	var vec_poly_info []FriPolynomialInfo
+	for i := polynomial_indices.Start; i < polynomial_indices.End; i++ {
+		vec_poly_info = append(vec_poly_info, FriPolynomialInfo{OracleIndex: oracle_index, PolynomialIndex: int(i)})
+	}
+	return vec_poly_info
+}
+
+type FriBatchInfo struct {
+	Point       goldilocks.GoldilocksExtension2Variable
+	Polynomials []FriPolynomialInfo
+}
+
+type FriInstanceInfo struct {
+	Oracles []FriOracleInfo
+	Batches []FriBatchInfo
+}
+
+type PlonkOracle struct {
+	Index    int
+	Blinding bool
+}
+
+var CONSTANT_SIGMAS = PlonkOracle{Index: 0, Blinding: false}
+var WIRES = PlonkOracle{Index: 1, Blinding: true}
+var ZS_PARTIAL_PRODUCTS = PlonkOracle{Index: 2, Blinding: true}
+var QUOTIENT = PlonkOracle{Index: 3, Blinding: true}
+
+func SaltSize(salted bool) int {
+	if salted {
+		return SALT_SIZE
+	} else {
+		return 0
+	}
 }

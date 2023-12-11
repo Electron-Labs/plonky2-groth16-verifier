@@ -8,6 +8,11 @@ import (
 	"github.com/consensys/gnark/std/math/emulated"
 )
 
+const TWO_ADICITY = 32
+const MULTIPLICATIVE_GROUP_GENERATOR = 7
+
+var POWER_OF_TWO_GENERATOR = new(big.Int).SetUint64(1753635133440165772)
+
 type GoldilocksVariable struct {
 	Limb frontend.Variable
 }
@@ -144,4 +149,51 @@ func InverseHint(_ *big.Int, inputs []*big.Int, outputs []*big.Int) error {
 
 	output.ModInverse(output, MODULUS)
 	return nil
+}
+
+func ExpPow2(
+	api frontend.API,
+	rangeChecker frontend.Rangechecker,
+	in GoldilocksVariable,
+	degree_bits int,
+) GoldilocksVariable {
+	out := in
+	for i := 0; i < degree_bits; i++ {
+		out = Mul(api, rangeChecker, out, out)
+	}
+	return out
+}
+
+func Exp(
+	api frontend.API,
+	rangeChecker frontend.Rangechecker,
+	in GoldilocksVariable,
+	degree_in_bits []frontend.Variable,
+) GoldilocksVariable {
+	current := in
+	product := GetGoldilocksVariable(1)
+	for _, bit := range degree_in_bits {
+		productXcurrent := Mul(api, rangeChecker, product, current)
+		product.Limb = api.Select(bit, productXcurrent.Limb, product.Limb)
+		current = Mul(api, rangeChecker, current, current)
+	}
+	return product
+}
+
+func ExpPow2BigInt(base *big.Int, power_log int) *big.Int {
+	res := base
+	for i := 0; i < power_log; i++ {
+		res = new(big.Int).Mod(new(big.Int).Mul(res, res), MODULUS)
+	}
+	return res
+}
+
+func PrimitveRootOfUnity(n_log int) GoldilocksVariable {
+	if n_log > TWO_ADICITY {
+		panic("n_log more than TWO_ADICITY_EXT2")
+	}
+	base_pow := ExpPow2BigInt(POWER_OF_TWO_GENERATOR, TWO_ADICITY-n_log)
+	var root GoldilocksVariable
+	root.Limb = base_pow
+	return root
 }

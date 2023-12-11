@@ -4,6 +4,8 @@ import (
 	"math/bits"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
+	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/fri"
+	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/hash"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/plonk"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/plonk/gates"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
@@ -153,31 +155,8 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 }
 
 func hashPublicInputs(api frontend.API, rangeChecker frontend.Rangechecker, publicInputs types.PublicInputsVariable) types.HashOutVariable {
-	hasher := NewHasher(api, rangeChecker)
+	hasher := hash.NewHasher(api, rangeChecker)
 	return hasher.HashNoPad(publicInputs)
-}
-
-func getFriOpenings(openings types.OpeningSetVariable) types.FriOpeningsVariable {
-	values := openings.Constants
-	values = append(values, openings.PlonkSigmas...)
-	values = append(values, openings.Wires...)
-	values = append(values, openings.PlonkZs...)
-	values = append(values, openings.PartialProducts...)
-	values = append(values, openings.QuotientPolys...)
-	values = append(values, openings.LookupZs...)
-	zetaBatch := types.FriOpeningBatchVariable{
-		Values: values,
-	}
-
-	values = openings.PlonkZsNext
-	values = append(values, openings.LookupZsNext...)
-	zetaNextBatch := types.FriOpeningBatchVariable{
-		Values: values,
-	}
-	friOpenings := types.FriOpeningsVariable{
-		Batches: []types.FriOpeningBatchVariable{zetaBatch, zetaNextBatch},
-	}
-	return friOpenings
 }
 
 func friChallenges(api frontend.API, rangeChecker frontend.Rangechecker, challenger *Challenger, openingProof types.FriProofVariable) types.FriChallengesVariable {
@@ -248,7 +227,7 @@ func getChallenges(api frontend.API, rangeChecker frontend.Rangechecker, proof t
 	challenger.ObserveCap(proof.QuotientPolysCap)
 	challenges.PlonkZeta = challenger.GetExtensionChallenge()
 
-	challenger.ObserveOpenings(getFriOpenings(proof.Openings))
+	challenger.ObserveOpenings(fri.GetFriOpenings(proof.Openings))
 
 	friChallenges := friChallenges(api, rangeChecker, &challenger, proof.OpeningProof)
 	challenges.FriChallenges = friChallenges
@@ -315,7 +294,23 @@ func verifyWithChallenges(
 		api.AssertIsEqual(lhs.B.Limb, rhs.B.Limb)
 	}
 
-	// [TODO] implement FRI verification
+	merkle_caps := []types.MerkleCapVariable{
+		verifier_data.ConstantSigmasCap,
+		proof.WiresCap,
+		proof.PlonkZsPartialProductsCap,
+		proof.QuotientPolysCap,
+	}
+
+	fri.VerifyFriProof(
+		api,
+		rangeChecker,
+		fri.GetFriInstance(api, rangeChecker, common_data, zeta),
+		fri.GetFriOpenings(proof.Openings),
+		challenges.FriChallenges,
+		merkle_caps,
+		proof.OpeningProof,
+		common_data.FriParams,
+	)
 }
 
 func (circuit *Verifier) Verify(proof types.ProofVariable, verifier_only types.VerifierOnlyVariable, pub_inputs types.PublicInputsVariable) error {
