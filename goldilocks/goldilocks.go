@@ -80,6 +80,15 @@ func ModulusHint(_ *big.Int, inputs []*big.Int, results []*big.Int) error {
 	return nil
 }
 
+func Neg(
+	api frontend.API,
+	in GoldilocksVariable,
+) GoldilocksVariable {
+	return GoldilocksVariable{
+		Limb: api.Sub(MODULUS, in.Limb),
+	}
+}
+
 func Add(
 	api frontend.API,
 	rangeChecker frontend.Rangechecker,

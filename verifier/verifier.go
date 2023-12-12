@@ -4,78 +4,14 @@ import (
 	"math/bits"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
+	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/plonk"
+	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/plonk/gates"
+	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/rangecheck"
 )
 
 const NUM_COINS_LOOKUP = 4
-
-type FriReductionStrategy struct {
-	// TODO: supports only constant Arity Bits right now, expand further
-	ConstantArityBits []uint64 `json:"ConstantArityBits"`
-}
-
-type FriConfig struct {
-	RateBits          uint64               `json:"rate_bits"`
-	CapHeight         uint64               `json:"cap_height"`
-	ProofOfWorkBits   uint32               `json:"proof_of_work_bits"`
-	ReductionStrategy FriReductionStrategy `json:"reduction_strategy"` // [TODO remove later if goes unused]
-	NumQueryRounds    uint64               `json:"num_query_rounds"`
-}
-
-type FriParams struct {
-	Config             FriConfig `json:"config"`
-	Hiding             bool      `json:"hiding"`
-	DegreeBits         uint64    `json:"degree_bits"`
-	ReductionArityBits []uint64  `json:"reduction_arity_bits"`
-}
-
-type CircuitConfig struct {
-	NumWires                uint64    `json:"num_wires"`
-	NumRoutedWires          uint64    `json:"num_routed_wires"`
-	NumConstants            uint64    `json:"num_constants"`
-	UseBaseArithmeticGate   bool      `json:"use_base_arithmetic_gate"`
-	SecurityBits            uint64    `json:"security_bits"`
-	NumChallenges           uint64    `json:"num_challenges"`
-	ZeroKnowledge           bool      `json:"zero_knowledge"`
-	MaxQuotientDegreeFactor uint64    `json:"max_quotient_degree_factor"`
-	FriConfig               FriConfig `json:"fri_config"`
-}
-
-type GateRef struct {
-	Gate string
-}
-
-type Range struct {
-	Start uint64 `json:"start"`
-	End   uint64 `json:"end"`
-}
-
-type SelectorsInfo struct {
-	SelectorIndices []uint64 `json:"selector_indices"`
-	Groups          []Range  `json:"groups"`
-}
-
-type LookupTable struct {
-	a uint16
-	b uint16
-}
-
-type CommonData struct {
-	Config               CircuitConfig `json:"config"`
-	FriParams            FriParams     `json:"fri_params"`
-	Gates                []string      `json:"gates"`
-	SelectorsInfo        SelectorsInfo `json:"selectors_info"`
-	QuotientDegreeFactor uint64        `json:"quotient_degree_factor"`
-	NumGateConstraints   uint64        `json:"num_gate_constraints"`
-	NumConstants         uint64        `json:"num_constants"`
-	NumPublicInputs      uint64        `json:"num_public_inputs"`
-	KIs                  []uint64      `json:"k_is"`
-	NumPartialProducts   uint64        `json:"num_partial_products"`
-	NumLookupPolys       uint64        `json:"num_lookup_polys"`
-	NumLookupSelectors   uint64        `json:"num_lookup_selectors"`
-	Luts                 []LookupTable `json:"luts"`
-}
 
 type CircuitConstants struct {
 	CAP_LEN                     uint64
@@ -102,12 +38,14 @@ type CircuitConstants struct {
 }
 
 type Verifier struct {
-	api frontend.API
+	api        frontend.API
+	commonData types.CommonData
 }
 
-func createVerifier(api frontend.API) *Verifier {
+func createVerifier(api frontend.API, commonData types.CommonData) *Verifier {
 	return &Verifier{
-		api: api,
+		api:        api,
+		commonData: commonData,
 	}
 }
 
@@ -125,7 +63,7 @@ func modulus(api frontend.API, rangeChecker frontend.Rangechecker, a frontend.Va
 }
 
 // Range check everything is in goldilocks field
-func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proof ProofVariable, verifier_only VerifierOnlyVariable, pub_inputs PublicInputsVariable) error {
+func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proof types.ProofVariable, verifier_only types.VerifierOnlyVariable, pub_inputs types.PublicInputsVariable) error {
 	// 1. Inputs should all be within goldilocks field
 	for _, x := range pub_inputs {
 		goldilocks.RangeCheck(api, rangeChecker, x.Limb)
@@ -133,13 +71,13 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 
 	// 2. All proof elements should be within goldilocks field
 	for _, x := range proof.WiresCap {
-		x.applyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
+		x.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
 	}
 	for _, x := range proof.PlonkZsPartialProductsCap {
-		x.applyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
+		x.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
 	}
 	for _, x := range proof.QuotientPolysCap {
-		x.applyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
+		x.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
 	}
 
 	for _, x := range proof.Openings.Constants {
@@ -172,7 +110,7 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 
 	for _, x := range proof.OpeningProof.CommitPhaseMerkleCap {
 		for _, m := range x {
-			m.applyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
+			m.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
 		}
 	}
 
@@ -183,7 +121,7 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 				goldilocks.RangeCheck(api, rangeChecker, x.Limb)
 			}
 			for _, m := range e.Y.Siblings {
-				m.applyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
+				m.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
 			}
 		}
 
@@ -194,7 +132,7 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 				e.RangeCheck(api, rangeChecker)
 			}
 			for _, m := range s.MerkleProof.Siblings {
-				m.applyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
+				m.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
 			}
 		}
 	}
@@ -207,19 +145,19 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 
 	// 3. All verifier data elements should be in field too
 	for _, x := range verifier_only.ConstantSigmasCap {
-		x.applyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
+		x.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
 	}
-	verifier_only.CircuitDigest.applyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
+	verifier_only.CircuitDigest.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
 
 	return nil
 }
 
-func hashPublicInputs(api frontend.API, rangeChecker frontend.Rangechecker, publicInputs PublicInputsVariable) HashOutVariable {
+func hashPublicInputs(api frontend.API, rangeChecker frontend.Rangechecker, publicInputs types.PublicInputsVariable) types.HashOutVariable {
 	hasher := NewHasher(api, rangeChecker)
 	return hasher.HashNoPad(publicInputs)
 }
 
-func getFriOpenings(openings OpeningSetVariable) FriOpeningsVariable {
+func getFriOpenings(openings types.OpeningSetVariable) types.FriOpeningsVariable {
 	values := openings.Constants
 	values = append(values, openings.PlonkSigmas...)
 	values = append(values, openings.Wires...)
@@ -227,27 +165,27 @@ func getFriOpenings(openings OpeningSetVariable) FriOpeningsVariable {
 	values = append(values, openings.PartialProducts...)
 	values = append(values, openings.QuotientPolys...)
 	values = append(values, openings.LookupZs...)
-	zetaBatch := FriOpeningBatchVariable{
+	zetaBatch := types.FriOpeningBatchVariable{
 		Values: values,
 	}
 
 	values = openings.PlonkZsNext
 	values = append(values, openings.LookupZsNext...)
-	zetaNextBatch := FriOpeningBatchVariable{
+	zetaNextBatch := types.FriOpeningBatchVariable{
 		Values: values,
 	}
-	friOpenings := FriOpeningsVariable{
-		Batches: []FriOpeningBatchVariable{zetaBatch, zetaNextBatch},
+	friOpenings := types.FriOpeningsVariable{
+		Batches: []types.FriOpeningBatchVariable{zetaBatch, zetaNextBatch},
 	}
 	return friOpenings
 }
 
-func friChallenges(api frontend.API, rangeChecker frontend.Rangechecker, challenger *Challenger, openingProof FriProofVariable) FriChallengesVariable {
+func friChallenges(api frontend.API, rangeChecker frontend.Rangechecker, challenger *Challenger, openingProof types.FriProofVariable) types.FriChallengesVariable {
 	numQueries := len(openingProof.QueryRoundProofs)
 	ldeSize := (1 << len(openingProof.QueryRoundProofs[0].InitialTreeProof.EvalsProofs[0].Y.Siblings)) * len(openingProof.CommitPhaseMerkleCap[0])
 	ldeBits := bits.Len(uint(ldeSize))
 
-	var friChallenges FriChallengesVariable
+	var friChallenges types.FriChallengesVariable
 
 	friChallenges.FriAlpha = challenger.GetExtensionChallenge()
 	friChallenges.FriBetas = make([]goldilocks.GoldilocksExtension2Variable, len(openingProof.CommitPhaseMerkleCap))
@@ -271,8 +209,8 @@ func friChallenges(api frontend.API, rangeChecker frontend.Rangechecker, challen
 	return friChallenges
 }
 
-func getChallenges(api frontend.API, rangeChecker frontend.Rangechecker, proof ProofVariable, publicInputHash HashOutVariable, circuitDigest HashOutVariable) ProofChallengesVariable {
-	var challenges ProofChallengesVariable
+func getChallenges(api frontend.API, rangeChecker frontend.Rangechecker, proof types.ProofVariable, publicInputHash types.HashOutVariable, circuitDigest types.HashOutVariable) types.ProofChallengesVariable {
+	var challenges types.ProofChallengesVariable
 	challenger := NewChallenger(api, rangeChecker)
 	hasLookup := len(proof.Openings.LookupZs) != 0
 
@@ -317,7 +255,70 @@ func getChallenges(api frontend.API, rangeChecker frontend.Rangechecker, proof P
 	return challenges
 }
 
-func (circuit *Verifier) Verify(proof ProofVariable, verifier_only VerifierOnlyVariable, pub_inputs PublicInputsVariable) error {
+func verifyWithChallenges(
+	api frontend.API,
+	rangeChecker frontend.Rangechecker,
+	proof types.ProofVariable,
+	public_inputs_hash types.HashOutVariable,
+	challenges types.ProofChallengesVariable,
+	verifier_data types.VerifierOnlyVariable,
+	common_data types.CommonData,
+) {
+	local_constants := proof.Openings.Constants
+	local_wires := proof.Openings.Wires
+	vars := gates.EvaluationVars{
+		LocalConstants:   local_constants,
+		LocalWires:       local_wires,
+		PublicInputsHash: public_inputs_hash,
+	}
+	local_zs := proof.Openings.PlonkZs
+	next_zs := proof.Openings.PlonkZsNext
+	local_lookup_zs := proof.Openings.LookupZs
+	next_lookup_zs := proof.Openings.LookupZsNext
+	s_sigmas := proof.Openings.PlonkSigmas
+	partial_products := proof.Openings.PartialProducts
+
+	zeta := challenges.PlonkZeta
+	zeta_pow_deg := goldilocks.ExpPow2Ext(api, rangeChecker, zeta, int(common_data.FriParams.DegreeBits))
+	z_h_zeta := zeta_pow_deg
+	z_h_zeta.A.Limb = api.Sub(z_h_zeta.A.Limb, 1)
+
+	vanishing_polys_zeta := plonk.EvalVanishingPoly(
+		api,
+		rangeChecker,
+		common_data,
+		zeta,
+		zeta_pow_deg,
+		vars,
+		local_zs,
+		next_zs,
+		local_lookup_zs,
+		next_lookup_zs,
+		partial_products,
+		s_sigmas,
+		challenges.PlonkBetas,
+		challenges.PlonkGammas,
+		challenges.PlonkAlphas,
+		challenges.PlonkDeltas,
+	)
+
+	quotient_polys_zeta := proof.Openings.QuotientPolys
+
+	chunk_size := int(common_data.QuotientDegreeFactor)
+	num_chunks := (len(quotient_polys_zeta)-1)/chunk_size + 1
+	for i := 0; i < num_chunks; i++ {
+		chunk := quotient_polys_zeta[i*chunk_size : min((i+1)*chunk_size, len(quotient_polys_zeta))]
+		r_w_p := plonk.ReduceWithPowers(api, rangeChecker, chunk, zeta_pow_deg)
+		rhs := goldilocks.MulExt(api, rangeChecker, z_h_zeta, r_w_p)
+		lhs := vanishing_polys_zeta[i]
+		api.AssertIsEqual(lhs.A.Limb, rhs.A.Limb)
+		api.AssertIsEqual(lhs.B.Limb, rhs.B.Limb)
+	}
+
+	// [TODO] implement FRI verification
+}
+
+func (circuit *Verifier) Verify(proof types.ProofVariable, verifier_only types.VerifierOnlyVariable, pub_inputs types.PublicInputsVariable) error {
 	rangeChecker := rangecheck.New(circuit.api)
 	// TODO: removed input range check now
 	// fieldCheckInputs(circuit.api, rangeChecker, proof, verifier_only, pub_inputs)
@@ -325,5 +326,6 @@ func (circuit *Verifier) Verify(proof ProofVariable, verifier_only VerifierOnlyV
 	circuit.api.Println(pubInputsHash)
 	challenges := getChallenges(circuit.api, rangeChecker, proof, pubInputsHash, verifier_only.CircuitDigest)
 	circuit.api.Println(challenges)
+	verifyWithChallenges(circuit.api, rangeChecker, proof, pubInputsHash, challenges, verifier_only, circuit.commonData)
 	return nil
 }

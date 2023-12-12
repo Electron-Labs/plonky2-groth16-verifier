@@ -1,4 +1,4 @@
-package verifier
+package types
 
 import (
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
@@ -11,13 +11,13 @@ type HashOutVariable struct {
 	HashOut []goldilocks.GoldilocksVariable
 }
 
-func (hashOut *HashOutVariable) applyRangeCheck(rangeCheck func(frontend.API, frontend.Rangechecker, frontend.Variable), api frontend.API, rangeChecker frontend.Rangechecker) {
+func (hashOut *HashOutVariable) ApplyRangeCheck(rangeCheck func(frontend.API, frontend.Rangechecker, frontend.Variable), api frontend.API, rangeChecker frontend.Rangechecker) {
 	for _, h := range hashOut.HashOut {
 		rangeCheck(api, rangeChecker, h.Limb)
 	}
 }
 
-func (hashOut *HashOutVariable) make() {
+func (hashOut *HashOutVariable) Make() {
 	hashOut.HashOut = make([]goldilocks.GoldilocksVariable, HASH_OUT)
 }
 

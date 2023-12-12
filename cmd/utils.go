@@ -5,76 +5,70 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math"
-	"os"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier"
+	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
 )
 
-func read_common_data_from_file(path string) (verifier.CommonData, error) {
+func read_common_data_from_file(path string) (types.CommonData, error) {
 	jsonCommonData, err := ioutil.ReadFile(path)
 	if err != nil {
 		fmt.Println("Error reading JSON file:", err)
-		return verifier.CommonData{}, err
+		return types.CommonData{}, err
 	}
 
-	var commonData verifier.CommonData
+	var commonData types.CommonData
 
 	if err := json.Unmarshal(jsonCommonData, &commonData); err != nil {
 		fmt.Println("Error unmarshaling JSON:", err)
-		return verifier.CommonData{}, err
+		return types.CommonData{}, err
 	}
 	return commonData, nil
 }
 
-func read_verifier_data_from_file(path string) (verifier.VerifierOnly, error) {
+func read_verifier_data_from_file(path string) (types.VerifierOnly, error) {
 	jsonVerifierData, err := ioutil.ReadFile(path)
 	if err != nil {
 		fmt.Println("Error reading verifier only json file:", err)
-		return verifier.VerifierOnly{}, err
+		return types.VerifierOnly{}, err
 	}
-	var verifier_only verifier.VerifierOnly
+	var verifier_only types.VerifierOnly
 	if err := json.Unmarshal(jsonVerifierData, &verifier_only); err != nil {
 		fmt.Println("Error unmarshaling JSON:", err)
-		return verifier.VerifierOnly{}, err
+		return types.VerifierOnly{}, err
 	}
 	return verifier_only, nil
 }
 
-func read_proof_from_file(path string) (verifier.Proof, error) {
+func read_proof_from_file(path string) (types.Proof, error) {
 	jsonProofData, err := ioutil.ReadFile(path)
 	if err != nil {
 		fmt.Println("Error reading verifier only json file:", err)
-		return verifier.Proof{}, err
+		return types.Proof{}, err
 	}
-	var proof verifier.Proof
+	var proof types.Proof
 	if err := json.Unmarshal(jsonProofData, &proof); err != nil {
 		fmt.Println("Error unmarshaling JSON:", err)
-		return verifier.Proof{}, err
+		return types.Proof{}, err
 	}
 	return proof, nil
 }
 
-func read_public_inputs_from_file(path string) (verifier.PublicInputs, error) {
+func read_public_inputs_from_file(path string) (types.PublicInputs, error) {
 	jsonPublicInputsData, err := ioutil.ReadFile(path)
 	if err != nil {
 		fmt.Println("Error reading verifier only json file:", err)
-		return verifier.PublicInputs{}, err
+		return types.PublicInputs{}, err
 	}
-	var pub_inputs verifier.PublicInputs
+	var pub_inputs types.PublicInputs
 	if err := json.Unmarshal(jsonPublicInputsData, &pub_inputs); err != nil {
 		fmt.Println("Error unmarshaling JSON:", err)
-		return verifier.PublicInputs{}, err
+		return types.PublicInputs{}, err
 	}
 	return pub_inputs, nil
 }
 
-func getCircuitConstants(common_data_path string) verifier.CircuitConstants {
-	var common_data verifier.CommonData
-	jsonCommonData, _ := ioutil.ReadFile(common_data_path)
-	if err := json.Unmarshal(jsonCommonData, &common_data); err != nil {
-		fmt.Println("Error unmarshaling JSON3:", err)
-		os.Exit(1)
-	}
+func getCircuitConstants(common_data types.CommonData) verifier.CircuitConstants {
 
 	s1 := common_data.NumConstants + common_data.Config.NumRoutedWires
 

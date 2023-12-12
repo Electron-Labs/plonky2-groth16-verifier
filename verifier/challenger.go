@@ -2,6 +2,7 @@ package verifier
 
 import (
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
+	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
 	"github.com/consensys/gnark/frontend"
 )
 
@@ -51,19 +52,19 @@ func (challenger *Challenger) ObserveExtensionElements(elms []goldilocks.Goldilo
 	}
 }
 
-func (challenger *Challenger) ObserveHash(hash HashOutVariable) {
+func (challenger *Challenger) ObserveHash(hash types.HashOutVariable) {
 	for _, elm := range hash.HashOut {
 		challenger.ObserveElement(elm)
 	}
 }
 
-func (challenger *Challenger) ObserveCap(cap MerkleCapVariable) {
+func (challenger *Challenger) ObserveCap(cap types.MerkleCapVariable) {
 	for _, hash := range cap {
 		challenger.ObserveHash(hash)
 	}
 }
 
-func (challenger *Challenger) ObserveOpenings(openings FriOpeningsVariable) {
+func (challenger *Challenger) ObserveOpenings(openings types.FriOpeningsVariable) {
 	for _, v := range openings.Batches {
 		challenger.ObserveExtensionElements(v.Values)
 	}

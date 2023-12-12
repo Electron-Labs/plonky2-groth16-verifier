@@ -12,9 +12,13 @@ func TestGetCircuitConstants(t *testing.T) {
 	proofPath := "../data/goldilocks/proof_with_pis.json"
 	proof, err := read_proof_from_file(proofPath)
 	if err != nil {
-		t.Fatal("Error in reading proof file: ", commonDataPath)
+		t.Fatal("Error in reading proof file: ", proofPath)
 	}
-	circuitConstans := getCircuitConstants(commonDataPath)
+	commonData, err := read_common_data_from_file(commonDataPath)
+	if err != nil {
+		t.Fatal("Error in reading common data file: ", commonDataPath)
+	}
+	circuitConstans := getCircuitConstants(commonData)
 
 	assert.Equal(t, len(proof.WiresCap), int(circuitConstans.CAP_LEN))
 	assert.Equal(t, len(proof.PlonkZsPartialProductsCap), int(circuitConstans.CAP_LEN))
