@@ -58,6 +58,7 @@ func modulus(api frontend.API, rangeChecker frontend.Rangechecker, a frontend.Va
 		panic(err)
 	}
 	api.AssertIsEqual(api.Add(api.Mul(result[0], b), result[1]), a)
+	rangeChecker.Check(result[0], n)
 	rangeChecker.Check(result[1], n)
 	goldilocks.LessThan(api, rangeChecker, result[1], b, n)
 

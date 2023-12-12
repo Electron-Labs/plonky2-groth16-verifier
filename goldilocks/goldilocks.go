@@ -1,6 +1,7 @@
 package goldilocks
 
 import (
+	"math"
 	"math/big"
 
 	"github.com/consensys/gnark/constraint/solver"
@@ -43,6 +44,7 @@ var MODULUS *big.Int = emulated.Goldilocks{}.Modulus()
 func init() {
 	solver.RegisterHint(ModulusHint)
 	solver.RegisterHint(InverseHint)
+	solver.RegisterHint(GoldilocksRangeCheckHint)
 }
 
 func getGoldilocks(i frontend.Variable) GoldilocksVariable {
@@ -56,8 +58,36 @@ func LessThan(api frontend.API, rangeChecker frontend.Rangechecker, i1 frontend.
 	return api.Sub(1, comp_binary[n])
 }
 
+func GoldilocksRangeCheckHint(p *big.Int, inputs []*big.Int, outputs []*big.Int) error {
+	if len(inputs) != 1 {
+		panic("Incorrect number of inputs to hint")
+	}
+	outputs[0] = new(big.Int).And(inputs[0], big.NewInt(math.MaxUint32))
+	outputs[1] = new(big.Int).Rsh(inputs[0], 32)
+	return nil
+}
+
 func RangeCheck(api frontend.API, rangeChecker frontend.Rangechecker, x frontend.Variable) {
-	api.AssertIsEqual(LessThan(api, rangeChecker, x, (&big.Int{}).Add(big.NewInt(1), MODULUS), 64), 1)
+	outputs, err := api.Compiler().NewHint(GoldilocksRangeCheckHint, 2, x)
+	if err != nil {
+		panic("Error in Goldilocks range check hint")
+	}
+	low_bits := outputs[0]
+	high_bits := outputs[1]
+	rangeChecker.Check(low_bits, 32)
+	rangeChecker.Check(high_bits, 32)
+	api.AssertIsEqual(
+		x,
+		api.Add(api.Mul(high_bits, 1<<32), low_bits),
+	)
+	api.AssertIsEqual(
+		api.Select(
+			api.IsZero(api.Sub(math.MaxUint32, high_bits)),
+			api.IsZero(low_bits),
+			1,
+		),
+		1,
+	)
 }
 
 func Reduce(api frontend.API, rangeChecker frontend.Rangechecker, x frontend.Variable, n int) GoldilocksVariable {
@@ -101,9 +131,7 @@ func Add(
 	in2 GoldilocksVariable,
 ) GoldilocksVariable {
 	res := api.Add(in1.Limb, in2.Limb)
-	lt := LessThan(api, rangeChecker, res, MODULUS, 65)
-	res = api.Select(lt, res, api.Sub(res, MODULUS))
-	return GoldilocksVariable{Limb: res}
+	return Reduce(api, rangeChecker, res, 65)
 }
 
 func Mul(
@@ -123,9 +151,7 @@ func Sub(
 	in2 GoldilocksVariable,
 ) GoldilocksVariable {
 	res := api.Add(api.Sub(in1.Limb, in2.Limb), MODULUS)
-	lt := LessThan(api, rangeChecker, res, MODULUS, 65)
-	res = api.Select(lt, res, api.Sub(res, MODULUS))
-	return GoldilocksVariable{Limb: res}
+	return Reduce(api, rangeChecker, res, 65)
 }
 
 func Inv(
