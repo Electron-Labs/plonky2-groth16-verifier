@@ -9,6 +9,9 @@ import (
 
 const W = 7
 const DTH_ROOT = 18446744069414584320
+const TWO_ADICITY_EXT2 = TWO_ADICITY + 1
+
+var EXT_POWER_OF_TWO_GENERATOR = [2]*big.Int{new(big.Int).SetUint64(0), new(big.Int).SetUint64(15659105665374529263)}
 
 type GoldilocksExtension2Variable struct {
 	A GoldilocksVariable
@@ -166,6 +169,23 @@ func ExpPow2Ext(
 	return out
 }
 
+func ExpExt(
+	api frontend.API,
+	rangeChecker frontend.Rangechecker,
+	in GoldilocksExtension2Variable,
+	degree_in_bits []frontend.Variable,
+) GoldilocksExtension2Variable {
+	current := in
+	product := GetGoldilocksExtensionVariable([]uint64{1, 0})
+	for _, bit := range degree_in_bits {
+		productXcurrent := MulExt(api, rangeChecker, product, current)
+		product.A.Limb = api.Select(bit, productXcurrent.A.Limb, product.A.Limb)
+		product.B.Limb = api.Select(bit, productXcurrent.B.Limb, product.B.Limb)
+		current = MulExt(api, rangeChecker, current, current)
+	}
+	return product
+}
+
 func DivExt(
 	api frontend.API,
 	rangeChecker frontend.Rangechecker,
@@ -212,4 +232,63 @@ func InvExtHint(_ *big.Int, inputs []*big.Int, outputs []*big.Int) error {
 	outputs[0] = new(big.Int).Mod(new(big.Int).Mul(forbenius_A, a_pow_r_inv), MODULUS)
 	outputs[1] = new(big.Int).Mod(new(big.Int).Mul(forbenius_B, a_pow_r_inv), MODULUS)
 	return nil
+}
+
+func SquareExtBigInt(base [2]*big.Int) [2]*big.Int {
+	a0 := base[0]
+	a1 := base[1]
+
+	a02 := new(big.Int).Mul(a0, a0)
+	a12 := new(big.Int).Mul(a1, a1)
+
+	c0 := new(big.Int).Mod(new(big.Int).Add(a02, new(big.Int).Mul(new(big.Int).SetUint64(W), a12)), MODULUS)
+	c1 := new(big.Int).Mod(new(big.Int).Mul(a0, new(big.Int).Add(a1, a1)), MODULUS)
+
+	return [2]*big.Int{c0, c1}
+}
+
+func ExpPow2ExtBigInt(base [2]*big.Int, power_log int) [2]*big.Int {
+	res := base
+	for i := 0; i < power_log; i++ {
+		res = SquareExtBigInt(res)
+	}
+	return res
+}
+
+func PrimitveRootOfUnityExt(n_log int) GoldilocksExtension2Variable {
+	if n_log > TWO_ADICITY_EXT2 {
+		panic("n_log more than TWO_ADICITY_EXT2")
+	}
+	base_pow := ExpPow2ExtBigInt(EXT_POWER_OF_TWO_GENERATOR, TWO_ADICITY_EXT2-n_log)
+	var root GoldilocksExtension2Variable
+	root.A.Limb = base_pow[0]
+	root.B.Limb = base_pow[1]
+	return root
+}
+
+func SelectGoldilocksExt2(api frontend.API, b frontend.Variable, in1 GoldilocksExtension2Variable, in2 GoldilocksExtension2Variable) GoldilocksExtension2Variable {
+	var out GoldilocksExtension2Variable
+	out.A.Limb = api.Select(b, in1.A.Limb, in2.A.Limb)
+	out.B.Limb = api.Select(b, in1.B.Limb, in2.B.Limb)
+	return out
+}
+
+func SelectGoldilocksExt2Recursive(api frontend.API, b []frontend.Variable, in []GoldilocksExtension2Variable) []GoldilocksExtension2Variable {
+	if len(in) == 2 {
+		return []GoldilocksExtension2Variable{SelectGoldilocksExt2(api, b[0], in[1], in[0])}
+	}
+	first_bit_select := make([]GoldilocksExtension2Variable, len(in)/2)
+	for i := 0; i < len(first_bit_select); i++ {
+		first_bit_select[i] = SelectGoldilocksExt2(api, b[0], in[2*i+1], in[2*i])
+	}
+	return SelectGoldilocksExt2Recursive(api, b[1:], first_bit_select)
+}
+
+func Flatten(in []GoldilocksExtension2Variable) []GoldilocksVariable {
+	out := make([]GoldilocksVariable, len(in)*2)
+	for i, v := range in {
+		out[2*i] = v.A
+		out[2*i+1] = v.B
+	}
+	return out
 }
