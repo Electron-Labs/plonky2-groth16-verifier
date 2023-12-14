@@ -50,14 +50,8 @@ func SelectHashOutRecursive(api frontend.API, b []frontend.Variable, in []HashOu
 		}
 		return SelectHashOutRecursive(api, b[2:], two_bits_select)
 	} else {
-		if len(in) == 2 {
-			return []HashOutVariable{SelectHashOut(api, b[0], in[1], in[0])}
-		}
-		first_bit_select := make([]HashOutVariable, len(in)/2)
-		for i := 0; i < len(first_bit_select); i++ {
-			first_bit_select[i] = SelectHashOut(api, b[0], in[2*i+1], in[2*i])
-		}
-		return SelectHashOutRecursive(api, b[1:], first_bit_select)
+		// <4 power means len(in) == 2 only
+		return []HashOutVariable{SelectHashOut(api, b[0], in[1], in[0])}
 	}
 }
 

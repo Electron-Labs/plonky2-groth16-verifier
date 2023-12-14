@@ -288,14 +288,8 @@ func SelectGoldilocksExt2Recursive(api frontend.API, b []frontend.Variable, in [
 		}
 		return SelectGoldilocksExt2Recursive(api, b[2:], two_bits_select)
 	} else {
-		if len(in) == 2 {
-			return []GoldilocksExtension2Variable{SelectGoldilocksExt2(api, b[0], in[1], in[0])}
-		}
-		first_bit_select := make([]GoldilocksExtension2Variable, len(in)/2)
-		for i := 0; i < len(first_bit_select); i++ {
-			first_bit_select[i] = SelectGoldilocksExt2(api, b[0], in[2*i+1], in[2*i])
-		}
-		return SelectGoldilocksExt2Recursive(api, b[1:], first_bit_select)
+		// <4 power means len(in) == 2 only
+		return []GoldilocksExtension2Variable{SelectGoldilocksExt2(api, b[0], in[1], in[0])}
 	}
 }
 
