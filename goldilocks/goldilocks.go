@@ -80,10 +80,12 @@ func RangeCheck(api frontend.API, rangeChecker frontend.Rangechecker, x frontend
 		x,
 		api.Add(api.Mul(high_bits, 1<<32), low_bits),
 	)
+	//[NOTE] Since some values in proof_with_pis returned from plonky2 are equal to 2**64 - 2**32 + 1
+	// we need to include a check for it too. we an reduce but it would blow up the constraints
 	api.AssertIsEqual(
 		api.Select(
 			api.IsZero(api.Sub(math.MaxUint32, high_bits)),
-			api.IsZero(low_bits),
+			api.Select(api.IsZero(low_bits), 1, api.IsZero(api.Sub(low_bits, 1))),
 			1,
 		),
 		1,

@@ -33,6 +33,8 @@ var buildCmd = &cobra.Command{
 		circuitConstraints := getCircuitConstants(common_data)
 
 		var myCircuit verifier.Runner
+
+		// Arrays are resized according to circuitConstants before compiling
 		myCircuit.Make(circuitConstraints, common_data)
 
 		r1cs, _ := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &myCircuit)
@@ -58,54 +60,6 @@ var buildCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		pk.WriteTo(f_pk)
-
-		// proof, _ := read_proof_from_file("./data/goldilocks/proof_with_pis.json")
-		// verifier_only, _ := read_verifier_data_from_file("./data/goldilocks/verifier_only.json")
-		// public_inputs, _ := read_public_inputs_from_file("./data/goldilocks/pub_inputs.json")
-
-		// proof_variable := proof.GetVariable()
-		// vd_variable := verifier_only.GetVariable()
-		// public_inputs_variable := public_inputs.GetVariable()
-
-		// assignment := &verifier.Runner{
-		// 	Proof:        proof_variable,
-		// 	VerifierOnly: vd_variable,
-		// 	PubInputs:    public_inputs_variable,
-		// }
-
-		// witness, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField())
-		// if err != nil {
-		// 	fmt.Println("witness wrong: ", err)
-		// 	os.Exit(1)
-		// }
-
-		// public, _ := witness.Public()
-
-		// g16p, err := groth16.Prove(r1cs, pk, witness)
-		// if err != nil {
-		// 	fmt.Println("prove wrong: ", err)
-		// 	os.Exit(1)
-		// }
-		// err = groth16.Verify(g16p, vk, public)
-		// if err != nil {
-		// 	fmt.Println("verify wrong: ", err)
-		// 	os.Exit(1)
-		// }
-
-		// load common data from json
-		// var myCircuit verifier.Verifier
-		// r1cs, _ := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &myCircuit)
-		// pk, vk, _ := groth16.Setup(r1cs)
-		// assignment := &verifier.Verifier{
-		// 	// X: uint(18446744069414584320),
-		// }
-		// witness, _ := frontend.NewWitness(assignment, ecc.BN254.ScalarField())
-		// public_witness, _ := witness.Public()
-
-		// proof, _ := groth16.Prove(r1cs, pk, witness)
-
-		// err := groth16.Verify(proof, vk, public_witness)
-		// fmt.Print(err == nil)
 	},
 }
 

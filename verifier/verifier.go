@@ -316,8 +316,7 @@ func verifyWithChallenges(
 
 func (circuit *Verifier) Verify(proof types.ProofVariable, verifier_only types.VerifierOnlyVariable, pub_inputs types.PublicInputsVariable) error {
 	rangeChecker := rangecheck.New(circuit.api)
-	// TODO: removed input range check now
-	// fieldCheckInputs(circuit.api, rangeChecker, proof, verifier_only, pub_inputs)
+	fieldCheckInputs(circuit.api, rangeChecker, proof, verifier_only, pub_inputs)
 	pubInputsHash := hashPublicInputs(circuit.api, rangeChecker, pub_inputs)
 	circuit.api.Println(pubInputsHash)
 	challenges := getChallenges(circuit.api, rangeChecker, proof, pubInputsHash, verifier_only.CircuitDigest)
