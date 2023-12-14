@@ -273,15 +273,24 @@ func SelectGoldilocksExt2(api frontend.API, b frontend.Variable, in1 GoldilocksE
 	return out
 }
 
+func SelectGoldilocksExt2Lookup2(api frontend.API, b0 frontend.Variable, b1 frontend.Variable, in0 GoldilocksExtension2Variable, in1 GoldilocksExtension2Variable, in2 GoldilocksExtension2Variable, in3 GoldilocksExtension2Variable) GoldilocksExtension2Variable {
+	var out GoldilocksExtension2Variable
+	out.A.Limb = api.Lookup2(b0, b1, in0.A.Limb, in1.A.Limb, in2.A.Limb, in3.A.Limb)
+	out.B.Limb = api.Lookup2(b0, b1, in0.B.Limb, in1.B.Limb, in2.B.Limb, in3.B.Limb)
+	return out
+}
+
 func SelectGoldilocksExt2Recursive(api frontend.API, b []frontend.Variable, in []GoldilocksExtension2Variable) []GoldilocksExtension2Variable {
-	if len(in) == 2 {
+	if len(in)%4 == 0 {
+		two_bits_select := make([]GoldilocksExtension2Variable, len(in)/4)
+		for i := 0; i < len(two_bits_select); i++ {
+			two_bits_select[i] = SelectGoldilocksExt2Lookup2(api, b[0], b[1], in[4*i], in[4*i+1], in[4*i+2], in[4*i+3])
+		}
+		return SelectGoldilocksExt2Recursive(api, b[2:], two_bits_select)
+	} else {
+		// <4 power means len(in) == 2 only
 		return []GoldilocksExtension2Variable{SelectGoldilocksExt2(api, b[0], in[1], in[0])}
 	}
-	first_bit_select := make([]GoldilocksExtension2Variable, len(in)/2)
-	for i := 0; i < len(first_bit_select); i++ {
-		first_bit_select[i] = SelectGoldilocksExt2(api, b[0], in[2*i+1], in[2*i])
-	}
-	return SelectGoldilocksExt2Recursive(api, b[1:], first_bit_select)
 }
 
 func Flatten(in []GoldilocksExtension2Variable) []GoldilocksVariable {
