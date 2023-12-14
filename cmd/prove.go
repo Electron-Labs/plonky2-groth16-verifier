@@ -90,11 +90,6 @@ var proveCmd = &cobra.Command{
 			fmt.Println("prove wrong: ", err)
 			os.Exit(1)
 		}
-		// err = groth16.Verify(g16p, vk, public)
-		// if err != nil {
-		// 	fmt.Println("verify wrong: ", err)
-		// 	os.Exit(1)
-		// }
 	},
 }
 
