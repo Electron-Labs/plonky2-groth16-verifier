@@ -2,7 +2,6 @@
 Wraps up plonky2 verifier as a groth16 circuit
 
 # TODOS
-- [ ] Apply range check on inputs to the circuit (current implementation leads to non satisfying constraints; commented out for now)
 - [ ] Implement constraints for rest of the plonky2 gates
     - [ ] ArithmeticExtensionGate
     - [ ] BaseSumGate
