@@ -21,6 +21,15 @@ func SelectHashOut(api frontend.API, b frontend.Variable, in1 HashOutVariable, i
 	return out
 }
 
+func SelectHashoutLookup2(api frontend.API, b0 frontend.Variable, b1 frontend.Variable, in0 HashOutVariable, in1 HashOutVariable, in2 HashOutVariable, in3 HashOutVariable) HashOutVariable {
+	var out HashOutVariable
+	out.HashOut = make([]goldilocks.GoldilocksVariable, HASH_OUT)
+	for i := 0; i < HASH_OUT; i++ {
+		out.HashOut[i].Limb = api.Lookup2(b0, b1, in0.HashOut[i].Limb, in1.HashOut[i].Limb, in2.HashOut[i].Limb, in3.HashOut[i].Limb)
+	}
+	return out
+}
+
 func (hashOut *HashOutVariable) ApplyRangeCheck(rangeCheck func(frontend.API, frontend.Rangechecker, frontend.Variable), api frontend.API, rangeChecker frontend.Rangechecker) {
 	for _, h := range hashOut.HashOut {
 		rangeCheck(api, rangeChecker, h.Limb)
@@ -34,14 +43,22 @@ func (hashOut *HashOutVariable) Make() {
 type MerkleCapVariable []HashOutVariable
 
 func SelectHashOutRecursive(api frontend.API, b []frontend.Variable, in []HashOutVariable) []HashOutVariable {
-	if len(in) == 2 {
-		return []HashOutVariable{SelectHashOut(api, b[0], in[1], in[0])}
+	if len(in)%4 == 0 {
+		two_bits_select := make([]HashOutVariable, len(in)/4)
+		for i := 0; i < len(two_bits_select); i++ {
+			two_bits_select[i] = SelectHashoutLookup2(api, b[0], b[1], in[4*i], in[4*i+1], in[4*i+2], in[4*i+3])
+		}
+		return SelectHashOutRecursive(api, b[2:], two_bits_select)
+	} else {
+		if len(in) == 2 {
+			return []HashOutVariable{SelectHashOut(api, b[0], in[1], in[0])}
+		}
+		first_bit_select := make([]HashOutVariable, len(in)/2)
+		for i := 0; i < len(first_bit_select); i++ {
+			first_bit_select[i] = SelectHashOut(api, b[0], in[2*i+1], in[2*i])
+		}
+		return SelectHashOutRecursive(api, b[1:], first_bit_select)
 	}
-	first_bit_select := make([]HashOutVariable, len(in)/2)
-	for i := 0; i < len(first_bit_select); i++ {
-		first_bit_select[i] = SelectHashOut(api, b[0], in[2*i+1], in[2*i])
-	}
-	return SelectHashOutRecursive(api, b[1:], first_bit_select)
 }
 
 type MerkleProofVariable struct {
