@@ -2,6 +2,7 @@ package hash
 
 import (
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
+	"github.com/Electron-Labs/plonky2-groth16-verifier/poseidon"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
 	"github.com/consensys/gnark/frontend"
 )
@@ -9,23 +10,25 @@ import (
 type SpongeHasher struct {
 	api          frontend.API
 	rangeChecker frontend.Rangechecker
+	poseidon     poseidon.Poseidon
 }
 
-func NewHasher(api frontend.API, rangeChecker frontend.Rangechecker) SpongeHasher {
+func NewHasher(api frontend.API, rangeChecker frontend.Rangechecker, poseidon poseidon.Poseidon) SpongeHasher {
 	return SpongeHasher{
 		api:          api,
 		rangeChecker: rangeChecker,
+		poseidon:     poseidon,
 	}
 }
 
 func (hasher *SpongeHasher) HashNoPad(inputs []goldilocks.GoldilocksVariable) types.HashOutVariable {
-	permutation := goldilocks.NewPermutation(hasher.api, hasher.rangeChecker)
+	permutation := poseidon.NewPermutation(hasher.api, hasher.rangeChecker, hasher.poseidon)
 
 	numInputs := len(inputs)
-	numChunks := (numInputs-1)/goldilocks.SPONGE_RATE + 1
+	numChunks := (numInputs-1)/poseidon.SPONGE_RATE + 1
 	for i := 0; i < numChunks; i++ {
-		start := i * goldilocks.SPONGE_RATE
-		end := min((i+1)*goldilocks.SPONGE_RATE, numInputs)
+		start := i * poseidon.SPONGE_RATE
+		end := min((i+1)*poseidon.SPONGE_RATE, numInputs)
 		permutation.Set(inputs[start:end])
 		permutation.Permute()
 	}

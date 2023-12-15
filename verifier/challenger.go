@@ -2,12 +2,13 @@ package verifier
 
 import (
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
+	"github.com/Electron-Labs/plonky2-groth16-verifier/poseidon"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
 	"github.com/consensys/gnark/frontend"
 )
 
 type Challenger struct {
-	spongeState  goldilocks.Permutation
+	spongeState  poseidon.Permutation
 	inputBuffer  []goldilocks.GoldilocksVariable
 	inputIdx     int
 	outputBuffer []goldilocks.GoldilocksVariable
@@ -15,9 +16,10 @@ type Challenger struct {
 }
 
 func NewChallenger(api frontend.API, rangeChecker frontend.Rangechecker) Challenger {
-	permutation := goldilocks.NewPermutation(api, rangeChecker)
-	inputBuffer := make([]goldilocks.GoldilocksVariable, goldilocks.SPONGE_RATE)
-	outputBuffer := make([]goldilocks.GoldilocksVariable, goldilocks.SPONGE_RATE)
+	poseidon_goldilocks := &poseidon.PoseidonGoldilocks{}
+	permutation := poseidon.NewPermutation(api, rangeChecker, poseidon_goldilocks)
+	inputBuffer := make([]goldilocks.GoldilocksVariable, poseidon.SPONGE_RATE)
+	outputBuffer := make([]goldilocks.GoldilocksVariable, poseidon.SPONGE_RATE)
 	return Challenger{
 		spongeState:  permutation,
 		inputBuffer:  inputBuffer,
@@ -30,7 +32,7 @@ func NewChallenger(api frontend.API, rangeChecker frontend.Rangechecker) Challen
 func (challenger *Challenger) ObserveElement(elm goldilocks.GoldilocksVariable) {
 	challenger.inputBuffer[challenger.inputIdx] = elm
 	challenger.inputIdx += 1
-	if challenger.inputIdx == goldilocks.SPONGE_RATE {
+	if challenger.inputIdx == poseidon.SPONGE_RATE {
 		challenger.duplex()
 	}
 }
@@ -102,5 +104,5 @@ func (challenger *Challenger) duplex() {
 		challenger.outputBuffer[i] = v
 	}
 	challenger.inputIdx = 0
-	challenger.outputIdx = goldilocks.SPONGE_RATE
+	challenger.outputIdx = poseidon.SPONGE_RATE
 }
