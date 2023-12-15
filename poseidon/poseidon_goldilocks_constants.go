@@ -1,4 +1,4 @@
-package goldilocks
+package poseidon
 
 import (
 	"fmt"

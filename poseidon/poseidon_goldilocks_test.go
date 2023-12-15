@@ -1,8 +1,9 @@
-package goldilocks
+package poseidon
 
 import (
 	"testing"
 
+	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/r1cs"
@@ -11,13 +12,14 @@ import (
 )
 
 type TestPermuteCircuit struct {
-	Inputs  []GoldilocksVariable
-	Outputs []GoldilocksVariable
+	Inputs  []goldilocks.GoldilocksVariable
+	Outputs []goldilocks.GoldilocksVariable
 }
 
 func (circuit *TestPermuteCircuit) Define(api frontend.API) error {
 	rangeChecker := rangecheck.New(api)
-	outputs := Permute(api, rangeChecker, circuit.Inputs)
+	poseidon_goldilocks := &PoseidonGoldilocks{}
+	outputs := poseidon_goldilocks.Permute(api, rangeChecker, circuit.Inputs)
 	for i := 0; i < SPONGE_WIDTH; i++ {
 		api.AssertIsEqual(outputs[i].Limb, circuit.Outputs[i].Limb)
 	}
@@ -46,8 +48,8 @@ func TestPermute(t *testing.T) {
 	}
 
 	var circuit TestPermuteCircuit
-	circuit.Inputs = make([]GoldilocksVariable, SPONGE_WIDTH)
-	circuit.Outputs = make([]GoldilocksVariable, SPONGE_WIDTH)
+	circuit.Inputs = make([]goldilocks.GoldilocksVariable, SPONGE_WIDTH)
+	circuit.Outputs = make([]goldilocks.GoldilocksVariable, SPONGE_WIDTH)
 	r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &circuit)
 	if err != nil {
 		t.Fatal("Error in compiling circuit: ", err)
@@ -55,11 +57,11 @@ func TestPermute(t *testing.T) {
 
 	for _, t_i := range tests {
 		var witness TestPermuteCircuit
-		witness.Inputs = make([]GoldilocksVariable, SPONGE_WIDTH)
-		witness.Outputs = make([]GoldilocksVariable, SPONGE_WIDTH)
+		witness.Inputs = make([]goldilocks.GoldilocksVariable, SPONGE_WIDTH)
+		witness.Outputs = make([]goldilocks.GoldilocksVariable, SPONGE_WIDTH)
 		for i := 0; i < SPONGE_WIDTH; i++ {
-			witness.Inputs[i] = GetGoldilocksVariable(t_i.inputs[i])
-			witness.Outputs[i] = GetGoldilocksVariable(t_i.outputs[i])
+			witness.Inputs[i] = goldilocks.GetGoldilocksVariable(t_i.inputs[i])
+			witness.Outputs[i] = goldilocks.GetGoldilocksVariable(t_i.outputs[i])
 		}
 
 		w, err := frontend.NewWitness(&witness, ecc.BN254.ScalarField())
