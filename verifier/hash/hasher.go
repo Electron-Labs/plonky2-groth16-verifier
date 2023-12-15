@@ -13,7 +13,7 @@ type SpongeHasher struct {
 	poseidon     poseidon.Poseidon
 }
 
-func NewHasher(api frontend.API, rangeChecker frontend.Rangechecker, poseidon poseidon.Poseidon) SpongeHasher { //,
+func NewHasher(api frontend.API, rangeChecker frontend.Rangechecker, poseidon poseidon.Poseidon) SpongeHasher {
 	return SpongeHasher{
 		api:          api,
 		rangeChecker: rangeChecker,

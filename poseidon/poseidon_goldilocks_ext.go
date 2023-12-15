@@ -1,4 +1,4 @@
-// package poseidon
+package poseidon
 
 // import (
 // 	"math/big"
