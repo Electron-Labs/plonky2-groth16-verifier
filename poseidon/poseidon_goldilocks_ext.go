@@ -1,6 +1,8 @@
-package poseidon
+// package poseidon
 
 // import (
+// 	"math/big"
+
 // 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
 // 	"github.com/consensys/gnark/frontend"
 // )
@@ -100,49 +102,33 @@ package poseidon
 // 	return out
 // }
 
-// func (poseidon *PoseidonGoldilocksExt) PartialFirstConstantLayer(api frontend.API, rangeChecker frontend.Rangechecker, in []goldilocks.GoldilocksExtension2Variable) []goldilocks.GoldilocksExtension2Variable {
-// 	in_base := make([]goldilocks.GoldilocksVariable, len(in))
-// 	for i, v := range in {
-// 		in_base[i] = v.A
+// func (poseidon *PoseidonGoldilocksExt) MdsPartialLayerFast(api frontend.API, rangeChecker frontend.Rangechecker, in []goldilocks.GoldilocksExtension2Variable, r int) []goldilocks.GoldilocksExtension2Variable {
+// 	out := make([]goldilocks.GoldilocksExtension2Variable, SPONGE_WIDTH)
+// 	s0 := goldilocks.GetVariableArray(in[0])
+// 	mds0to0 := big.NewInt(0).Add(MDS_CIRC[0], MDS_DIAG[0])
+// 	d := goldilocks.MulExtNoReduce(api, s0, [2]frontend.Variable{
+// 		mds0to0,
+// 		0,
+// 	})
+// 	for i := 1; i < SPONGE_WIDTH; i++ {
+// 		d = goldilocks.AddExtNoReduce(api, d, goldilocks.MulExtNoReduce(api, goldilocks.GetVariableArray(in[i]), [2]frontend.Variable{
+// 			FAST_PARTIAL_ROUND_W_HATS[r][i-1],
+// 			0,
+// 		}))
 // 	}
-// 	let poseidon_goldilocks := &posedposeidon.Po
-// 	out_base := PartialFirstConstantLayer(api, rangeChecker, in_base)
-// 	for i, v := range out_base {
-// 		in[i].A = v
+// 	out[0] = goldilocks.GoldilocksExtension2Variable{
+// 		A: goldilocks.Reduce(api, rangeChecker, d[0], 131),
+// 		B: goldilocks.Reduce(api, rangeChecker, d[1], 131),
 // 	}
-// 	return in
-// }
-
-// // func (poseidon *PoseidonGoldilocksExt) PartialRounds(api frontend.API, rangeChecker frontend.Rangechecker, state []goldilocks.GoldilocksExtension2Variable, r *int) []goldilocks.GoldilocksExtension2Variable {
-// // 	state = poseidon.PartialFirstConstantLayer(api, rangeChecker, state)
-// // 	state = poseidon.MdsPartialLayerInit(api, rangeChecker, state)
-// // 	for i := 0; i < PARTIAL_ROUNDS; i++ {
-// // 		state[0] = poseidon.Sbox(api, rangeChecker, state[0])
-// // 		state[0] = goldilocks.Add(api, rangeChecker, state[0], goldilocks.GoldilocksVariable{Limb: FAST_PARTIAL_ROUND_CONSTANTS[i]})
-// // 		state = MdsPartialLayerFast(api, rangeChecker, state, i)
-// // 	}
-// // 	*r += PARTIAL_ROUNDS
-// // 	return state
-// // }
-
-// func (poseidon *PoseidonGoldilocksExt) PermuteWithState(api frontend.API, rangeChecker frontend.Rangechecker, inputs []goldilocks.GoldilocksExtension2Variable) []goldilocks.GoldilocksExtension2Variable {
-// 	if len(inputs) != SPONGE_WIDTH {
-// 		panic("Invalid number of inputs")
+// 	for i := 1; i < SPONGE_WIDTH; i++ {
+// 		res := goldilocks.AddExtNoReduce(api, goldilocks.GetVariableArray(in[i]), goldilocks.MulExtNoReduce(api, s0, [2]frontend.Variable{
+// 			FAST_PARTIAL_ROUND_VS[r][i-1],
+// 			0,
+// 		}))
+// 		out[i] = goldilocks.GoldilocksExtension2Variable{
+// 			A: goldilocks.Reduce(api, rangeChecker, res[0], 128),
+// 			B: goldilocks.Reduce(api, rangeChecker, res[1], 128),
+// 		}
 // 	}
-
-// 	// state := make([]goldilocks.GoldilocksVariable, SPONGE_WIDTH)
-// 	// for j := 0; j < SPONGE_WIDTH; j++ {
-// 	// 	state[j] = inputs[j]
-// 	// }
-
-// 	// r := 0
-// 	// 	state = FullRounds(api, rangeChecker, state, &r)
-// 	// 	state = PartialRounds(api, rangeChecker, state, &r)
-// 	// 	state = FullRounds(api, rangeChecker, state, &r)
-
-// 	// 	if r != 2*FULL_ROUNDS_HALF+PARTIAL_ROUNDS {
-// 	// 		panic("Invalid number of rounds")
-// 	// 	}
-
-// 	// return state
+// 	return out
 // }
