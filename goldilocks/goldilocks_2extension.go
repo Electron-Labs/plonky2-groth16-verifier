@@ -7,6 +7,7 @@ import (
 	"github.com/consensys/gnark/frontend"
 )
 
+const D = 2
 const W = 7
 const DTH_ROOT = 18446744069414584320
 const TWO_ADICITY_EXT2 = TWO_ADICITY + 1
