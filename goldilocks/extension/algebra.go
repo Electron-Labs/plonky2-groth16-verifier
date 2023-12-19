@@ -22,10 +22,10 @@ func MulNoReduce(
 
 	// initialize to 0
 	res := [D][D]frontend.Variable{{zero, zero}, {zero, zero}}
-	w := [D]frontend.Variable{goldilocks.W, goldilocks.W}
+	w := [D]frontend.Variable{goldilocks.W, zero}
 
 	for i := 0; i < D; i++ {
-		for j := 0; i < D; i++ {
+		for j := 0; j < D; j++ {
 			if i+j < D {
 				res[(i+j)%D] = goldilocks.AddExtNoReduce(api, res[(i+j)%D], goldilocks.MulExtNoReduce(api, in1[i], in2[j]))
 			} else {
