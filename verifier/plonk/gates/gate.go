@@ -50,7 +50,9 @@ func ParseGate(gate_id string) Gate {
 		return NewArithmeticGate(gate_id)
 
 	} else if strings.Contains(gate_id, "ArithmeticExtensionGate") {
-		panic("todo")
+
+		return NewArithmeticExtensionGate(gate_id)
+
 	} else if strings.Contains(gate_id, "BaseSumGate") {
 		panic("todo")
 	} else if strings.Contains(gate_id, "ConstantGate") {
