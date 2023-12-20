@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
+	algebra "github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks/extension"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
 	"github.com/consensys/gnark/frontend"
 )
@@ -15,6 +16,8 @@ const UNUSED_SELECTOR = math.MaxUint32
 type Gate interface {
 	EvalUnfiltered(api frontend.API, rangeChecker frontend.Rangechecker, vars EvaluationVars) []goldilocks.GoldilocksExtension2Variable
 }
+
+const D = goldilocks.D
 
 func EvalFiltered(
 	api frontend.API,
@@ -146,4 +149,12 @@ func EvaluateGateConstraints(
 		}
 	}
 	return constraints
+}
+
+func GetLocalExtAlgebra(wires []goldilocks.GoldilocksExtension2Variable, range_ [2]int) [D][D]frontend.Variable {
+	if range_[1]-range_[0] != D {
+		panic("gate::GetLocalExtAlgebra - range must have `D` elements")
+	}
+	twoWires := [D]goldilocks.GoldilocksExtension2Variable{wires[range_[0]], wires[range_[1]-1]}
+	return algebra.GetVariableArray(twoWires)
 }
