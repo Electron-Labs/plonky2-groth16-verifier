@@ -225,3 +225,14 @@ func PrimitveRootOfUnity(n_log int) GoldilocksVariable {
 	root.Limb = base_pow
 	return root
 }
+
+func TwoAdicSubgroup(api frontend.API, rangeChecker frontend.Rangechecker, nLog int) []GoldilocksVariable {
+	generator := PrimitveRootOfUnity(nLog)
+	powers := make([]GoldilocksVariable, 1<<nLog)
+
+	powers[0] = GoldilocksVariable{Limb: 1}
+	for i := 1; i < 1<<nLog; i++ {
+		powers[i] = Mul(api, rangeChecker, powers[i-1], generator)
+	}
+	return powers
+}
