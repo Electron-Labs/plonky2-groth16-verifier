@@ -62,7 +62,9 @@ func ParseGate(gate_id string) Gate {
 		return NewConstantGate(gate_id)
 
 	} else if strings.Contains(gate_id, "CosetInterpolationGate") {
-		panic("todo")
+
+		return NewCosetInterpolationGate(gate_id)
+
 	} else if strings.Contains(gate_id, "ExponentiationGate") {
 		panic("todo")
 	} else if strings.Contains(gate_id, "LookupGate") {
