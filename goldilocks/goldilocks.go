@@ -47,7 +47,7 @@ func init() {
 	solver.RegisterHint(GoldilocksRangeCheckHint)
 }
 
-func getGoldilocks(i frontend.Variable) GoldilocksVariable {
+func GetGoldilocks(i frontend.Variable) GoldilocksVariable {
 	return GoldilocksVariable{Limb: i}
 }
 

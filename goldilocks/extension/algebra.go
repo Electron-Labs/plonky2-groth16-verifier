@@ -18,11 +18,9 @@ func MulNoReduce(
 	in2 [D][D]frontend.Variable,
 ) [D][D]frontend.Variable {
 
-	zero := frontend.Variable(0)
-
 	// initialize to 0
-	res := [D][D]frontend.Variable{{zero, zero}, {zero, zero}}
-	w := [D]frontend.Variable{goldilocks.W, zero}
+	res := ZERO()
+	w := goldilocks.BaseTo2ExtRaw(goldilocks.W)
 
 	for i := 0; i < D; i++ {
 		for j := 0; j < D; j++ {
@@ -54,10 +52,42 @@ func AddNoReduce(api frontend.API, in1 [D][D]frontend.Variable, in2 [D][D]fronte
 	return out
 }
 
+// no modulus is added
 func SubNoReduce(api frontend.API, in1 [D][D]frontend.Variable, in2 [D][D]frontend.Variable) [D][D]frontend.Variable {
 	out := [D][D]frontend.Variable{{in1[0][0], in1[0][1]}, {in1[1][0], in1[1][1]}}
 	for i := 0; i < D; i++ {
-		out[i] = goldilocks.SubExtNoReduce(api, out[i], in2[i])
+		for j := 0; j < D; j++ {
+			out[i][j] = api.Sub(in1[i][j], in2[i][j])
+		}
 	}
 	return out
+}
+
+func Sub(api frontend.API, rangeChecker frontend.Rangechecker, in1 [D][D]frontend.Variable, in2 [D][D]frontend.Variable) [D][D]frontend.Variable {
+	out := [D][D]frontend.Variable{{in1[0][0], in1[0][1]}, {in1[1][0], in1[1][1]}}
+	for i := 0; i < D; i++ {
+		for j := 0; j < D; j++ {
+			out[i][j] = goldilocks.Sub(api, rangeChecker, goldilocks.GetGoldilocks(in1[i][j]), goldilocks.GetGoldilocks(in2[i][j])).Limb
+		}
+	}
+	return out
+}
+
+func GetVariableArray(in [D]goldilocks.GoldilocksExtension2Variable) [D][D]frontend.Variable {
+	out := [D][D]frontend.Variable{}
+	for i, elm := range in {
+		out[i] = goldilocks.GetVariableArray(elm)
+	}
+	return out
+}
+
+func FromBase(x [D]frontend.Variable) [D][D]frontend.Variable {
+	return [D][D]frontend.Variable{
+		{x[0], x[1]},
+		{0, 0},
+	}
+}
+
+func ZERO() [D][D]frontend.Variable {
+	return [D][D]frontend.Variable{goldilocks.ZERO(), goldilocks.ZERO()}
 }
