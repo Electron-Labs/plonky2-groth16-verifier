@@ -6,7 +6,7 @@ import (
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/hash"
-	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/plonk"
+	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/plonk/gates"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
 	"github.com/consensys/gnark/frontend"
 )
@@ -66,7 +66,7 @@ func FriCombineInitial(
 				B: goldilocks.GetGoldilocksVariable(0),
 			})
 		}
-		reduced_evals := plonk.ReduceWithPowers(api, rangeChecker, evals, alpha)
+		reduced_evals := gates.ReduceWithPowers(api, rangeChecker, evals, alpha)
 		numerator := goldilocks.SubExt(api, rangeChecker, reduced_evals, reduced_openings)
 		denominator := goldilocks.SubExt(api, rangeChecker, subgroup_x_ext, point)
 		if i == 0 {
@@ -314,7 +314,7 @@ func VerifyFriProof(
 
 	var precomputed_reduced_evals []goldilocks.GoldilocksExtension2Variable
 	for _, batch := range openings.Batches {
-		precomputed_reduced_evals = append(precomputed_reduced_evals, plonk.ReduceWithPowers(api, rangeChecker, batch.Values, challenges.FriAlpha))
+		precomputed_reduced_evals = append(precomputed_reduced_evals, gates.ReduceWithPowers(api, rangeChecker, batch.Values, challenges.FriAlpha))
 	}
 	for i := range challenges.FriQueryIndices {
 		FriVerifierQueryRound(
