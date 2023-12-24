@@ -295,6 +295,56 @@ func TestPublicInputGate(t *testing.T) {
 	assert.CheckCircuit(&circuit, test.WithValidAssignment(&assignment), test.WithCurves(ecc.BN254))
 }
 
+func TestBaseSum(t *testing.T) {
+	assert := test.NewAssert(t)
+
+	fileName := "../../../testdata/base_sum.json"
+	fileData, err := os.ReadFile(fileName)
+	if err != nil {
+		panic(fmt.Sprintln("fail to read file: ", fileName, err))
+	}
+
+	var tData TestData
+
+	err = json.Unmarshal(fileData, &tData)
+	if err != nil {
+		panic(fmt.Sprintln("fail to deserialize: ", err))
+	}
+
+	var circuit TestGateCircuit
+	circuit.Vars.PublicInputsHash = tData.Vars.PublicInputsHash.GetVariable()
+	circuit.Vars.LocalConstants = goldilocks.GetGoldilocksExtensionVariableArr(tData.Vars.LocalConstants)
+	circuit.Vars.LocalWires = goldilocks.GetGoldilocksExtensionVariableArr(tData.Vars.LocalWires)
+	circuit.Constraints = goldilocks.GetGoldilocksExtensionVariableArr(tData.Constraints)
+	circuit.GateId = "BaseSumGate { num_limbs: 63 } + Base: 2"
+
+	r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &circuit)
+	if err != nil {
+		t.Fatal("failed to compile: ", err)
+	}
+
+	t.Log(r1cs.GetNbConstraints())
+
+	var assignment TestGateCircuit
+	assignment.Vars.PublicInputsHash = tData.Vars.PublicInputsHash.GetVariable()
+	assignment.Vars.LocalConstants = goldilocks.GetGoldilocksExtensionVariableArr(tData.Vars.LocalConstants)
+	assignment.Vars.LocalWires = goldilocks.GetGoldilocksExtensionVariableArr(tData.Vars.LocalWires)
+	assignment.Constraints = goldilocks.GetGoldilocksExtensionVariableArr(tData.Constraints)
+	assignment.GateId = "BaseSumGate { num_limbs: 63 } + Base: 2"
+
+	witness, err := frontend.NewWitness(&assignment, ecc.BN254.ScalarField())
+	if err != nil {
+		t.Fatal("Error in witness: ", err)
+	}
+
+	err = r1cs.IsSolved(witness)
+	if err != nil {
+		t.Fatal("failed to solve: ", err)
+	}
+
+	assert.CheckCircuit(&circuit, test.WithValidAssignment(&assignment), test.WithCurves(ecc.BN254))
+}
+
 // TODO: not working
 // func TestPoseidonGate(t *testing.T) {
 // 	assert := test.NewAssert(t)

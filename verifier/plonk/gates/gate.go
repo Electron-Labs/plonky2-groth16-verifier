@@ -57,7 +57,9 @@ func ParseGate(gate_id string) Gate {
 		return NewArithmeticExtensionGate(gate_id)
 
 	} else if strings.Contains(gate_id, "BaseSumGate") {
-		panic("todo")
+
+		return NewBaseSumGate(gate_id)
+
 	} else if strings.Contains(gate_id, "ConstantGate") {
 
 		return NewConstantGate(gate_id)
@@ -159,4 +161,15 @@ func GetLocalExtAlgebra(wires []goldilocks.GoldilocksExtension2Variable, range_ 
 	}
 	twoWires := [D]goldilocks.GoldilocksExtension2Variable{wires[range_[0]], wires[range_[1]-1]}
 	return algebra.GetVariableArray(twoWires)
+}
+
+func GetLocalWiresFromRange(wires []goldilocks.GoldilocksExtension2Variable, range_ [2]int) [][D]frontend.Variable {
+	if range_[1] > len(wires) {
+		panic("gate::GetLocalWiresFromRange - invalid range")
+	}
+	out := make([][2]frontend.Variable, range_[1]-range_[0])
+	for i, wire := range wires[range_[0]:range_[1]] {
+		out[i] = goldilocks.GetVariableArray(wire)
+	}
+	return out
 }
