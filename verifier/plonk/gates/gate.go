@@ -77,7 +77,9 @@ func ParseGate(gate_id string) Gate {
 		return NewLookupGate(gate_id)
 
 	} else if strings.Contains(gate_id, "LookupTableGate") {
-		panic("todo")
+
+		return NewLookupTableGate(gate_id)
+
 	} else if strings.Contains(gate_id, "MulExtensionGate") {
 		panic("todo")
 	} else if strings.Contains(gate_id, "NoopGate") {
