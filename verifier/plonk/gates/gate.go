@@ -85,7 +85,9 @@ func ParseGate(gate_id string) Gate {
 		return NewMulExtensionGate(gate_id)
 
 	} else if strings.Contains(gate_id, "NoopGate") {
-		panic("todo")
+
+		return NewNoopGate(gate_id)
+
 	} else if strings.Contains(gate_id, "PoseidonGate") {
 
 		return NewPoseidonGate(gate_id)
