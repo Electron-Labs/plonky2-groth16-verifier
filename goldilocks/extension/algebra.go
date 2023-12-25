@@ -12,6 +12,7 @@ type GoldilocksExtension2Algebra2Variable struct {
 	B goldilocks.GoldilocksExtension2Variable
 }
 
+// [[136, 133], [133, 130]] bits each variable is 64bits
 func MulNoReduce(
 	api frontend.API,
 	in1 [D][D]frontend.Variable,
