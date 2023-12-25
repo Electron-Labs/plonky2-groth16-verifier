@@ -1,8 +1,8 @@
 package gates
 
 import (
-	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
 	"github.com/consensys/gnark/frontend"
@@ -12,12 +12,11 @@ type LookupTableGate struct {
 }
 
 func NewLookupTableGate(id string) *LookupTableGate {
-	var gate LookupTableGate
-	err := json.Unmarshal([]byte("{}"), &gate)
-	if err != nil {
-		panic(fmt.Sprintln("Invalid gate id: ", id, err))
+	if strings.HasPrefix(id, "LookupTableGate") != true {
+		panic(fmt.Sprintln("Invalid gate id: ", id))
 	}
-	return &gate
+
+	return new(LookupTableGate)
 }
 
 func (gate *LookupTableGate) EvalUnfiltered(api frontend.API, rangeChecker frontend.Rangechecker, vars EvaluationVars) []goldilocks.GoldilocksExtension2Variable {
