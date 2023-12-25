@@ -9,7 +9,7 @@ Wraps up plonky2 verifier as a groth16 circuit
     - [x] ExponentiationGate
     - [x] LookupGate
     - [x] LookupTableGate
-    - [ ] MulExtensionGate
+    - [x] MulExtensionGate
     - [ ] NoopGate
     - [ ] PoseidonMdsGate
     - [ ] RandomAccessGate
