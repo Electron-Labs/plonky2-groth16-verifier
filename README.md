@@ -3,13 +3,13 @@ Wraps up plonky2 verifier as a groth16 circuit
 
 # TODOS
 - [ ] Implement constraints for rest of the plonky2 gates
-    - [ ] ArithmeticExtensionGate
-    - [ ] BaseSumGate
-    - [ ] CosetInterpolationGate
-    - [ ] ExponentiationGate
-    - [ ] LookupGate
-    - [ ] LookupTableGate
-    - [ ] MulExtensionGate
+    - [x] ArithmeticExtensionGate
+    - [x] BaseSumGate
+    - [x] CosetInterpolationGate
+    - [x] ExponentiationGate
+    - [x] LookupGate
+    - [x] LookupTableGate
+    - [x] MulExtensionGate
     - [ ] NoopGate
     - [ ] PoseidonMdsGate
     - [ ] RandomAccessGate
