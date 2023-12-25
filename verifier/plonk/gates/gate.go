@@ -72,7 +72,9 @@ func ParseGate(gate_id string) Gate {
 		return NewExponentiationGate(gate_id)
 
 	} else if strings.Contains(gate_id, "LookupGate") {
-		panic("todo")
+
+		return NewLookupGate(gate_id)
+
 	} else if strings.Contains(gate_id, "LookupTableGate") {
 		panic("todo")
 	} else if strings.Contains(gate_id, "MulExtensionGate") {
