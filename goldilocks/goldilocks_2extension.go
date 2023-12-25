@@ -7,6 +7,7 @@ import (
 	"github.com/consensys/gnark/frontend"
 )
 
+const D = 2
 const W = 7
 const DTH_ROOT = 18446744069414584320
 const TWO_ADICITY_EXT2 = TWO_ADICITY + 1
@@ -140,7 +141,7 @@ func MulExt(
 	cBNoReduce := api.Add(api.Mul(in1.A.Limb, in2.B.Limb), api.Mul(in1.B.Limb, in2.A.Limb))
 
 	return GoldilocksExtension2Variable{
-		A: Reduce(api, rangeChecker, cANoReduce, 131),
+		A: Reduce(api, rangeChecker, cANoReduce, 131), // TODO: 132?
 		B: Reduce(api, rangeChecker, cBNoReduce, 129),
 	}
 }
@@ -300,4 +301,13 @@ func Flatten(in []GoldilocksExtension2Variable) []GoldilocksVariable {
 		out[2*i+1] = v.B
 	}
 	return out
+}
+
+// TODO: make it FromBase afer moving to a sub-package 'quadratic'
+func BaseTo2ExtRaw(x frontend.Variable) [D]frontend.Variable {
+	return [D]frontend.Variable{x, 0}
+}
+
+func ZERO() [D]frontend.Variable {
+	return [D]frontend.Variable{0, 0}
 }
