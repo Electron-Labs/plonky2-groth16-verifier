@@ -148,7 +148,7 @@ func TestArithmeticExtensionGate(t *testing.T) {
 func TestCosetInterpolationGate(t *testing.T) {
 	assert := test.NewAssert(t)
 
-	fileName := "../../../testdata/coset_interpolation.json"
+	fileName := "../../../testdata/coset_interpolation_constraints.json"
 	fileData, err := os.ReadFile(fileName)
 	if err != nil {
 		panic(fmt.Sprintln("fail to read file: ", fileName, err))
@@ -298,7 +298,7 @@ func TestPublicInputGate(t *testing.T) {
 func TestBaseSum(t *testing.T) {
 	assert := test.NewAssert(t)
 
-	fileName := "../../../testdata/base_sum.json"
+	fileName := "../../../testdata/base_sum_constraints.json"
 	fileData, err := os.ReadFile(fileName)
 	if err != nil {
 		panic(fmt.Sprintln("fail to read file: ", fileName, err))
@@ -348,7 +348,7 @@ func TestBaseSum(t *testing.T) {
 func TestExponentiationGate(t *testing.T) {
 	assert := test.NewAssert(t)
 
-	fileName := "../../../testdata/exponentiation.json"
+	fileName := "../../../testdata/exponentiation_constraints.json"
 	fileData, err := os.ReadFile(fileName)
 	if err != nil {
 		panic(fmt.Sprintln("fail to read file: ", fileName, err))
@@ -381,6 +381,56 @@ func TestExponentiationGate(t *testing.T) {
 	assignment.Vars.LocalWires = goldilocks.GetGoldilocksExtensionVariableArr(tData.Vars.LocalWires)
 	assignment.Constraints = goldilocks.GetGoldilocksExtensionVariableArr(tData.Constraints)
 	assignment.GateId = "ExponentiationGate { num_power_bits: 17, _phantom: PhantomData<plonky2_field::goldilocks_field::GoldilocksField> }"
+
+	witness, err := frontend.NewWitness(&assignment, ecc.BN254.ScalarField())
+	if err != nil {
+		t.Fatal("Error in witness: ", err)
+	}
+
+	err = r1cs.IsSolved(witness)
+	if err != nil {
+		t.Fatal("failed to solve: ", err)
+	}
+
+	assert.CheckCircuit(&circuit, test.WithValidAssignment(&assignment), test.WithCurves(ecc.BN254))
+}
+
+func TestLookupGate(t *testing.T) {
+	assert := test.NewAssert(t)
+
+	fileName := "../../../testdata/lookup_constraints.json"
+	fileData, err := os.ReadFile(fileName)
+	if err != nil {
+		panic(fmt.Sprintln("fail to read file: ", fileName, err))
+	}
+
+	var tData TestData
+
+	err = json.Unmarshal(fileData, &tData)
+	if err != nil {
+		panic(fmt.Sprintln("fail to deserialize: ", err))
+	}
+
+	var circuit TestGateCircuit
+	circuit.Vars.PublicInputsHash = tData.Vars.PublicInputsHash.GetVariable()
+	circuit.Vars.LocalConstants = goldilocks.GetGoldilocksExtensionVariableArr(tData.Vars.LocalConstants)
+	circuit.Vars.LocalWires = goldilocks.GetGoldilocksExtensionVariableArr(tData.Vars.LocalWires)
+	circuit.Constraints = goldilocks.GetGoldilocksExtensionVariableArr(tData.Constraints)
+	circuit.GateId = "LookupGate {num_slots: 40, lut_hash: [36, 96, 153, 18, 161, 69, 56, 184, 62, 235, 132, 33, 162, 102, 217, 235, 96, 191, 181, 219, 152, 137, 120, 81, 73, 22, 207, 95, 245, 86, 119, 116]}"
+
+	r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &circuit)
+	if err != nil {
+		t.Fatal("failed to compile: ", err)
+	}
+
+	t.Log(r1cs.GetNbConstraints())
+
+	var assignment TestGateCircuit
+	assignment.Vars.PublicInputsHash = tData.Vars.PublicInputsHash.GetVariable()
+	assignment.Vars.LocalConstants = goldilocks.GetGoldilocksExtensionVariableArr(tData.Vars.LocalConstants)
+	assignment.Vars.LocalWires = goldilocks.GetGoldilocksExtensionVariableArr(tData.Vars.LocalWires)
+	assignment.Constraints = goldilocks.GetGoldilocksExtensionVariableArr(tData.Constraints)
+	assignment.GateId = "LookupGate {num_slots: 40, lut_hash: [36, 96, 153, 18, 161, 69, 56, 184, 62, 235, 132, 33, 162, 102, 217, 235, 96, 191, 181, 219, 152, 137, 120, 81, 73, 22, 207, 95, 245, 86, 119, 116]}"
 
 	witness, err := frontend.NewWitness(&assignment, ecc.BN254.ScalarField())
 	if err != nil {
