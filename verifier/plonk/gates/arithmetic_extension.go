@@ -48,14 +48,14 @@ func (gate *ArithmeticExtensionGate) EvalUnfiltered(api frontend.API, rangeCheck
 
 		constraints[i*D] = goldilocks.NegExt(api,
 			goldilocks.GoldilocksExtension2Variable{
-				A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0][0], 199),
-				B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0][1], 199)},
+				A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0][0], 202),
+				B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0][1], 202)},
 		)
 
 		constraints[i*D+1] = goldilocks.NegExt(api,
 			goldilocks.GoldilocksExtension2Variable{
-				A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1][0], 205),
-				B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1][1], 203)},
+				A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1][0], 199),
+				B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1][1], 199)},
 		)
 	}
 	return constraints
