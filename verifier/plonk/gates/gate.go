@@ -102,7 +102,9 @@ func ParseGate(gate_id string) Gate {
 		return NewRandomAccessGate(gate_id)
 
 	} else if strings.Contains(gate_id, "ReducingGate") {
-		panic("todo")
+
+		return NewReducingGate(gate_id)
+
 	} else if strings.Contains(gate_id, "ReducingExtensionGate") {
 		panic("todo")
 	} else {
