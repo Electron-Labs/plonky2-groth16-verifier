@@ -107,7 +107,9 @@ func ParseGate(gate_id string) Gate {
 		return NewReducingGate(gate_id)
 
 	} else if strings.Contains(gate_id, "ReducingExtensionGate") {
-		panic("todo")
+
+		return NewReducingExtensionGate(gate_id)
+
 	} else {
 		panic(fmt.Sprintln("Unsupported gate:", gate_id))
 	}

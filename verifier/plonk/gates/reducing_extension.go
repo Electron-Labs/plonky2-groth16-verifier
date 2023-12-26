@@ -10,15 +10,15 @@ import (
 	"github.com/consensys/gnark/frontend"
 )
 
-type ReducingGate struct {
+type ReducingExtensionGate struct {
 	NumCoeffs int `json:"num_coeffs"`
 }
 
-func NewReducingGate(id string) *ReducingGate {
-	id = strings.TrimPrefix(id, "ReducingGate")
+func NewReducingExtensionGate(id string) *ReducingExtensionGate {
+	id = strings.TrimPrefix(id, "ReducingExtensionGate")
 	id = strings.Replace(id, "num_coeffs", "\"num_coeffs\"", 1)
 
-	var gate ReducingGate
+	var gate ReducingExtensionGate
 	err := json.Unmarshal([]byte(id), &gate)
 	if err != nil {
 		panic(fmt.Sprintln("Invalid gate id: ", id, err))
@@ -26,12 +26,15 @@ func NewReducingGate(id string) *ReducingGate {
 	return &gate
 }
 
-func (gate *ReducingGate) EvalUnfiltered(api frontend.API, rangeChecker frontend.Rangechecker, vars EvaluationVars) []goldilocks.GoldilocksExtension2Variable {
+func (gate *ReducingExtensionGate) EvalUnfiltered(api frontend.API, rangeChecker frontend.Rangechecker, vars EvaluationVars) []goldilocks.GoldilocksExtension2Variable {
 	alpha := GetLocalExtAlgebra(vars.LocalWires, gate.wiresAlpha())
 	oldAcc := GetLocalExtAlgebra(vars.LocalWires, gate.wiresOldAcc())
-	coeffs := GetLocalWiresFromRange(vars.LocalWires, gate.wiresCoeffs())
+	coeffs := make([][D][D]frontend.Variable, gate.NumCoeffs)
+	for i := 0; i < gate.NumCoeffs; i++ {
+		coeffs[i] = GetLocalExtAlgebra(vars.LocalWires, gate.wiresCoeff(i))
+	}
 	accs := make([][D][D]frontend.Variable, gate.NumCoeffs)
-	for i := 0; i < len(accs); i++ {
+	for i := 0; i < gate.NumCoeffs; i++ {
 		accs[i] = GetLocalExtAlgebra(vars.LocalWires, gate.wiresAccs(i))
 	}
 
@@ -39,14 +42,14 @@ func (gate *ReducingGate) EvalUnfiltered(api frontend.API, rangeChecker frontend
 
 	acc := oldAcc
 	for i := 0; i < gate.NumCoeffs; i++ {
-		constraintNoReduce := algebra.SubNoReduce(api, algebra.AddNoReduce(api, algebra.MulNoReduce(api, acc, alpha), algebra.FromBase(coeffs[i])), accs[i])
+		constraintNoReduce := algebra.SubNoReduce(api, algebra.AddNoReduce(api, algebra.MulNoReduce(api, acc, alpha), coeffs[i]), accs[i])
 		constraints[2*i] = goldilocks.GoldilocksExtension2Variable{
 			A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0][0], 137),
 			B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0][1], 134),
 		}
 		constraints[2*i+1] = goldilocks.GoldilocksExtension2Variable{
-			A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1][0], 133),
-			B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1][1], 130),
+			A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1][0], 134),
+			B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1][1], 131),
 		}
 		acc = accs[i]
 	}
@@ -54,38 +57,37 @@ func (gate *ReducingGate) EvalUnfiltered(api frontend.API, rangeChecker frontend
 	return constraints
 }
 
-func (gate *ReducingGate) numConstraints() int {
+func (gate *ReducingExtensionGate) numConstraints() int {
 	return D * gate.NumCoeffs
 }
 
-func (gate *ReducingGate) wiresAlpha() [2]int {
+func (gate *ReducingExtensionGate) wiresAlpha() [2]int {
 	return [2]int{D, 2 * D}
 }
-
-func (gate *ReducingGate) wiresOldAcc() [2]int {
+func (gate *ReducingExtensionGate) wiresOldAcc() [2]int {
 	return [2]int{2 * D, 3 * D}
 }
 
-func (gate *ReducingGate) wiresCoeffs() [2]int {
-	return [2]int{gate.startCoeffs(), gate.startCoeffs() + gate.NumCoeffs}
+func (gate *ReducingExtensionGate) wiresCoeff(i int) [2]int {
+	return [2]int{gate.startCoeffs() + i*D, gate.startCoeffs() + (i+1)*D}
 }
 
-func (gate *ReducingGate) wiresOutput() [2]int {
+func (gate *ReducingExtensionGate) startCoeffs() int {
+	return 3 * D
+}
+
+func (gate *ReducingExtensionGate) wiresOutput() [2]int {
 	return [2]int{0, D}
 }
 
-func (gate *ReducingGate) startAccs() int {
-	return gate.startCoeffs() + gate.NumCoeffs
+func (gate *ReducingExtensionGate) startAccs() int {
+	return gate.startCoeffs() + gate.NumCoeffs*D
 }
 
-func (gate *ReducingGate) wiresAccs(i int) [2]int {
+func (gate *ReducingExtensionGate) wiresAccs(i int) [2]int {
 	if i == gate.NumCoeffs-1 {
 		// The last accumulator is the output.
 		return gate.wiresOutput()
 	}
 	return [2]int{gate.startAccs() + D*i, gate.startAccs() + D*(i+1)}
-}
-
-func (gate *ReducingGate) startCoeffs() int {
-	return 3 * D
 }
