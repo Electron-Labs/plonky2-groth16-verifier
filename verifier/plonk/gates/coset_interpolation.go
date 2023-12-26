@@ -180,12 +180,12 @@ func PartialInterpolateExtAlgebra(
 
 		// TODO: verify reduce bits once more
 		eval = [D][D]frontend.Variable{
-			{goldilocks.Reduce(api, rangeChecker, evalNoReduce[0][0], 203).Limb, goldilocks.Reduce(api, rangeChecker, evalNoReduce[0][1], 200).Limb},
-			{goldilocks.Reduce(api, rangeChecker, evalNoReduce[1][0], 199).Limb, goldilocks.Reduce(api, rangeChecker, evalNoReduce[1][1], 196).Limb},
+			{goldilocks.Reduce(api, rangeChecker, evalNoReduce[0][0], 201).Limb, goldilocks.Reduce(api, rangeChecker, evalNoReduce[0][1], 201).Limb},
+			{goldilocks.Reduce(api, rangeChecker, evalNoReduce[1][0], 199).Limb, goldilocks.Reduce(api, rangeChecker, evalNoReduce[1][1], 199).Limb},
 		}
 		termsPartialProd = [D][D]frontend.Variable{
-			{goldilocks.Reduce(api, rangeChecker, termsPartialProdNoReduce[0][0], 133).Limb, goldilocks.Reduce(api, rangeChecker, termsPartialProdNoReduce[0][1], 133).Limb},
-			{goldilocks.Reduce(api, rangeChecker, termsPartialProdNoReduce[1][0], 137).Limb, goldilocks.Reduce(api, rangeChecker, termsPartialProdNoReduce[1][1], 134).Limb},
+			{goldilocks.Reduce(api, rangeChecker, termsPartialProdNoReduce[0][0], 136).Limb, goldilocks.Reduce(api, rangeChecker, termsPartialProdNoReduce[0][1], 133).Limb},
+			{goldilocks.Reduce(api, rangeChecker, termsPartialProdNoReduce[1][0], 133).Limb, goldilocks.Reduce(api, rangeChecker, termsPartialProdNoReduce[1][1], 130).Limb},
 		}
 	}
 
