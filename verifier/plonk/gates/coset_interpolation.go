@@ -35,16 +35,14 @@ func NewCosetInterpolationGate(id string) *CosetInterpolationGate {
 }
 
 func (gate *CosetInterpolationGate) EvalUnfiltered(api frontend.API, rangeChecker frontend.Rangechecker, vars EvaluationVars) []goldilocks.GoldilocksExtension2Variable {
-	subgroupBits := gate.SubgroupBits
-	degree := gate.Degree
-	numConstraints := numConstraints(subgroupBits, degree)
-	numPoints := numPoints(subgroupBits)
+	numConstraints := gate.numConstraints()
+	numPoints := gate.numPoints()
 
 	constraints := make([]goldilocks.GoldilocksExtension2Variable, numConstraints)
 
-	shift := goldilocks.GetVariableArray(vars.LocalWires[wireShift()])
-	evaluationPoint := GetLocalExtAlgebra(vars.LocalWires, wiresEvaluationPoint(subgroupBits))
-	shiftedEvaluationPoint := GetLocalExtAlgebra(vars.LocalWires, wiresShiftedEvaluationPoint(subgroupBits, degree))
+	shift := goldilocks.GetVariableArray(vars.LocalWires[gate.wireShift()])
+	evaluationPoint := GetLocalExtAlgebra(vars.LocalWires, gate.wiresEvaluationPoint())
+	shiftedEvaluationPoint := GetLocalExtAlgebra(vars.LocalWires, gate.wiresShiftedEvaluationPoint())
 
 	a := algebra.ScalarMulNoReduce(api, shiftedEvaluationPoint, shift)
 
@@ -64,10 +62,10 @@ func (gate *CosetInterpolationGate) EvalUnfiltered(api frontend.API, rangeChecke
 			B: goldilocks.Reduce(api, rangeChecker, evalPointConstraint[1][1], 129)},
 	)
 
-	domain := goldilocks.TwoAdicSubgroup(api, rangeChecker, subgroupBits)
+	domain := goldilocks.TwoAdicSubgroup(api, rangeChecker, gate.SubgroupBits)
 	values := make([][2][2]frontend.Variable, numPoints)
 	for i := 0; i < numPoints; i++ {
-		values[i] = GetLocalExtAlgebra(vars.LocalWires, wiresValue(i))
+		values[i] = GetLocalExtAlgebra(vars.LocalWires, gate.wiresValue(i))
 	}
 
 	weights := make([]frontend.Variable, len(gate.BarycentricWeights))
@@ -75,21 +73,21 @@ func (gate *CosetInterpolationGate) EvalUnfiltered(api frontend.API, rangeChecke
 		weights[i] = frontend.Variable(gate.BarycentricWeights[i])
 	}
 
-	computedEval, computedProd := PartialInterpolateExtAlgebra(
+	computedEval, computedProd := gate.PartialInterpolateExtAlgebra(
 		api,
 		rangeChecker,
-		domain[:degree],
-		values[:degree],
-		weights[:degree],
+		domain[:gate.Degree],
+		values[:gate.Degree],
+		weights[:gate.Degree],
 		shiftedEvaluationPoint,
 		algebra.ZERO(),
 		algebra.FromBase(goldilocks.BaseTo2ExtRaw(1)),
 	)
 
-	numIntermediates := numIntermediates(subgroupBits, degree)
+	numIntermediates := gate.numIntermediates()
 	for i := 0; i < numIntermediates; i++ {
-		intermediateEval := GetLocalExtAlgebra(vars.LocalWires, wiresIntermediateEval(subgroupBits, i))
-		intermediateProd := GetLocalExtAlgebra(vars.LocalWires, wiresIntermediateProd(subgroupBits, degree, i))
+		intermediateEval := GetLocalExtAlgebra(vars.LocalWires, gate.wiresIntermediateEval(i))
+		intermediateProd := GetLocalExtAlgebra(vars.LocalWires, gate.wiresIntermediateProd(i))
 
 		// set constraints on the following successive indices
 		// D + i * 2 * D
@@ -113,10 +111,10 @@ func (gate *CosetInterpolationGate) EvalUnfiltered(api frontend.API, rangeChecke
 			B: goldilocks.Sub(api, rangeChecker, goldilocks.GetGoldilocks(intermediateProd[1][1]), goldilocks.GetGoldilocks(computedProd[1][1])),
 		}
 
-		startIndex := 1 + (degree-1)*(i+1)
-		endIndex := min(startIndex+degree-1, numPoints)
+		startIndex := 1 + (gate.Degree-1)*(i+1)
+		endIndex := min(startIndex+gate.Degree-1, numPoints)
 
-		computedEval, computedProd = PartialInterpolateExtAlgebra(
+		computedEval, computedProd = gate.PartialInterpolateExtAlgebra(
 			api,
 			rangeChecker,
 			domain[startIndex:endIndex],
@@ -128,7 +126,7 @@ func (gate *CosetInterpolationGate) EvalUnfiltered(api frontend.API, rangeChecke
 		)
 	}
 
-	evaluationValue := GetLocalExtAlgebra(vars.LocalWires, wiresEvaluationValue(subgroupBits))
+	evaluationValue := GetLocalExtAlgebra(vars.LocalWires, gate.wiresEvaluationValue())
 
 	constraints[numConstraints-2] = goldilocks.GoldilocksExtension2Variable{
 		A: goldilocks.Sub(api, rangeChecker, goldilocks.GetGoldilocks(evaluationValue[0][0]), goldilocks.GetGoldilocks(computedEval[0][0])),
@@ -142,7 +140,7 @@ func (gate *CosetInterpolationGate) EvalUnfiltered(api frontend.API, rangeChecke
 	return constraints
 }
 
-func PartialInterpolateExtAlgebra(
+func (gate *CosetInterpolationGate) PartialInterpolateExtAlgebra(
 	api frontend.API,
 	rangeChecker frontend.Rangechecker,
 	domain []goldilocks.GoldilocksVariable,
@@ -178,7 +176,6 @@ func PartialInterpolateExtAlgebra(
 		evalNoReduce := algebra.AddNoReduce(api, algebra.MulNoReduce(api, eval, term), algebra.MulNoReduce(api, val, termsPartialProd))
 		termsPartialProdNoReduce := algebra.MulNoReduce(api, termsPartialProd, term)
 
-		// TODO: verify reduce bits once more
 		eval = [D][D]frontend.Variable{
 			{goldilocks.Reduce(api, rangeChecker, evalNoReduce[0][0], 201).Limb, goldilocks.Reduce(api, rangeChecker, evalNoReduce[0][1], 201).Limb},
 			{goldilocks.Reduce(api, rangeChecker, evalNoReduce[1][0], 199).Limb, goldilocks.Reduce(api, rangeChecker, evalNoReduce[1][1], 199).Limb},
@@ -192,73 +189,73 @@ func PartialInterpolateExtAlgebra(
 	return eval, termsPartialProd
 }
 
-func numConstraints(subgroupBits int, degree int) int {
+func (gate *CosetInterpolationGate) numConstraints() int {
 	// D constraints to check for consistency of the shifted evaluation point, plus D
 	// constraints for the evaluation value.
-	return D + D + 2*D*numIntermediates(subgroupBits, degree)
+	return D + D + 2*D*gate.numIntermediates()
 }
 
-func numPoints(subgroupBits int) int {
-	return 1 << subgroupBits
+func (gate *CosetInterpolationGate) numPoints() int {
+	return 1 << gate.SubgroupBits
 }
 
 // Wire index of the coset shift.
-func wireShift() int {
+func (gate *CosetInterpolationGate) wireShift() int {
 	return 0
 }
 
-func startValues() int {
+func (gate *CosetInterpolationGate) startValues() int {
 	return 1
 }
 
 // Wire indices of the `i`th interpolant value.
-func wiresValue(i int) [2]int {
-	start := startValues() + i*D
+func (gate *CosetInterpolationGate) wiresValue(i int) [2]int {
+	start := gate.startValues() + i*D
 	return [2]int{start, start + D}
 }
 
-func startEvaluationPoint(subgroupBits int) int {
-	return startValues() + numPoints(subgroupBits)*D
+func (gate *CosetInterpolationGate) startEvaluationPoint() int {
+	return gate.startValues() + gate.numPoints()*D
 }
 
 // Wire indices of the point to evaluate the interpolant at.
-func wiresEvaluationPoint(subgroupBits int) [2]int {
-	start := startEvaluationPoint(subgroupBits)
+func (gate *CosetInterpolationGate) wiresEvaluationPoint() [2]int {
+	start := gate.startEvaluationPoint()
 	return [2]int{start, start + D}
 }
 
-func numIntermediates(subgroupBits int, degree int) int {
-	return (numPoints(subgroupBits) - 2) / (degree - 1)
+func (gate *CosetInterpolationGate) numIntermediates() int {
+	return (gate.numPoints() - 2) / (gate.Degree - 1)
 }
 
 // The wires corresponding to the i'th intermediate evaluation.
-func wiresIntermediateEval(subgroupBits int, i int) [2]int {
-	start := startIntermediates(subgroupBits) + D*i
+func (gate *CosetInterpolationGate) wiresIntermediateEval(i int) [2]int {
+	start := gate.startIntermediates() + D*i
 	return [2]int{start, start + D}
 }
 
 // The wires corresponding to the i'th intermediate product.
-func wiresIntermediateProd(subgroupBits int, degree int, i int) [2]int {
-	start := startIntermediates(subgroupBits) + D*(numIntermediates(subgroupBits, degree)+i)
+func (gate *CosetInterpolationGate) wiresIntermediateProd(i int) [2]int {
+	start := gate.startIntermediates() + D*(gate.numIntermediates()+i)
 	return [2]int{start, start + D}
 }
 
-func startEvaluationValue(subgroupBits int) int {
-	return startEvaluationPoint(subgroupBits) + D
+func (gate *CosetInterpolationGate) startEvaluationValue() int {
+	return gate.startEvaluationPoint() + D
 }
 
 // Wire indices of the interpolated value.
-func wiresEvaluationValue(subgroupBits int) [2]int {
-	start := startEvaluationValue(subgroupBits)
+func (gate *CosetInterpolationGate) wiresEvaluationValue() [2]int {
+	start := gate.startEvaluationValue()
 	return [2]int{start, start + D}
 }
 
-func startIntermediates(subgroupBits int) int {
-	return startEvaluationValue(subgroupBits) + D
+func (gate *CosetInterpolationGate) startIntermediates() int {
+	return gate.startEvaluationValue() + D
 }
 
 // Wire indices of the shifted point to evaluate the interpolant at.
-func wiresShiftedEvaluationPoint(subgroupBits int, degree int) [2]int {
-	start := startIntermediates(subgroupBits) + D*2*numIntermediates(subgroupBits, degree)
+func (gate *CosetInterpolationGate) wiresShiftedEvaluationPoint() [2]int {
+	start := gate.startIntermediates() + D*2*gate.numIntermediates()
 	return [2]int{start, start + D}
 }
