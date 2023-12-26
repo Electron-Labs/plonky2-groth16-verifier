@@ -32,11 +32,10 @@ func NewBaseSumGate(id string) *BaseSumGate {
 }
 
 func (gate *BaseSumGate) EvalUnfiltered(api frontend.API, rangeChecker frontend.Rangechecker, vars EvaluationVars) []goldilocks.GoldilocksExtension2Variable {
-	numLimbs := gate.NumLimbs
-	constraints := make([]goldilocks.GoldilocksExtension2Variable, 1+numLimbs)
+	constraints := make([]goldilocks.GoldilocksExtension2Variable, 1+gate.NumLimbs)
 
 	sum := goldilocks.GetVariableArray(vars.LocalWires[WIRE_SUM])
-	limbs := GetLocalWiresFromRange(vars.LocalWires, limbs(numLimbs))
+	limbs := GetLocalWiresFromRange(vars.LocalWires, gate.limbs())
 	computedSumNoReduce := reduceWithPowers(api, rangeChecker, limbs, goldilocks.BaseTo2ExtRaw(gate.Base)) // 188 bits max
 	// assumuing computedSumNoReduce is always > sum
 	constraintNoReduce := goldilocks.SubExtNoReduce(api, computedSumNoReduce, sum)
@@ -44,7 +43,7 @@ func (gate *BaseSumGate) EvalUnfiltered(api frontend.API, rangeChecker frontend.
 		A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0], 188),
 		B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1], 188),
 	}
-	for i := 0; i < numLimbs; i++ {
+	for i := 0; i < gate.NumLimbs; i++ {
 		constraintNoReduce := goldilocks.SubExtNoReduce(api, limbs[i], goldilocks.BaseTo2ExtRaw(0))
 		for j := 1; j < gate.Base; j++ {
 			constraintNoReduce = goldilocks.MulExtNoReduce(api, constraintNoReduce, goldilocks.SubExtNoReduce(api, limbs[i], goldilocks.BaseTo2ExtRaw(j)))
@@ -57,6 +56,11 @@ func (gate *BaseSumGate) EvalUnfiltered(api frontend.API, rangeChecker frontend.
 	return constraints
 }
 
+// Returns the index of the `i`th limb wire.
+func (gate *BaseSumGate) limbs() [2]int {
+	return [2]int{START_LIMBS, START_LIMBS + gate.NumLimbs}
+}
+
 func reduceWithPowers(api frontend.API, rangeChecker frontend.Rangechecker, terms [][D]frontend.Variable, alpha [D]frontend.Variable) [D]frontend.Variable {
 	sumNoReduce := goldilocks.ZERO()
 	nTerms := len(terms)
@@ -65,9 +69,4 @@ func reduceWithPowers(api frontend.API, rangeChecker frontend.Rangechecker, term
 	}
 
 	return sumNoReduce
-}
-
-// Returns the index of the `i`th limb wire.
-func limbs(numLimbs int) [2]int {
-	return [2]int{START_LIMBS, START_LIMBS + numLimbs}
 }
