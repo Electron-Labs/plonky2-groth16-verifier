@@ -45,6 +45,55 @@ func (circuit *TestGateCircuit) Define(api frontend.API) error {
 	return nil
 }
 
+func CheckGate(fileName string, gateId string, t *testing.T) {
+	assert := test.NewAssert(t)
+
+	fileData, err := os.ReadFile(fileName)
+	if err != nil {
+		panic(fmt.Sprintln("fail to read file: ", fileName, err))
+	}
+
+	var tData TestData
+
+	err = json.Unmarshal(fileData, &tData)
+	if err != nil {
+		panic(fmt.Sprintln("fail to deserialize: ", err))
+	}
+
+	var circuit TestGateCircuit
+	circuit.Vars.PublicInputsHash = tData.Vars.PublicInputsHash.GetVariable()
+	circuit.Vars.LocalConstants = goldilocks.GetGoldilocksExtensionVariableArr(tData.Vars.LocalConstants)
+	circuit.Vars.LocalWires = goldilocks.GetGoldilocksExtensionVariableArr(tData.Vars.LocalWires)
+	circuit.Constraints = goldilocks.GetGoldilocksExtensionVariableArr(tData.Constraints)
+	circuit.GateId = gateId
+
+	r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &circuit)
+	if err != nil {
+		t.Fatal("failed to compile: ", err)
+	}
+
+	t.Log(r1cs.GetNbConstraints())
+
+	var assignment TestGateCircuit
+	assignment.Vars.PublicInputsHash = tData.Vars.PublicInputsHash.GetVariable()
+	assignment.Vars.LocalConstants = goldilocks.GetGoldilocksExtensionVariableArr(tData.Vars.LocalConstants)
+	assignment.Vars.LocalWires = goldilocks.GetGoldilocksExtensionVariableArr(tData.Vars.LocalWires)
+	assignment.Constraints = goldilocks.GetGoldilocksExtensionVariableArr(tData.Constraints)
+	assignment.GateId = gateId
+
+	witness, err := frontend.NewWitness(&assignment, ecc.BN254.ScalarField())
+	if err != nil {
+		t.Fatal("Error in witness: ", err)
+	}
+
+	err = r1cs.IsSolved(witness)
+	if err != nil {
+		t.Fatal("failed to solve: ", err)
+	}
+
+	assert.CheckCircuit(&circuit, test.WithValidAssignment(&assignment), test.WithCurves(ecc.BN254))
+}
+
 func TestArithmeticGate(t *testing.T) {
 	assert := test.NewAssert(t)
 
@@ -743,6 +792,14 @@ func TestReducingExtensionGate(t *testing.T) {
 	}
 
 	assert.CheckCircuit(&circuit, test.WithValidAssignment(&assignment), test.WithCurves(ecc.BN254))
+}
+
+func TestPoseidonMdsGate(t *testing.T) {
+	CheckGate(
+		"../../../testdata/poseidon_mds_constraints.json",
+		"PoseidonMdsGate(PhantomData<plonky2_field::goldilocks_field::GoldilocksField>)",
+		t,
+	)
 }
 
 // TODO: not working

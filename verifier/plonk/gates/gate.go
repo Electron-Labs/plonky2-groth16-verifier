@@ -92,7 +92,9 @@ func ParseGate(gate_id string) Gate {
 		return NewPoseidonGate(gate_id)
 
 	} else if strings.Contains(gate_id, "PoseidonMdsGate") {
-		panic("todo")
+
+		return NewPoseidonMdsGate(gate_id)
+
 	} else if strings.Contains(gate_id, "PublicInputGate") {
 
 		return NewPublicInputGate(gate_id)

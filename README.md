@@ -11,7 +11,7 @@ Wraps up plonky2 verifier as a groth16 circuit
     - [x] LookupTableGate
     - [x] MulExtensionGate
     - [x] NoopGate
-    - [ ] PoseidonMdsGate
+    - [x] PoseidonMdsGate
     - [x] RandomAccessGate
     - [x] ReducingGate
     - [x] ReducingExtensionGate
