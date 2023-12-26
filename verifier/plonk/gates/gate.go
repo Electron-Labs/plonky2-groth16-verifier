@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
+	algebra "github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks/extension"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
 	"github.com/consensys/gnark/frontend"
 )
@@ -15,6 +16,8 @@ const UNUSED_SELECTOR = math.MaxUint32
 type Gate interface {
 	EvalUnfiltered(api frontend.API, rangeChecker frontend.Rangechecker, vars EvaluationVars) []goldilocks.GoldilocksExtension2Variable
 }
+
+const D = goldilocks.D
 
 func EvalFiltered(
 	api frontend.API,
@@ -50,15 +53,21 @@ func ParseGate(gate_id string) Gate {
 		return NewArithmeticGate(gate_id)
 
 	} else if strings.Contains(gate_id, "ArithmeticExtensionGate") {
-		panic("todo")
+
+		return NewArithmeticExtensionGate(gate_id)
+
 	} else if strings.Contains(gate_id, "BaseSumGate") {
-		panic("todo")
+
+		return NewBaseSumGate(gate_id)
+
 	} else if strings.Contains(gate_id, "ConstantGate") {
 
 		return NewConstantGate(gate_id)
 
 	} else if strings.Contains(gate_id, "CosetInterpolationGate") {
-		panic("todo")
+
+		return NewCosetInterpolationGate(gate_id)
+
 	} else if strings.Contains(gate_id, "ExponentiationGate") {
 		panic("todo")
 	} else if strings.Contains(gate_id, "LookupGate") {
@@ -144,4 +153,23 @@ func EvaluateGateConstraints(
 		}
 	}
 	return constraints
+}
+
+func GetLocalExtAlgebra(wires []goldilocks.GoldilocksExtension2Variable, range_ [2]int) [D][D]frontend.Variable {
+	if range_[1]-range_[0] != D {
+		panic("gate::GetLocalExtAlgebra - range must have `D` elements")
+	}
+	twoWires := [D]goldilocks.GoldilocksExtension2Variable{wires[range_[0]], wires[range_[1]-1]}
+	return algebra.GetVariableArray(twoWires)
+}
+
+func GetLocalWiresFromRange(wires []goldilocks.GoldilocksExtension2Variable, range_ [2]int) [][D]frontend.Variable {
+	if range_[1] > len(wires) {
+		panic("gate::GetLocalWiresFromRange - invalid range")
+	}
+	out := make([][2]frontend.Variable, range_[1]-range_[0])
+	for i, wire := range wires[range_[0]:range_[1]] {
+		out[i] = goldilocks.GetVariableArray(wire)
+	}
+	return out
 }
