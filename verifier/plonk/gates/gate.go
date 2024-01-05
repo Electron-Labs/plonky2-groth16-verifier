@@ -111,6 +111,10 @@ func ParseGate(gate_id string) Gate {
 
 		return NewReducingExtensionGate(gate_id)
 
+	} else if strings.Contains(gate_id, "ComparisonGate") {
+
+		return NewU32ComparisonGate(gate_id)
+
 	} else {
 		panic(fmt.Sprintln("Unsupported gate:", gate_id))
 	}
