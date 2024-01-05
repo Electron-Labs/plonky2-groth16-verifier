@@ -307,6 +307,12 @@ func Flatten(in []GoldilocksExtension2Variable) []GoldilocksVariable {
 func BaseTo2ExtRaw(x frontend.Variable) [D]frontend.Variable {
 	return [D]frontend.Variable{x, 0}
 }
+func BaseTo2Ext(x GoldilocksVariable) GoldilocksExtension2Variable {
+	return GoldilocksExtension2Variable{
+		A: x,
+		B: GoldilocksVariable{Limb: 0},
+	}
+}
 
 func ZERO() [D]frontend.Variable {
 	return [D]frontend.Variable{0, 0}

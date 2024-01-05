@@ -802,6 +802,14 @@ func TestPoseidonMdsGate(t *testing.T) {
 	)
 }
 
+func TestU32ComparisonGate(t *testing.T) {
+	CheckGate(
+		"../../../testdata/u32_comparison_constraints.json",
+		"ComparisonGate { num_bits: 32, num_chunks: 16, _phantom: PhantomData<plonky2_field::goldilocks_field::GoldilocksField> }<D=2>",
+		t,
+	)
+}
+
 // TODO: not working
 // func TestPoseidonGate(t *testing.T) {
 // 	assert := test.NewAssert(t)

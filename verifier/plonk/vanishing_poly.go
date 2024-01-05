@@ -126,7 +126,7 @@ func EvalVanishingPoly(
 		alphas_ext[i].A = v
 		alphas_ext[i].B.Limb = 0
 	}
-	return ReduceWithPowersMulti(api, rangeChecker, vanishing_terms, alphas_ext)
+	return gates.ReduceWithPowersMulti(api, rangeChecker, vanishing_terms, alphas_ext)
 }
 
 func check_partial_products(
