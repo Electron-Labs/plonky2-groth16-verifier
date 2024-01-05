@@ -810,6 +810,14 @@ func TestU32ComparisonGate(t *testing.T) {
 	)
 }
 
+func TestU32AddMany(t *testing.T) {
+	CheckGate(
+		"../../../testdata/u32_add_many_constraints.json",
+		"U32AddManyGate { num_addends: 2, num_ops: 5, _phantom: PhantomData<plonky2_field::goldilocks_field::GoldilocksField> }",
+		t,
+	)
+}
+
 // TODO: not working
 // func TestPoseidonGate(t *testing.T) {
 // 	assert := test.NewAssert(t)

@@ -115,7 +115,12 @@ func ParseGate(gate_id string) Gate {
 
 		return NewU32ComparisonGate(gate_id)
 
+	} else if strings.Contains(gate_id, "U32AddManyGate") {
+
+		return NewU32AddManyGate(gate_id)
+
 	} else {
+
 		panic(fmt.Sprintln("Unsupported gate:", gate_id))
 	}
 }
