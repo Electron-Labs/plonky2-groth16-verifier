@@ -62,9 +62,10 @@ func (gate *RandomAccessGate) EvalUnfiltered(api frontend.API, rangeChecker fron
 			reconstructedIndex = goldilocks.AddExtNoReduce(api, goldilocks.AddExtNoReduce(api, reconstructedIndex, reconstructedIndex), bits[i])
 		}
 		constraintNoReduce := goldilocks.SubExtNoReduce(api, reconstructedIndex, accessIndex)
+		// 74 for tendermint circuits (bits = 6)
 		constraints[copy*nConstraintsPerCopy+gate.Bits] = goldilocks.GoldilocksExtension2Variable{
-			A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0], 70),
-			B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1], 70),
+			A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0], 74),
+			B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1], 74),
 		}
 
 		// Repeatedly fold the list, selecting the left or right item from each pair based on

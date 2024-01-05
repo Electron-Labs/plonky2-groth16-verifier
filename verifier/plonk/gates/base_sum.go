@@ -37,7 +37,7 @@ func (gate *BaseSumGate) EvalUnfiltered(api frontend.API, rangeChecker frontend.
 
 	sum := goldilocks.GetVariableArray(vars.LocalWires[WIRE_SUM])
 	limbs := GetLocalWiresFromRange(vars.LocalWires, limbs(numLimbs))
-	computedSumNoReduce := reduceWithPowers(api, rangeChecker, limbs, goldilocks.BaseTo2ExtRaw(gate.Base)) // 188 bits max
+	computedSumNoReduce := reduceWithPowers(api, rangeChecker, limbs, goldilocks.BaseTo2ExtRaw(gate.Base)) // 188 bits max for tendermint circuits (Base = 2)
 	// assumuing computedSumNoReduce is always > sum
 	constraintNoReduce := goldilocks.SubExtNoReduce(api, computedSumNoReduce, sum)
 	constraints[0] = goldilocks.GoldilocksExtension2Variable{
