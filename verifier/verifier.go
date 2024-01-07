@@ -290,7 +290,7 @@ func verifyWithChallenges(
 	num_chunks := (len(quotient_polys_zeta)-1)/chunk_size + 1
 	for i := 0; i < num_chunks; i++ {
 		chunk := quotient_polys_zeta[i*chunk_size : min((i+1)*chunk_size, len(quotient_polys_zeta))]
-		r_w_p := plonk.ReduceWithPowers(api, rangeChecker, chunk, zeta_pow_deg)
+		r_w_p := gates.ReduceWithPowers(api, rangeChecker, chunk, zeta_pow_deg)
 		rhs := goldilocks.MulExt(api, rangeChecker, z_h_zeta, r_w_p)
 		lhs := vanishing_polys_zeta[i]
 		api.AssertIsEqual(lhs.A.Limb, rhs.A.Limb)
