@@ -47,7 +47,7 @@ func EvalFiltered(
 }
 
 func ParseGate(gate_id string) Gate {
-	if strings.Contains(gate_id, "ArithmeticGate") {
+	if strings.HasPrefix(gate_id, "ArithmeticGate") {
 
 		return NewArithmeticGate(gate_id)
 
@@ -118,6 +118,10 @@ func ParseGate(gate_id string) Gate {
 	} else if strings.Contains(gate_id, "U32AddManyGate") {
 
 		return NewU32AddManyGate(gate_id)
+
+	} else if strings.HasPrefix(gate_id, "U32ArithmeticGate") {
+
+		return NewU32ArithmeticGate(gate_id)
 
 	} else {
 
