@@ -18,7 +18,8 @@ var rootCmd = &cobra.Command{
 	Long: `The following tasks are supported as part of the application :
 1. (build)Generate circuit for custom plonky2 configs requires plonky2_config.json, common_data
 2. (prove)Generate groth16 proof corresponding to a plonky2 proof with pis
-3. (verify)Verification of groth16 proof`,
+3. (verify)Verification of groth16 proof
+4. (exportSol)Exports VerifyingKey as a Solidity contract`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
