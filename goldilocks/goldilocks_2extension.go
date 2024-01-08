@@ -282,7 +282,9 @@ func SelectGoldilocksExt2Lookup2(api frontend.API, b0 frontend.Variable, b1 fron
 }
 
 func SelectGoldilocksExt2Recursive(api frontend.API, b []frontend.Variable, in []GoldilocksExtension2Variable) []GoldilocksExtension2Variable {
-	if len(in)%4 == 0 {
+	if len(in) == 1 {
+		return in
+	} else if len(in)%4 == 0 {
 		two_bits_select := make([]GoldilocksExtension2Variable, len(in)/4)
 		for i := 0; i < len(two_bits_select); i++ {
 			two_bits_select[i] = SelectGoldilocksExt2Lookup2(api, b[0], b[1], in[4*i], in[4*i+1], in[4*i+2], in[4*i+3])
