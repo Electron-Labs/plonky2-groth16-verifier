@@ -43,7 +43,9 @@ func (hashOut *HashOutVariable) Make() {
 type MerkleCapVariable []HashOutVariable
 
 func SelectHashOutRecursive(api frontend.API, b []frontend.Variable, in []HashOutVariable) []HashOutVariable {
-	if len(in)%4 == 0 {
+	if len(in) == 1 {
+		return in
+	} else if len(in)%4 == 0 {
 		two_bits_select := make([]HashOutVariable, len(in)/4)
 		for i := 0; i < len(two_bits_select); i++ {
 			two_bits_select[i] = SelectHashoutLookup2(api, b[0], b[1], in[4*i], in[4*i+1], in[4*i+2], in[4*i+3])
