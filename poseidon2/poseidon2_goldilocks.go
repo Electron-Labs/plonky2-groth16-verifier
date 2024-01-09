@@ -52,7 +52,6 @@ func MatmulExternal(api frontend.API, rangeChecker frontend.Rangechecker, inputs
 	// Compute store = [M4, M4, M4] * x
 	t4 := WIDTH / 4
 	storedNoReduce := make([]frontend.Variable, 4)
-	stored := make([]goldilocks.GoldilocksVariable, 4)
 
 	for l := 0; l < 4; l++ {
 		storedNoReduce[l] = inputs[l].Limb
@@ -60,13 +59,14 @@ func MatmulExternal(api frontend.API, rangeChecker frontend.Rangechecker, inputs
 			storedNoReduce[l] = api.Add(storedNoReduce[l], inputs[4*j+l].Limb)
 		}
 	}
-	for l := 0; l < 4; l++ {
-		stored[l] = goldilocks.Reduce(api, rangeChecker, storedNoReduce[l], 65)
-	}
 
 	// Compute store + circ[M4,0,0] * X
+	inputsNoReduce := make([]frontend.Variable, len(inputs))
 	for i := 0; i < len(inputs); i++ {
-		inputs[i] = goldilocks.Add(api, rangeChecker, inputs[i], stored[i%4])
+		inputsNoReduce[i] = api.Add(inputs[i].Limb, storedNoReduce[i%4])
+	}
+	for l := 0; l < len(inputs); l++ {
+		inputs[l] = goldilocks.Reduce(api, rangeChecker, inputsNoReduce[l], 66)
 	}
 }
 
