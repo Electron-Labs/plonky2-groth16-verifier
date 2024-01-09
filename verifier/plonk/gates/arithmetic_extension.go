@@ -32,47 +32,43 @@ func (gate *ArithmeticExtensionGate) EvalUnfiltered(api frontend.API, rangeCheck
 	constraints := make([]goldilocks.GoldilocksExtension2Variable, gate.NumOps*D)
 	for i := 0; i < gate.NumOps; i++ {
 		// wires
-		multiplicand0 := GetLocalExtAlgebra(vars.LocalWires, gate.Wires_ithMultiplicand0(i))
-		multiplicand1 := GetLocalExtAlgebra(vars.LocalWires, gate.Wires_ithMultiplicand1(i))
-		addend := GetLocalExtAlgebra(vars.LocalWires, gate.Wires_ithAddend(i))
-		output := GetLocalExtAlgebra(vars.LocalWires, gate.Wires_ithOutput(i))
+		multiplicand0 := GetLocalExtAlgebra(vars.LocalWires, gate.wires_ithMultiplicand0(i))
+		multiplicand1 := GetLocalExtAlgebra(vars.LocalWires, gate.wires_ithMultiplicand1(i))
+		addend := GetLocalExtAlgebra(vars.LocalWires, gate.wires_ithAddend(i))
+		output := GetLocalExtAlgebra(vars.LocalWires, gate.wires_ithOutput(i))
 
 		computedOutputNoReduce := algebra.MulNoReduce(api, multiplicand0, multiplicand1)
 		computedOutputNoReduce = algebra.ScalarMulNoReduce(api, computedOutputNoReduce, const0)
 		computedOutputNoReduce = algebra.AddNoReduce(api, computedOutputNoReduce, algebra.ScalarMulNoReduce(api, addend, const1))
-		// assumming computedOutputNoReduce is always greator than output
-		constraintNoReduce := [D][D]frontend.Variable{
-			{api.Sub(computedOutputNoReduce[0][0], output[0][0]), api.Sub(computedOutputNoReduce[0][1], output[0][1])},
-			{api.Sub(computedOutputNoReduce[1][0], output[1][0]), api.Sub(computedOutputNoReduce[1][1], output[1][1])},
-		}
+		constraintNoReduce := algebra.SubNoReduce(api, computedOutputNoReduce, output)
 
 		constraints[i*D] = goldilocks.NegExt(api,
 			goldilocks.GoldilocksExtension2Variable{
-				A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0][0], 202),
-				B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0][1], 202)},
+				A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0][0], 201),
+				B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0][1], 200)},
 		)
 
 		constraints[i*D+1] = goldilocks.NegExt(api,
 			goldilocks.GoldilocksExtension2Variable{
 				A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1][0], 199),
-				B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1][1], 199)},
+				B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1][1], 198)},
 		)
 	}
 	return constraints
 }
 
-func (gate *ArithmeticExtensionGate) Wires_ithMultiplicand0(i int) [2]int {
+func (gate *ArithmeticExtensionGate) wires_ithMultiplicand0(i int) [2]int {
 	return [2]int{4 * D * i, 4*D*i + D}
 }
 
-func (gate *ArithmeticExtensionGate) Wires_ithMultiplicand1(i int) [2]int {
+func (gate *ArithmeticExtensionGate) wires_ithMultiplicand1(i int) [2]int {
 	return [2]int{4*D*i + D, 4*D*i + 2*D}
 }
 
-func (gate *ArithmeticExtensionGate) Wires_ithAddend(i int) [2]int {
+func (gate *ArithmeticExtensionGate) wires_ithAddend(i int) [2]int {
 	return [2]int{4*D*i + 2*D, 4*D*i + 3*D}
 }
 
-func (gate *ArithmeticExtensionGate) Wires_ithOutput(i int) [2]int {
+func (gate *ArithmeticExtensionGate) wires_ithOutput(i int) [2]int {
 	return [2]int{4*D*i + 3*D, 4*D*i + 4*D}
 }

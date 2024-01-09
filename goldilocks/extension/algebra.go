@@ -12,6 +12,7 @@ type GoldilocksExtension2Algebra2Variable struct {
 	B goldilocks.GoldilocksExtension2Variable
 }
 
+// results in [[134, 132], [132, 130]] bits when all input is in goldilocks
 func MulNoReduce(
 	api frontend.API,
 	in1 [D][D]frontend.Variable,
@@ -52,12 +53,11 @@ func AddNoReduce(api frontend.API, in1 [D][D]frontend.Variable, in2 [D][D]fronte
 	return out
 }
 
-// no modulus is added
 func SubNoReduce(api frontend.API, in1 [D][D]frontend.Variable, in2 [D][D]frontend.Variable) [D][D]frontend.Variable {
 	out := [D][D]frontend.Variable{{in1[0][0], in1[0][1]}, {in1[1][0], in1[1][1]}}
 	for i := 0; i < D; i++ {
 		for j := 0; j < D; j++ {
-			out[i][j] = api.Sub(in1[i][j], in2[i][j])
+			out[i][j] = api.Add(api.Sub(in1[i][j], in2[i][j]), goldilocks.MODULUS)
 		}
 	}
 	return out
