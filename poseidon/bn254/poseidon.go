@@ -1,4 +1,4 @@
-package poseidon
+package poseidonBn254
 
 import (
 	"github.com/consensys/gnark/frontend"

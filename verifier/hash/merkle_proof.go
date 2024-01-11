@@ -2,7 +2,7 @@ package hash
 
 import (
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
-	poseidon "github.com/Electron-Labs/plonky2-groth16-verifier/poseidon/goldilocks"
+	poseidonGoldilocks "github.com/Electron-Labs/plonky2-groth16-verifier/poseidon/goldilocks"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
 	"github.com/consensys/gnark/frontend"
 )
@@ -15,7 +15,7 @@ func VerifyMerkleProofToCap(
 	merkle_cap types.MerkleCapVariable,
 	proof types.MerkleProofVariable,
 ) {
-	poseidon_goldilocks := &poseidon.PoseidonGoldilocks{}
+	poseidon_goldilocks := &poseidonGoldilocks.PoseidonGoldilocks{}
 	hasher := NewHasher(api, rangeChecker, poseidon_goldilocks)
 	current_digest := hasher.HashOrNoop(leaf_data)
 	for i, sibling_digest := range proof.Siblings {
