@@ -2,13 +2,13 @@ package verifier
 
 import (
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
-	poseidon "github.com/Electron-Labs/plonky2-groth16-verifier/poseidon/goldilocks"
+	poseidonGoldilocks "github.com/Electron-Labs/plonky2-groth16-verifier/poseidon/goldilocks"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
 	"github.com/consensys/gnark/frontend"
 )
 
 type Challenger struct {
-	spongeState  poseidon.Permutation
+	spongeState  poseidonGoldilocks.Permutation
 	inputBuffer  []goldilocks.GoldilocksVariable
 	inputIdx     int
 	outputBuffer []goldilocks.GoldilocksVariable
@@ -16,10 +16,10 @@ type Challenger struct {
 }
 
 func NewChallenger(api frontend.API, rangeChecker frontend.Rangechecker) Challenger {
-	poseidon_goldilocks := &poseidon.PoseidonGoldilocks{}
-	permutation := poseidon.NewPermutation(api, rangeChecker, poseidon_goldilocks)
-	inputBuffer := make([]goldilocks.GoldilocksVariable, poseidon.SPONGE_RATE)
-	outputBuffer := make([]goldilocks.GoldilocksVariable, poseidon.SPONGE_RATE)
+	poseidon_goldilocks := &poseidonGoldilocks.PoseidonGoldilocks{}
+	permutation := poseidonGoldilocks.NewPermutation(api, rangeChecker, poseidon_goldilocks)
+	inputBuffer := make([]goldilocks.GoldilocksVariable, poseidonGoldilocks.SPONGE_RATE)
+	outputBuffer := make([]goldilocks.GoldilocksVariable, poseidonGoldilocks.SPONGE_RATE)
 	return Challenger{
 		spongeState:  permutation,
 		inputBuffer:  inputBuffer,
@@ -32,7 +32,7 @@ func NewChallenger(api frontend.API, rangeChecker frontend.Rangechecker) Challen
 func (challenger *Challenger) ObserveElement(elm goldilocks.GoldilocksVariable) {
 	challenger.inputBuffer[challenger.inputIdx] = elm
 	challenger.inputIdx += 1
-	if challenger.inputIdx == poseidon.SPONGE_RATE {
+	if challenger.inputIdx == poseidonGoldilocks.SPONGE_RATE {
 		challenger.duplex()
 	}
 }
@@ -104,5 +104,5 @@ func (challenger *Challenger) duplex() {
 		challenger.outputBuffer[i] = v
 	}
 	challenger.inputIdx = 0
-	challenger.outputIdx = poseidon.SPONGE_RATE
+	challenger.outputIdx = poseidonGoldilocks.SPONGE_RATE
 }

@@ -4,7 +4,7 @@ import (
 	"math/bits"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
-	poseidon "github.com/Electron-Labs/plonky2-groth16-verifier/poseidon/goldilocks"
+	poseidonGoldilocks "github.com/Electron-Labs/plonky2-groth16-verifier/poseidon/goldilocks"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/fri"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/hash"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/plonk"
@@ -157,7 +157,7 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 }
 
 func hashPublicInputs(api frontend.API, rangeChecker frontend.Rangechecker, publicInputs types.PublicInputsVariable) types.HashOutVariable {
-	poseidon_goldilocks := &poseidon.PoseidonGoldilocks{}
+	poseidon_goldilocks := &poseidonGoldilocks.PoseidonGoldilocks{}
 	hasher := hash.NewHasher(api, rangeChecker, poseidon_goldilocks)
 	return hasher.HashNoPad(publicInputs)
 }

@@ -1,4 +1,4 @@
-package poseidon
+package poseidonGoldilocks
 
 import (
 	"math/big"
