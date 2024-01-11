@@ -7,7 +7,7 @@ import (
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
 	algebra "github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks/extension"
-	"github.com/Electron-Labs/plonky2-groth16-verifier/poseidon"
+	poseidon "github.com/Electron-Labs/plonky2-groth16-verifier/poseidon/goldilocks"
 	"github.com/consensys/gnark/frontend"
 )
 

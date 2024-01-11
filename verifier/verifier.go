@@ -4,7 +4,7 @@ import (
 	"math/bits"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
-	"github.com/Electron-Labs/plonky2-groth16-verifier/poseidon"
+	poseidon "github.com/Electron-Labs/plonky2-groth16-verifier/poseidon/goldilocks"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/fri"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/hash"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/plonk"
