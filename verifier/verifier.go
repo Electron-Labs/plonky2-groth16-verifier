@@ -156,9 +156,9 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 	return nil
 }
 
-func hashPublicInputs(api frontend.API, rangeChecker frontend.Rangechecker, publicInputs types.PublicInputsVariable) types.HashOutVariable {
+func hashPublicInputs(api frontend.API, rangeChecker frontend.Rangechecker, publicInputs types.PublicInputsVariable) types.PoseidonGoldilocksHashOut {
 	poseidon_goldilocks := &poseidonGoldilocks.PoseidonGoldilocks{}
-	hasher := hash.NewHasher(api, rangeChecker, poseidon_goldilocks)
+	hasher := hash.NewPoseidonGoldilocksHasher(api, rangeChecker, poseidon_goldilocks)
 	return hasher.HashNoPad(publicInputs)
 }
 
@@ -191,7 +191,7 @@ func friChallenges(api frontend.API, rangeChecker frontend.Rangechecker, challen
 	return friChallenges
 }
 
-func getChallenges(api frontend.API, rangeChecker frontend.Rangechecker, proof types.ProofVariable, publicInputHash types.HashOutVariable, circuitDigest types.HashOutVariable) types.ProofChallengesVariable {
+func getChallenges(api frontend.API, rangeChecker frontend.Rangechecker, proof types.ProofVariable, publicInputHash types.PoseidonGoldilocksHashOut, circuitDigest types.PoseidonGoldilocksHashOut) types.ProofChallengesVariable {
 	var challenges types.ProofChallengesVariable
 	challenger := NewChallenger(api, rangeChecker)
 	hasLookup := len(proof.Openings.LookupZs) != 0
@@ -241,7 +241,7 @@ func verifyWithChallenges(
 	api frontend.API,
 	rangeChecker frontend.Rangechecker,
 	proof types.ProofVariable,
-	public_inputs_hash types.HashOutVariable,
+	public_inputs_hash types.PoseidonGoldilocksHashOut,
 	challenges types.ProofChallengesVariable,
 	verifier_data types.VerifierOnlyVariable,
 	common_data types.CommonData,

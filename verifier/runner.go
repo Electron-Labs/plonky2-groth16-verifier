@@ -61,7 +61,7 @@ func (circuit *Runner) Make(constants CircuitConstants, commonData types.CommonD
 		circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs = make([]types.EvalProofVariable, constants.NUM_INITIAL_EVAL_PROOFS)
 		for j := range circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs {
 			circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].X = make([]goldilocks.GoldilocksVariable, num_evals[j])
-			circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings = make([]types.HashOutVariable, constants.INITIAL_EVAL_PROOF_SIBLINGS)
+			circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings = make([]types.PoseidonGoldilocksHashOut, constants.INITIAL_EVAL_PROOF_SIBLINGS)
 			for k := range circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings {
 				circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings[k].Make()
 			}
@@ -70,7 +70,7 @@ func (circuit *Runner) Make(constants CircuitConstants, commonData types.CommonD
 		circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps = make([]types.FriQueryStepVariable, constants.NUM_STEPS)
 		for j := range circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps {
 			circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps[j].Evals = make([]goldilocks.GoldilocksExtension2Variable, constants.LEVEL_EVALS[j])
-			circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps[j].MerkleProof.Siblings = make([]types.HashOutVariable, constants.LEVEL_SIBLINGS[j])
+			circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps[j].MerkleProof.Siblings = make([]types.PoseidonGoldilocksHashOut, constants.LEVEL_SIBLINGS[j])
 			for k := range circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps[j].MerkleProof.Siblings {
 				circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps[j].MerkleProof.Siblings[k].Make()
 			}

@@ -54,7 +54,7 @@ func (challenger *Challenger) ObserveExtensionElements(elms []goldilocks.Goldilo
 	}
 }
 
-func (challenger *Challenger) ObserveHash(hash types.HashOutVariable) {
+func (challenger *Challenger) ObserveHash(hash types.PoseidonGoldilocksHashOut) {
 	for _, elm := range hash.HashOut {
 		challenger.ObserveElement(elm)
 	}

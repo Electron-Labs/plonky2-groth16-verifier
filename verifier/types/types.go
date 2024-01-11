@@ -10,8 +10,8 @@ type HashOut struct {
 	HashOut []uint64 `json:"elements"`
 }
 
-func (hashout *HashOut) GetVariable() HashOutVariable {
-	var hashOutVariable HashOutVariable
+func (hashout *HashOut) GetVariable() PoseidonGoldilocksHashOut {
+	var hashOutVariable PoseidonGoldilocksHashOut
 	hashOutVariable.HashOut = goldilocks.GetGoldilocksVariableArr(hashout.HashOut)
 
 	return hashOutVariable

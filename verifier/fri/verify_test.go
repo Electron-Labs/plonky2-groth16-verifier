@@ -83,7 +83,7 @@ func (circuit *VerifyFriTest) Make(proof types.ProofVariable, fri_challenges typ
 		circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs = make([]types.EvalProofVariable, len(proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs))
 		for j := range circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs {
 			circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].X = make([]goldilocks.GoldilocksVariable, len(proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].X))
-			circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings = make([]types.HashOutVariable, len(proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings))
+			circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings = make([]types.PoseidonGoldilocksHashOut, len(proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings))
 			for k := range circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings {
 				circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings[k].Make()
 			}
@@ -92,7 +92,7 @@ func (circuit *VerifyFriTest) Make(proof types.ProofVariable, fri_challenges typ
 		circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps = make([]types.FriQueryStepVariable, len(proof.OpeningProof.QueryRoundProofs[i].Steps))
 		for j := range circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps {
 			circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps[j].Evals = make([]goldilocks.GoldilocksExtension2Variable, len(proof.OpeningProof.QueryRoundProofs[i].Steps[j].Evals))
-			circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps[j].MerkleProof.Siblings = make([]types.HashOutVariable, len(proof.OpeningProof.QueryRoundProofs[i].Steps[j].MerkleProof.Siblings))
+			circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps[j].MerkleProof.Siblings = make([]types.PoseidonGoldilocksHashOut, len(proof.OpeningProof.QueryRoundProofs[i].Steps[j].MerkleProof.Siblings))
 			for k := range circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps[j].MerkleProof.Siblings {
 				circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps[j].MerkleProof.Siblings[k].Make()
 			}

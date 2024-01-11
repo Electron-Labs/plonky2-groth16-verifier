@@ -3,6 +3,7 @@ package goldilocks
 import (
 	"math"
 	"math/big"
+	"slices"
 
 	"github.com/consensys/gnark/constraint/solver"
 	"github.com/consensys/gnark/frontend"
@@ -236,4 +237,13 @@ func TwoAdicSubgroup(api frontend.API, rangeChecker frontend.Rangechecker, nLog 
 		powers[i] = Mul(api, rangeChecker, powers[i-1], generator)
 	}
 	return powers
+}
+
+func GetBytesLe(api frontend.API, elm GoldilocksVariable) []byte {
+	z, _ := api.Compiler().ConstantValue(elm.Limb)
+	bytes := make([]byte, 8)
+	z.FillBytes(bytes)
+
+	slices.Reverse(bytes)
+	return bytes
 }

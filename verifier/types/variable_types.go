@@ -5,60 +5,65 @@ import (
 	"github.com/consensys/gnark/frontend"
 )
 
-const HASH_OUT = 4
+const POSEIDON_Bn254_HASH_OUT = 1
+const POSEIDON_GOLDILOCKS_HASH_OUT = 4
 const SALT_SIZE = 4
 
-type HashOutVariable struct {
+type PoseidonGoldilocksHashOut struct {
 	HashOut []goldilocks.GoldilocksVariable
 }
 
-func SelectHashOut(api frontend.API, b frontend.Variable, in1 HashOutVariable, in2 HashOutVariable) HashOutVariable {
-	var out HashOutVariable
-	out.HashOut = make([]goldilocks.GoldilocksVariable, HASH_OUT)
-	for i := 0; i < HASH_OUT; i++ {
+type PoseidonBn254HashOut struct {
+	HashOut frontend.Variable
+}
+
+func SelectHashOut(api frontend.API, b frontend.Variable, in1 PoseidonGoldilocksHashOut, in2 PoseidonGoldilocksHashOut) PoseidonGoldilocksHashOut {
+	var out PoseidonGoldilocksHashOut
+	out.HashOut = make([]goldilocks.GoldilocksVariable, POSEIDON_GOLDILOCKS_HASH_OUT)
+	for i := 0; i < POSEIDON_GOLDILOCKS_HASH_OUT; i++ {
 		out.HashOut[i].Limb = api.Select(b, in1.HashOut[i].Limb, in2.HashOut[i].Limb)
 	}
 	return out
 }
 
-func SelectHashoutLookup2(api frontend.API, b0 frontend.Variable, b1 frontend.Variable, in0 HashOutVariable, in1 HashOutVariable, in2 HashOutVariable, in3 HashOutVariable) HashOutVariable {
-	var out HashOutVariable
-	out.HashOut = make([]goldilocks.GoldilocksVariable, HASH_OUT)
-	for i := 0; i < HASH_OUT; i++ {
+func SelectHashoutLookup2(api frontend.API, b0 frontend.Variable, b1 frontend.Variable, in0 PoseidonGoldilocksHashOut, in1 PoseidonGoldilocksHashOut, in2 PoseidonGoldilocksHashOut, in3 PoseidonGoldilocksHashOut) PoseidonGoldilocksHashOut {
+	var out PoseidonGoldilocksHashOut
+	out.HashOut = make([]goldilocks.GoldilocksVariable, POSEIDON_GOLDILOCKS_HASH_OUT)
+	for i := 0; i < POSEIDON_GOLDILOCKS_HASH_OUT; i++ {
 		out.HashOut[i].Limb = api.Lookup2(b0, b1, in0.HashOut[i].Limb, in1.HashOut[i].Limb, in2.HashOut[i].Limb, in3.HashOut[i].Limb)
 	}
 	return out
 }
 
-func (hashOut *HashOutVariable) ApplyRangeCheck(rangeCheck func(frontend.API, frontend.Rangechecker, frontend.Variable), api frontend.API, rangeChecker frontend.Rangechecker) {
+func (hashOut *PoseidonGoldilocksHashOut) ApplyRangeCheck(rangeCheck func(frontend.API, frontend.Rangechecker, frontend.Variable), api frontend.API, rangeChecker frontend.Rangechecker) {
 	for _, h := range hashOut.HashOut {
 		rangeCheck(api, rangeChecker, h.Limb)
 	}
 }
 
-func (hashOut *HashOutVariable) Make() {
-	hashOut.HashOut = make([]goldilocks.GoldilocksVariable, HASH_OUT)
+func (hashOut *PoseidonGoldilocksHashOut) Make() {
+	hashOut.HashOut = make([]goldilocks.GoldilocksVariable, POSEIDON_GOLDILOCKS_HASH_OUT)
 }
 
-type MerkleCapVariable []HashOutVariable
+type MerkleCapVariable []PoseidonGoldilocksHashOut
 
-func SelectHashOutRecursive(api frontend.API, b []frontend.Variable, in []HashOutVariable) []HashOutVariable {
+func SelectHashOutRecursive(api frontend.API, b []frontend.Variable, in []PoseidonGoldilocksHashOut) []PoseidonGoldilocksHashOut {
 	if len(in) == 1 {
 		return in
 	} else if len(in)%4 == 0 {
-		two_bits_select := make([]HashOutVariable, len(in)/4)
+		two_bits_select := make([]PoseidonGoldilocksHashOut, len(in)/4)
 		for i := 0; i < len(two_bits_select); i++ {
 			two_bits_select[i] = SelectHashoutLookup2(api, b[0], b[1], in[4*i], in[4*i+1], in[4*i+2], in[4*i+3])
 		}
 		return SelectHashOutRecursive(api, b[2:], two_bits_select)
 	} else {
 		// <4 power means len(in) == 2 only
-		return []HashOutVariable{SelectHashOut(api, b[0], in[1], in[0])}
+		return []PoseidonGoldilocksHashOut{SelectHashOut(api, b[0], in[1], in[0])}
 	}
 }
 
 type MerkleProofVariable struct {
-	Siblings []HashOutVariable
+	Siblings []PoseidonGoldilocksHashOut
 }
 
 type EvalProofVariable struct {
@@ -118,7 +123,7 @@ type ProofVariable struct {
 
 type VerifierOnlyVariable struct {
 	ConstantSigmasCap MerkleCapVariable
-	CircuitDigest     HashOutVariable
+	CircuitDigest     PoseidonGoldilocksHashOut
 }
 
 type PublicInputsVariable []goldilocks.GoldilocksVariable

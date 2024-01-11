@@ -61,7 +61,7 @@ func TestVerifyMerkleProof(t *testing.T) {
 	for i, v := range merkle_cap {
 		circuit.MerkleCap[i].HashOut = goldilocks.GetGoldilocksVariableArr(v)
 	}
-	circuit.Proof.Siblings = make([]types.HashOutVariable, len(merkle_proof))
+	circuit.Proof.Siblings = make([]types.PoseidonGoldilocksHashOut, len(merkle_proof))
 	for i, v := range merkle_proof {
 		circuit.Proof.Siblings[i].HashOut = goldilocks.GetGoldilocksVariableArr(v)
 	}
@@ -79,7 +79,7 @@ func TestVerifyMerkleProof(t *testing.T) {
 	for i, v := range merkle_cap {
 		assignment.MerkleCap[i].HashOut = goldilocks.GetGoldilocksVariableArr(v)
 	}
-	assignment.Proof.Siblings = make([]types.HashOutVariable, len(merkle_proof))
+	assignment.Proof.Siblings = make([]types.PoseidonGoldilocksHashOut, len(merkle_proof))
 	for i, v := range merkle_proof {
 		assignment.Proof.Siblings[i].HashOut = goldilocks.GetGoldilocksVariableArr(v)
 	}

@@ -7,21 +7,21 @@ import (
 	"github.com/consensys/gnark/frontend"
 )
 
-type SpongeHasher struct {
+type PoseidonGoldilocksHasher struct {
 	api          frontend.API
 	rangeChecker frontend.Rangechecker
 	poseidon     poseidonGoldilocks.Poseidon
 }
 
-func NewHasher(api frontend.API, rangeChecker frontend.Rangechecker, poseidon poseidonGoldilocks.Poseidon) SpongeHasher {
-	return SpongeHasher{
+func NewPoseidonGoldilocksHasher(api frontend.API, rangeChecker frontend.Rangechecker, poseidon poseidonGoldilocks.Poseidon) PoseidonGoldilocksHasher {
+	return PoseidonGoldilocksHasher{
 		api:          api,
 		rangeChecker: rangeChecker,
 		poseidon:     poseidon,
 	}
 }
 
-func (hasher *SpongeHasher) HashNoPad(inputs []goldilocks.GoldilocksVariable) types.HashOutVariable {
+func (hasher *PoseidonGoldilocksHasher) HashNoPad(inputs []goldilocks.GoldilocksVariable) types.PoseidonGoldilocksHashOut {
 	permutation := poseidonGoldilocks.NewPermutation(hasher.api, hasher.rangeChecker, hasher.poseidon)
 
 	numInputs := len(inputs)
@@ -33,10 +33,10 @@ func (hasher *SpongeHasher) HashNoPad(inputs []goldilocks.GoldilocksVariable) ty
 		permutation.Permute()
 	}
 
-	var hash types.HashOutVariable
-	hash.HashOut = make([]goldilocks.GoldilocksVariable, types.HASH_OUT)
+	var hash types.PoseidonGoldilocksHashOut
+	hash.HashOut = make([]goldilocks.GoldilocksVariable, types.POSEIDON_GOLDILOCKS_HASH_OUT)
 	for i, v := range permutation.Squeeze() {
-		if i >= types.HASH_OUT {
+		if i >= types.POSEIDON_GOLDILOCKS_HASH_OUT {
 			break
 		}
 		hash.HashOut[i] = v
@@ -45,11 +45,11 @@ func (hasher *SpongeHasher) HashNoPad(inputs []goldilocks.GoldilocksVariable) ty
 	return hash
 }
 
-func (hasher *SpongeHasher) HashOrNoop(inputs []goldilocks.GoldilocksVariable) types.HashOutVariable {
-	var hash types.HashOutVariable
-	hash.HashOut = make([]goldilocks.GoldilocksVariable, types.HASH_OUT)
-	if len(inputs) <= types.HASH_OUT {
-		for i := 0; i < types.HASH_OUT; i++ {
+func (hasher *PoseidonGoldilocksHasher) HashOrNoop(inputs []goldilocks.GoldilocksVariable) types.PoseidonGoldilocksHashOut {
+	var hash types.PoseidonGoldilocksHashOut
+	hash.HashOut = make([]goldilocks.GoldilocksVariable, types.POSEIDON_GOLDILOCKS_HASH_OUT)
+	if len(inputs) <= types.POSEIDON_GOLDILOCKS_HASH_OUT {
+		for i := 0; i < types.POSEIDON_GOLDILOCKS_HASH_OUT; i++ {
 			if i < len(inputs) {
 				hash.HashOut[i] = inputs[i]
 
@@ -63,6 +63,6 @@ func (hasher *SpongeHasher) HashOrNoop(inputs []goldilocks.GoldilocksVariable) t
 	return hash
 }
 
-func (hasher *SpongeHasher) TwoToOne(left types.HashOutVariable, right types.HashOutVariable) types.HashOutVariable {
+func (hasher *PoseidonGoldilocksHasher) TwoToOne(left types.PoseidonGoldilocksHashOut, right types.PoseidonGoldilocksHashOut) types.PoseidonGoldilocksHashOut {
 	return hasher.HashNoPad(append(left.HashOut, right.HashOut...))
 }
