@@ -9,7 +9,7 @@ import (
 type EvaluationVars struct {
 	LocalConstants   []goldilocks.GoldilocksExtension2Variable
 	LocalWires       []goldilocks.GoldilocksExtension2Variable
-	PublicInputsHash types.HashOutVariable
+	PublicInputsHash types.PoseidonGoldilocksHashOut
 }
 
 func (vars *EvaluationVars) RemovePrefix(num_selectors int) {

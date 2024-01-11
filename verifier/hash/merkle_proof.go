@@ -16,7 +16,7 @@ func VerifyMerkleProofToCap(
 	proof types.MerkleProofVariable,
 ) {
 	poseidon_goldilocks := &poseidonGoldilocks.PoseidonGoldilocks{}
-	hasher := NewHasher(api, rangeChecker, poseidon_goldilocks)
+	hasher := NewPoseidonGoldilocksHasher(api, rangeChecker, poseidon_goldilocks)
 	current_digest := hasher.HashOrNoop(leaf_data)
 	for i, sibling_digest := range proof.Siblings {
 		bit := leaf_index_bits[i]
@@ -34,13 +34,13 @@ func VerifyMerkleProofToCap(
 		)
 		current_digest = hasher.TwoToOne(left, right)
 	}
-	var cap_hash types.HashOutVariable
+	var cap_hash types.PoseidonGoldilocksHashOut
 	if len(merkle_cap) == 1 {
 		cap_hash = merkle_cap[0]
 	} else {
 		cap_hash = types.SelectHashOutRecursive(api, leaf_index_bits[len(proof.Siblings):], merkle_cap)[0]
 	}
-	for i := 0; i < types.HASH_OUT; i++ {
+	for i := 0; i < types.POSEIDON_GOLDILOCKS_HASH_OUT; i++ {
 		api.AssertIsEqual(current_digest.HashOut[i].Limb, cap_hash.HashOut[i].Limb)
 	}
 }
