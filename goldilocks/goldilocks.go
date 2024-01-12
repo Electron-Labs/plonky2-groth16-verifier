@@ -240,6 +240,7 @@ func TwoAdicSubgroup(api frontend.API, rangeChecker frontend.Rangechecker, nLog 
 }
 
 func GetBytesLe(api frontend.API, elm GoldilocksVariable) []byte {
+	// TODO: handle when success is false
 	z, _ := api.Compiler().ConstantValue(elm.Limb)
 	bytes := make([]byte, 8)
 	z.FillBytes(bytes)

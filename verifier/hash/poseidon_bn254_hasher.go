@@ -1,7 +1,7 @@
 package hash
 
 import (
-	"slices"
+	"math/big"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
 	poseidonBn254 "github.com/Electron-Labs/plonky2-groth16-verifier/poseidon/bn254"
@@ -12,21 +12,27 @@ import (
 const GOLDILOCKS_ELEMENTS = 3
 
 type PoseidonBn254Hasher struct {
-	api          frontend.API
-	rangeChecker frontend.Rangechecker
-	poseidon     poseidonBn254.Poseidon
+	api      frontend.API
+	poseidon poseidonBn254.Poseidon
 }
 
-func NewPoseidonBn254Hasher(api frontend.API, rangeChecker frontend.Rangechecker, poseidon poseidonBn254.Poseidon) PoseidonBn254Hasher {
+func NewPoseidonBn254Hasher(api frontend.API, poseidon poseidonBn254.Poseidon) PoseidonBn254Hasher {
 	return PoseidonBn254Hasher{
-		api:          api,
-		rangeChecker: rangeChecker,
-		poseidon:     poseidon,
+		api:      api,
+		poseidon: poseidon,
 	}
+}
+
+func getBigTen64() *big.Int {
+	bigTen63 := new(big.Int).SetUint64(1 << 63)
+	bigTen := new(big.Int).SetUint64(1 << 1)
+	return new(big.Int).Mul(bigTen63, bigTen)
 }
 
 func (hasher *PoseidonBn254Hasher) HashNoPad(api frontend.API, inputs []goldilocks.GoldilocksVariable) types.PoseidonBn254HashOut {
 	permutation := poseidonBn254.NewPermutation(hasher.api, hasher.poseidon)
+
+	bigTen64 := getBigTen64()
 
 	for i := 0; i < len(inputs); i += poseidonBn254.RATE * 3 {
 		end_i := min(len(inputs), i+poseidonBn254.RATE*3)
@@ -36,22 +42,12 @@ func (hasher *PoseidonBn254Hasher) HashNoPad(api frontend.API, inputs []goldiloc
 			end_j := min(len(rateChunk), j+3)
 			bn254Chunk := rateChunk[j:end_j]
 
-			bytesLe := make([]byte, 32)
-			for k := 0; k < 3; k++ {
-				copy(bytesLe[k*8:(k+1)*8], goldilocks.GetBytesLe(api, bn254Chunk[k]))
+			stateBn254 := frontend.Variable(0)
+			var k int64
+			for k = 0; k < int64(len(bn254Chunk)); k++ {
+				stateBn254 = api.MulAcc(stateBn254, bn254Chunk[k].Limb, new(big.Int).Exp(bigTen64, new(big.Int).SetInt64(k), nil))
 			}
 
-			for n := 0; n < 8; n++ {
-				bytesLe[24+n] = 0
-			}
-
-			// get `bytesLe` in big endian
-			bytesBe := make([]byte, 32)
-			copy(bytesBe, bytesLe)
-			slices.Reverse(bytesBe)
-
-			stateBigInt := api.Compiler().Field().SetBytes(bytesBe)
-			stateBn254 := frontend.Variable(stateBigInt)
 			permutation.Set(j/3+1, stateBn254)
 		}
 		permutation.Permute()
@@ -62,22 +58,12 @@ func (hasher *PoseidonBn254Hasher) HashNoPad(api frontend.API, inputs []goldiloc
 
 func (hasher *PoseidonBn254Hasher) HashOrNoop(api frontend.API, inputs []goldilocks.GoldilocksVariable) types.PoseidonBn254HashOut {
 	if len(inputs) <= GOLDILOCKS_ELEMENTS {
-		inputsBytes := make([]byte, 32)
-		for i := 0; i < len(inputs); i++ {
-			bytesLe := goldilocks.GetBytesLe(api, inputs[i])
-			copy(inputsBytes[i*8:(i+1)*8], bytesLe)
+		bigTen64 := getBigTen64()
+		hashBn254 := frontend.Variable(0)
+		var i int64
+		for i = 0; i < int64(len(inputs)); i++ {
+			hashBn254 = api.MulAcc(hashBn254, inputs[i].Limb, new(big.Int).Exp(bigTen64, new(big.Int).SetInt64(i), nil))
 		}
-
-		for i := len(inputs) * 8; i < 32; i++ {
-			inputsBytes[i] = 0
-		}
-
-		// get `inputsBytes` in big endian
-		inputsBytesBe := make([]byte, 32)
-		copy(inputsBytesBe, inputsBytes)
-		slices.Reverse(inputsBytesBe)
-
-		hashBn254 := api.Compiler().Field().SetBytes(inputsBytesBe)
 		return types.PoseidonBn254HashOut{HashOut: hashBn254}
 	} else {
 		return hasher.HashNoPad(api, inputs)
@@ -88,9 +74,9 @@ func (hasher *PoseidonBn254Hasher) TwoToOne(api frontend.API, left types.Poseido
 	permutation := poseidonBn254.NewPermutation(hasher.api, hasher.poseidon)
 
 	permutation.Set(0, frontend.Variable(0))
-	permutation.Set(2, frontend.Variable(0))
-	permutation.Set(1, left.HashOut)
-	permutation.Set(1, right.HashOut)
+	permutation.Set(1, frontend.Variable(0))
+	permutation.Set(2, left.HashOut)
+	permutation.Set(3, right.HashOut)
 
 	permutation.Permute()
 	return types.PoseidonBn254HashOut{HashOut: permutation.Squeeze()[0]}
