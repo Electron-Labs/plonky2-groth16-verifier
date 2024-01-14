@@ -17,9 +17,9 @@ import (
 )
 
 type Vars struct {
-	LocalConstants   [][]uint64    `json:"local_constants"`
-	LocalWires       [][]uint64    `json:"local_wires"`
-	PublicInputsHash types.HashOut `json:"public_inputs_hash"`
+	LocalConstants   [][]uint64                          `json:"local_constants"`
+	LocalWires       [][]uint64                          `json:"local_wires"`
+	PublicInputsHash types.PoseidonGoldilocksHashOutType `json:"public_inputs_hash"`
 }
 
 type TestData struct {
