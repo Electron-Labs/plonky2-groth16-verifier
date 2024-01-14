@@ -22,7 +22,6 @@ func FriVerifyProofOfWork(
 
 func FriVerifyInitialProof(
 	api frontend.API,
-	rangeChecker frontend.Rangechecker,
 	x_index_bits []frontend.Variable,
 	proof types.FriInitialTreeProofVariable,
 	initial_merkle_caps []types.MerkleCapVariable,
@@ -30,7 +29,6 @@ func FriVerifyInitialProof(
 	for i := range proof.EvalsProofs {
 		hash.VerifyMerkleProofToCap(
 			api,
-			rangeChecker,
 			proof.EvalsProofs[i].X,
 			x_index_bits,
 			initial_merkle_caps[i],
@@ -216,7 +214,7 @@ func FriVerifierQueryRound(
 	params types.FriParams,
 ) {
 	x_index_bits := api.ToBinary(x_index, 64)
-	FriVerifyInitialProof(api, rangeChecker, x_index_bits, round_proof.InitialTreeProof, initial_merkle_caps)
+	FriVerifyInitialProof(api, x_index_bits, round_proof.InitialTreeProof, initial_merkle_caps)
 
 	log_n := int(math.Log2(float64(n)))
 	// reverse_bits
@@ -268,7 +266,6 @@ func FriVerifierQueryRound(
 
 		hash.VerifyMerkleProofToCap(
 			api,
-			rangeChecker,
 			goldilocks.Flatten(evals),
 			coset_index_bits,
 			proof.CommitPhaseMerkleCap[i],

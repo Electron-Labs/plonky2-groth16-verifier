@@ -13,24 +13,11 @@ type PoseidonGoldilocksHashOut struct {
 	HashOut []goldilocks.GoldilocksVariable
 }
 
-type PoseidonBn254HashOut struct {
-	HashOut frontend.Variable
-}
-
-func SelectHashOut(api frontend.API, b frontend.Variable, in1 PoseidonGoldilocksHashOut, in2 PoseidonGoldilocksHashOut) PoseidonGoldilocksHashOut {
+func SelectPoseidonGoldilocksHashOut(api frontend.API, b frontend.Variable, in1 PoseidonGoldilocksHashOut, in2 PoseidonGoldilocksHashOut) PoseidonGoldilocksHashOut {
 	var out PoseidonGoldilocksHashOut
 	out.HashOut = make([]goldilocks.GoldilocksVariable, POSEIDON_GOLDILOCKS_HASH_OUT)
 	for i := 0; i < POSEIDON_GOLDILOCKS_HASH_OUT; i++ {
 		out.HashOut[i].Limb = api.Select(b, in1.HashOut[i].Limb, in2.HashOut[i].Limb)
-	}
-	return out
-}
-
-func SelectHashoutLookup2(api frontend.API, b0 frontend.Variable, b1 frontend.Variable, in0 PoseidonGoldilocksHashOut, in1 PoseidonGoldilocksHashOut, in2 PoseidonGoldilocksHashOut, in3 PoseidonGoldilocksHashOut) PoseidonGoldilocksHashOut {
-	var out PoseidonGoldilocksHashOut
-	out.HashOut = make([]goldilocks.GoldilocksVariable, POSEIDON_GOLDILOCKS_HASH_OUT)
-	for i := 0; i < POSEIDON_GOLDILOCKS_HASH_OUT; i++ {
-		out.HashOut[i].Limb = api.Lookup2(b0, b1, in0.HashOut[i].Limb, in1.HashOut[i].Limb, in2.HashOut[i].Limb, in3.HashOut[i].Limb)
 	}
 	return out
 }
@@ -45,25 +32,55 @@ func (hashOut *PoseidonGoldilocksHashOut) Make() {
 	hashOut.HashOut = make([]goldilocks.GoldilocksVariable, POSEIDON_GOLDILOCKS_HASH_OUT)
 }
 
-type MerkleCapVariable []PoseidonGoldilocksHashOut
+type PoseidonBn254HashOut struct {
+	HashOut frontend.Variable
+}
 
-func SelectHashOutRecursive(api frontend.API, b []frontend.Variable, in []PoseidonGoldilocksHashOut) []PoseidonGoldilocksHashOut {
+func SelectPoseidonBn254HashOutLookup2(api frontend.API, b0 frontend.Variable, b1 frontend.Variable, in0 PoseidonBn254HashOut, in1 PoseidonBn254HashOut, in2 PoseidonBn254HashOut, in3 PoseidonBn254HashOut) PoseidonBn254HashOut {
+	return PoseidonBn254HashOut{
+		HashOut: api.Lookup2(b0, b1, in0.HashOut, in1.HashOut, in2.HashOut, in3.HashOut),
+	}
+}
+
+func SelectPoseidonBn254HashOut(api frontend.API, b frontend.Variable, in1 PoseidonBn254HashOut, in2 PoseidonBn254HashOut) PoseidonBn254HashOut {
+	return PoseidonBn254HashOut{
+		HashOut: api.Select(b, in1.HashOut, in2.HashOut),
+	}
+}
+
+func (hashOut *PoseidonBn254HashOut) ToVec(api frontend.API) []goldilocks.GoldilocksVariable {
+	bits := api.ToBinary(hashOut.HashOut)
+
+	goldilocksElements := []goldilocks.GoldilocksVariable{}
+	glElmBits := 7 * 8
+	// chunk size of 7 bits as done in plonky2
+	for i := 0; i < len(bits); i += glElmBits {
+		end_i := min(i+glElmBits, len(bits))
+		goldilocksElements = append(goldilocksElements, goldilocks.GoldilocksVariable{Limb: api.FromBinary(bits[i:end_i])})
+	}
+
+	return goldilocksElements
+}
+
+type MerkleCapVariable []PoseidonBn254HashOut
+
+func SelectPoseidonBn254HashOutRecursive(api frontend.API, b []frontend.Variable, in []PoseidonBn254HashOut) []PoseidonBn254HashOut {
 	if len(in) == 1 {
 		return in
 	} else if len(in)%4 == 0 {
-		two_bits_select := make([]PoseidonGoldilocksHashOut, len(in)/4)
+		two_bits_select := make([]PoseidonBn254HashOut, len(in)/4)
 		for i := 0; i < len(two_bits_select); i++ {
-			two_bits_select[i] = SelectHashoutLookup2(api, b[0], b[1], in[4*i], in[4*i+1], in[4*i+2], in[4*i+3])
+			two_bits_select[i] = SelectPoseidonBn254HashOutLookup2(api, b[0], b[1], in[4*i], in[4*i+1], in[4*i+2], in[4*i+3])
 		}
-		return SelectHashOutRecursive(api, b[2:], two_bits_select)
+		return SelectPoseidonBn254HashOutRecursive(api, b[2:], two_bits_select)
 	} else {
 		// <4 power means len(in) == 2 only
-		return []PoseidonGoldilocksHashOut{SelectHashOut(api, b[0], in[1], in[0])}
+		return []PoseidonBn254HashOut{SelectPoseidonBn254HashOut(api, b[0], in[1], in[0])}
 	}
 }
 
 type MerkleProofVariable struct {
-	Siblings []PoseidonGoldilocksHashOut
+	Siblings []PoseidonBn254HashOut
 }
 
 type EvalProofVariable struct {
@@ -123,7 +140,7 @@ type ProofVariable struct {
 
 type VerifierOnlyVariable struct {
 	ConstantSigmasCap MerkleCapVariable
-	CircuitDigest     PoseidonGoldilocksHashOut
+	CircuitDigest     PoseidonBn254HashOut
 }
 
 type PublicInputsVariable []goldilocks.GoldilocksVariable

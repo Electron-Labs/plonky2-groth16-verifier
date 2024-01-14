@@ -74,15 +74,6 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 	}
 
 	// 2. All proof elements should be within goldilocks field
-	for _, x := range proof.WiresCap {
-		x.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
-	}
-	for _, x := range proof.PlonkZsPartialProductsCap {
-		x.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
-	}
-	for _, x := range proof.QuotientPolysCap {
-		x.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
-	}
 
 	for _, x := range proof.Openings.Constants {
 		x.RangeCheck(api, rangeChecker)
@@ -112,20 +103,11 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 		x.RangeCheck(api, rangeChecker)
 	}
 
-	for _, x := range proof.OpeningProof.CommitPhaseMerkleCap {
-		for _, m := range x {
-			m.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
-		}
-	}
-
 	for _, q := range proof.OpeningProof.QueryRoundProofs {
 		// initial tree proof
 		for _, e := range q.InitialTreeProof.EvalsProofs {
 			for _, x := range e.X {
 				goldilocks.RangeCheck(api, rangeChecker, x.Limb)
-			}
-			for _, m := range e.Y.Siblings {
-				m.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
 			}
 		}
 
@@ -134,9 +116,6 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 			// evals
 			for _, e := range s.Evals {
 				e.RangeCheck(api, rangeChecker)
-			}
-			for _, m := range s.MerkleProof.Siblings {
-				m.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
 			}
 		}
 	}
@@ -148,10 +127,6 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 	goldilocks.RangeCheck(api, rangeChecker, proof.OpeningProof.PowWitness.Limb)
 
 	// 3. All verifier data elements should be in field too
-	for _, x := range verifier_only.ConstantSigmasCap {
-		x.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
-	}
-	verifier_only.CircuitDigest.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
 
 	return nil
 }
@@ -172,7 +147,7 @@ func friChallenges(api frontend.API, rangeChecker frontend.Rangechecker, challen
 	friChallenges.FriAlpha = challenger.GetExtensionChallenge()
 	friChallenges.FriBetas = make([]goldilocks.GoldilocksExtension2Variable, len(openingProof.CommitPhaseMerkleCap))
 	for i, v := range openingProof.CommitPhaseMerkleCap {
-		challenger.ObserveCap(v)
+		challenger.ObserveCap(api, v)
 		friChallenges.FriBetas[i] = challenger.GetExtensionChallenge()
 	}
 
@@ -191,15 +166,15 @@ func friChallenges(api frontend.API, rangeChecker frontend.Rangechecker, challen
 	return friChallenges
 }
 
-func getChallenges(api frontend.API, rangeChecker frontend.Rangechecker, proof types.ProofVariable, publicInputHash types.PoseidonGoldilocksHashOut, circuitDigest types.PoseidonGoldilocksHashOut) types.ProofChallengesVariable {
+func getChallenges(api frontend.API, rangeChecker frontend.Rangechecker, proof types.ProofVariable, publicInputHash types.PoseidonGoldilocksHashOut, circuitDigest types.PoseidonBn254HashOut) types.ProofChallengesVariable {
 	var challenges types.ProofChallengesVariable
 	challenger := NewChallenger(api, rangeChecker)
 	hasLookup := len(proof.Openings.LookupZs) != 0
 
-	challenger.ObserveHash(circuitDigest)
-	challenger.ObserveHash(publicInputHash)
+	challenger.ObservePoseidonBn254Hash(api, circuitDigest)
+	challenger.ObservePoseidonGoldilocksHash(publicInputHash)
 
-	challenger.ObserveCap(proof.WiresCap)
+	challenger.ObserveCap(api, proof.WiresCap)
 
 	numChallenges := len(proof.Openings.PlonkZs)
 
@@ -224,10 +199,10 @@ func getChallenges(api frontend.API, rangeChecker frontend.Rangechecker, proof t
 		challenges.PlonkDeltas = make([]goldilocks.GoldilocksVariable, 0)
 	}
 
-	challenger.ObserveCap(proof.PlonkZsPartialProductsCap)
+	challenger.ObserveCap(api, proof.PlonkZsPartialProductsCap)
 	challenges.PlonkAlphas = challenger.GetNChallenges(numChallenges)
 
-	challenger.ObserveCap(proof.QuotientPolysCap)
+	challenger.ObserveCap(api, proof.QuotientPolysCap)
 	challenges.PlonkZeta = challenger.GetExtensionChallenge()
 
 	challenger.ObserveOpenings(fri.GetFriOpenings(proof.Openings))

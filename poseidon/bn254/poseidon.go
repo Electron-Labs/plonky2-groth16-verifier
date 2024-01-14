@@ -28,15 +28,6 @@ func NewPermutation(api frontend.API, poseidon Poseidon) Permutation {
 }
 
 func (permuter *Permutation) Set(idx int, input frontend.Variable) {
-	// TODO:
-	// if len(inputs) > WIDTH {
-	// 	panic("Invalid number of inputs")
-	// }
-
-	// for i, v := range inputs {
-	// 	permuter.state[i] = v
-	// }
-
 	if idx >= WIDTH {
 		panic("Invalid index provided")
 	}

@@ -54,15 +54,20 @@ func (challenger *Challenger) ObserveExtensionElements(elms []goldilocks.Goldilo
 	}
 }
 
-func (challenger *Challenger) ObserveHash(hash types.PoseidonGoldilocksHashOut) {
+func (challenger *Challenger) ObservePoseidonGoldilocksHash(hash types.PoseidonGoldilocksHashOut) {
 	for _, elm := range hash.HashOut {
 		challenger.ObserveElement(elm)
 	}
 }
 
-func (challenger *Challenger) ObserveCap(cap types.MerkleCapVariable) {
+func (challenger *Challenger) ObservePoseidonBn254Hash(api frontend.API, hash types.PoseidonBn254HashOut) {
+	goldilocksElements := hash.ToVec(api)
+	challenger.ObserveElements(goldilocksElements)
+}
+
+func (challenger *Challenger) ObserveCap(api frontend.API, cap types.MerkleCapVariable) {
 	for _, hash := range cap {
-		challenger.ObserveHash(hash)
+		challenger.ObservePoseidonBn254Hash(api, hash)
 	}
 }
 
