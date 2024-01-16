@@ -56,7 +56,7 @@ func (hashOut *PoseidonBn254HashOut) ToVec(api frontend.API) []goldilocks.Goldil
 	// chunk size of 7 bits as done in plonky2
 	for i := 0; i < len(bits); i += glElmBits {
 		end_i := min(i+glElmBits, len(bits))
-		goldilocksElements = append(goldilocksElements, goldilocks.GoldilocksVariable{Limb: api.FromBinary(bits[i:end_i])})
+		goldilocksElements = append(goldilocksElements, goldilocks.GoldilocksVariable{Limb: api.FromBinary(bits[i:end_i]...)})
 	}
 
 	return goldilocksElements
