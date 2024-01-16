@@ -56,6 +56,32 @@ func (hasher *PoseidonBn254Hasher) HashNoPad(api frontend.API, inputs []goldiloc
 	return types.PoseidonBn254HashOut{HashOut: permutation.Squeeze()[0]} // taking first element as POSEIDON_Bn254_HASH_OUT = 1
 }
 
+// func (hasher *PoseidonBn254Hasher) HashNoPad(api frontend.API, inputs []goldilocks.GoldilocksVariable) types.PoseidonBn254HashOut {
+// 	permutation := poseidonBn254.NewPermutation(hasher.api, hasher.poseidon)
+
+// 	for i := 0; i < len(inputs); i += poseidonBn254.RATE * 3 {
+// 		end_i := min(len(inputs), i+poseidonBn254.RATE*3)
+// 		rateChunk := inputs[i:end_i]
+
+// 		for j := 0; j < len(rateChunk); j += 3 {
+// 			end_j := min(len(rateChunk), j+3)
+// 			bn254Chunk := rateChunk[j:end_j]
+
+// 			bits := make([]frontend.Variable, 64*len(bn254Chunk))
+// 			for k := 0; k < len(bn254Chunk); k++ {
+// 				copy(bits[k*64:(k+1)*64], api.FromBinary(bn254Chunk[k]))
+// 			}
+
+// 			stateBigInt := api.Compiler().Field().SetBytes(bytesBe)
+// 			stateBn254 := frontend.Variable(stateBigInt)
+// 			permutation.Set(j/3+1, stateBn254)
+// 		}
+// 		permutation.Permute()
+// 	}
+
+// 	return types.PoseidonBn254HashOut{HashOut: permutation.Squeeze()[0]} // taking first element as POSEIDON_Bn254_HASH_OUT = 1
+// }
+
 func (hasher *PoseidonBn254Hasher) HashOrNoop(api frontend.API, inputs []goldilocks.GoldilocksVariable) types.PoseidonBn254HashOut {
 	if len(inputs) <= GOLDILOCKS_ELEMENTS {
 		bigTen64 := getBigTen64()
