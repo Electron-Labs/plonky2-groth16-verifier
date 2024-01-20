@@ -44,6 +44,7 @@
         "NoopGate",
         "ConstantGate { num_consts: 2 }",
         "PublicInputGate",
+        "BaseSumGate { num_limbs: 32 } + Base: 2",
         "ArithmeticGate { num_ops: 20 }",
         "PoseidonGate(PhantomData<plonky2_field::goldilocks_field::GoldilocksField>)<WIDTH=12>"
     ],
@@ -53,16 +54,17 @@
             0,
             0,
             0,
+            0,
             1
         ],
         "groups": [
             {
                 "start": 0,
-                "end": 4
+                "end": 5
             },
             {
-                "start": 4,
-                "end": 5
+                "start": 5,
+                "end": 6
             }
         ]
     },

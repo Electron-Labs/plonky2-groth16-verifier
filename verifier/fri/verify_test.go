@@ -138,20 +138,22 @@ func read_verifier_data_from_file(path string) (types.VerifierOnly, error) {
 func TestVerifyFri(t *testing.T) {
 	assert := test.NewAssert(t)
 
-	commonData, err := read_common_data_from_file("../../data/goldilocks/common_data.json")
+	commonData, err := read_common_data_from_file("../../testdata/verify_fri/common_data.json")
 	if err != nil {
 		t.Fatal("Error in common data")
 	}
-	proof, err := read_proof_from_file("../../data/goldilocks/proof_with_pis.json")
+	proof, err := read_proof_from_file("../../testdata/verify_fri/proof_with_pis.json")
 	if err != nil {
 		t.Fatal("Error in reading proof")
 	}
-	verifierData, err := read_verifier_data_from_file("../../data/goldilocks/verifier_only.json")
+	verifierData, err := read_verifier_data_from_file("../../testdata/verify_fri/verifier_only.json")
 	if err != nil {
 		t.Fatal("Error in verifier data")
 	}
 	proof_var := proof.GetVariable()
 	verifier_data_var := verifierData.GetVariable()
+
+	// for goldilocks/poseidon_bn254 data
 	zeta := goldilocks.GetGoldilocksExtensionVariable([]uint64{16263632293919212639, 10013997701259715621})
 	fri_alpha := goldilocks.GetGoldilocksExtensionVariable([]uint64{13172871457756936397, 1804723272509206341})
 	fri_betas := goldilocks.GetGoldilocksExtensionVariableArr([][]uint64{
@@ -159,6 +161,17 @@ func TestVerifyFri(t *testing.T) {
 	})
 	fri_pow_response := goldilocks.GetGoldilocksVariable(60661718710665)
 	fri_query_indices := []frontend.Variable{486, 33, 62, 251, 123, 391, 447, 94, 477, 56, 123, 360, 365, 292, 228, 373, 92, 408, 379, 92, 231, 314, 370, 54, 503, 220, 393, 80}
+
+	// for tendermint data
+	// zeta := goldilocks.GetGoldilocksExtensionVariable([]uint64{15457524938562325708, 3479679977809551659})
+	// fri_alpha := goldilocks.GetGoldilocksExtensionVariable([]uint64{9846366809370789810, 11042981004784868283})
+	// fri_betas := goldilocks.GetGoldilocksExtensionVariableArr([][]uint64{
+	// 	{18250851304787470475, 5971507749560382253},
+	// 	{5205581278872883023, 15850745646177162614},
+	// 	{5448555762200760647, 8279983161807516452},
+	// })
+	// fri_pow_response := goldilocks.GetGoldilocksVariable(10666470807687)
+	// fri_query_indices := []frontend.Variable{165941, 193126, 290810, 374631, 420056, 398992, 99294, 70377, 271757, 187131, 6270, 112428, 350692, 334230, 513975, 34774, 214484, 357427, 271777, 438693, 252239, 63737, 161872, 275441, 75160, 302773, 385283, 148460}
 
 	fri_challenges := types.FriChallengesVariable{
 		FriAlpha:        fri_alpha,
