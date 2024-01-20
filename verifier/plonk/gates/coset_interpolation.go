@@ -19,6 +19,11 @@ type CosetInterpolationGate struct {
 }
 
 func NewCosetInterpolationGate(id string) *CosetInterpolationGate {
+	splits := strings.Split(id, ", _phantom")
+	if splits[1] != ": PhantomData<plonky2_field::goldilocks_field::GoldilocksField> }<D=2>" {
+		panic(fmt.Sprintln("Invalid gate id: ", id))
+	}
+	id = splits[0]
 	id = strings.Split(id, ", _phantom")[0]
 	id = strings.Join([]string{id, "}"}, "")
 	id = strings.TrimPrefix(id, "CosetInterpolationGate")
@@ -46,20 +51,16 @@ func (gate *CosetInterpolationGate) EvalUnfiltered(api frontend.API, rangeChecke
 
 	a := algebra.ScalarMulNoReduce(api, shiftedEvaluationPoint, shift)
 
-	// assuming a is always greator then evaluationPoint
-	evalPointConstraint := [D][D]frontend.Variable{
-		{api.Sub(a[0][0], evaluationPoint[0][0]), api.Sub(a[0][1], evaluationPoint[0][1])},
-		{api.Sub(a[1][0], evaluationPoint[1][0]), api.Sub(a[1][1], evaluationPoint[1][1])},
-	}
+	constraintNoReduce := algebra.SubNoReduce(api, a, evaluationPoint)
 	constraints[0] = goldilocks.NegExt(api,
 		goldilocks.GoldilocksExtension2Variable{
-			A: goldilocks.Reduce(api, rangeChecker, evalPointConstraint[0][0], 132),
-			B: goldilocks.Reduce(api, rangeChecker, evalPointConstraint[0][1], 129)},
+			A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0][0], 132),
+			B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0][1], 130)},
 	)
 	constraints[1] = goldilocks.NegExt(api,
 		goldilocks.GoldilocksExtension2Variable{
-			A: goldilocks.Reduce(api, rangeChecker, evalPointConstraint[1][0], 132),
-			B: goldilocks.Reduce(api, rangeChecker, evalPointConstraint[1][1], 129)},
+			A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1][0], 132),
+			B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1][1], 130)},
 	)
 
 	domain := goldilocks.TwoAdicSubgroup(api, rangeChecker, gate.SubgroupBits)
@@ -172,16 +173,16 @@ func (gate *CosetInterpolationGate) PartialInterpolateExtAlgebra(
 	for i := 0; i < n; i++ {
 		val := weightedValues[i]
 		xi := domain[i].Limb
-		term := algebra.Sub(api, rangeChecker, x, algebra.FromBase(goldilocks.BaseTo2ExtRaw(xi)))
-		evalNoReduce := algebra.AddNoReduce(api, algebra.MulNoReduce(api, eval, term), algebra.MulNoReduce(api, val, termsPartialProd))
-		termsPartialProdNoReduce := algebra.MulNoReduce(api, termsPartialProd, term)
+		termNoReduce := algebra.SubNoReduce(api, x, algebra.FromBase(goldilocks.BaseTo2ExtRaw(xi)))
+		evalNoReduce := algebra.AddNoReduce(api, algebra.MulNoReduce(api, eval, termNoReduce), algebra.MulNoReduce(api, val, termsPartialProd))
+		termsPartialProdNoReduce := algebra.MulNoReduce(api, termsPartialProd, termNoReduce)
 
 		eval = [D][D]frontend.Variable{
-			{goldilocks.Reduce(api, rangeChecker, evalNoReduce[0][0], 201).Limb, goldilocks.Reduce(api, rangeChecker, evalNoReduce[0][1], 201).Limb},
-			{goldilocks.Reduce(api, rangeChecker, evalNoReduce[1][0], 199).Limb, goldilocks.Reduce(api, rangeChecker, evalNoReduce[1][1], 199).Limb},
+			{goldilocks.Reduce(api, rangeChecker, evalNoReduce[0][0], 203).Limb, goldilocks.Reduce(api, rangeChecker, evalNoReduce[0][1], 202).Limb},
+			{goldilocks.Reduce(api, rangeChecker, evalNoReduce[1][0], 200).Limb, goldilocks.Reduce(api, rangeChecker, evalNoReduce[1][1], 199).Limb},
 		}
 		termsPartialProd = [D][D]frontend.Variable{
-			{goldilocks.Reduce(api, rangeChecker, termsPartialProdNoReduce[0][0], 136).Limb, goldilocks.Reduce(api, rangeChecker, termsPartialProdNoReduce[0][1], 133).Limb},
+			{goldilocks.Reduce(api, rangeChecker, termsPartialProdNoReduce[0][0], 137).Limb, goldilocks.Reduce(api, rangeChecker, termsPartialProdNoReduce[0][1], 134).Limb},
 			{goldilocks.Reduce(api, rangeChecker, termsPartialProdNoReduce[1][0], 133).Limb, goldilocks.Reduce(api, rangeChecker, termsPartialProdNoReduce[1][1], 130).Limb},
 		}
 	}

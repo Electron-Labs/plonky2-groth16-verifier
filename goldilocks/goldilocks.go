@@ -226,6 +226,7 @@ func PrimitveRootOfUnity(n_log int) GoldilocksVariable {
 	return root
 }
 
+// TODO: not sure if we need to do this computation inside the circuit
 func TwoAdicSubgroup(api frontend.API, rangeChecker frontend.Rangechecker, nLog int) []GoldilocksVariable {
 	generator := PrimitveRootOfUnity(nLog)
 	powers := make([]GoldilocksVariable, 1<<nLog)
