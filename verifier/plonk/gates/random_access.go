@@ -16,6 +16,11 @@ type RandomAccessGate struct {
 }
 
 func NewRandomAccessGate(id string) *RandomAccessGate {
+	splits := strings.Split(id, ", _phantom")
+	if splits[1] != ": PhantomData<plonky2_field::goldilocks_field::GoldilocksField> }<D=2>" {
+		panic(fmt.Sprintln("Invalid gate id: ", id))
+	}
+	id = splits[0]
 	id = strings.Split(id, ", _phantom")[0]
 	id = strings.Join([]string{id, "}"}, "")
 	id = strings.TrimPrefix(id, "RandomAccessGate")
@@ -52,19 +57,23 @@ func (gate *RandomAccessGate) EvalUnfiltered(api frontend.API, rangeChecker fron
 			constraintNoReduce := goldilocks.MulExtNoReduce(api, bits[i], goldilocks.SubExtNoReduce(api, bits[i], goldilocks.BaseTo2ExtRaw(1)))
 			constraints[copy*nConstraintsPerCopy+i] = goldilocks.GoldilocksExtension2Variable{
 				A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0], 132),
-				B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1], 129),
+				B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1], 130),
 			}
 		}
 
 		// Assert that the binary decomposition was correct.
 		reconstructedIndex := goldilocks.BaseTo2ExtRaw(0)
 		for i := len(bits) - 1; i >= 0; i-- {
-			reconstructedIndex = goldilocks.AddExtNoReduce(api, goldilocks.AddExtNoReduce(api, reconstructedIndex, reconstructedIndex), bits[i])
+			reconstructedIndexNoReduce := goldilocks.AddExtNoReduce(api, goldilocks.AddExtNoReduce(api, reconstructedIndex, reconstructedIndex), bits[i])
+			reconstructedIndex = [2]frontend.Variable{
+				goldilocks.Reduce(api, rangeChecker, reconstructedIndexNoReduce[0], 66).Limb,
+				goldilocks.Reduce(api, rangeChecker, reconstructedIndexNoReduce[1], 66).Limb,
+			}
 		}
 		constraintNoReduce := goldilocks.SubExtNoReduce(api, reconstructedIndex, accessIndex)
 		constraints[copy*nConstraintsPerCopy+gate.Bits] = goldilocks.GoldilocksExtension2Variable{
-			A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0], 70),
-			B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1], 70),
+			A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0], 65),
+			B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1], 65),
 		}
 
 		// Repeatedly fold the list, selecting the left or right item from each pair based on
