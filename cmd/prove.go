@@ -103,8 +103,8 @@ var provePlonkCmd = &cobra.Command{
 	Short: "Generate plonk proof",
 	Long:  `Generates a plonk proof corresponding to a plonky2 proof and given public inputs.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("Proof gen called:\n proof: %s\n pub_inputs: %s\n pkey: %s\n r1cs: %s\n",
-			plonky2_proof_path, plonky2_public_inputs_path, proving_key_path, r1cs_path)
+		fmt.Printf("Proof gen called:\n proof: %s\n plonky2 pub_inputs: %s\n pkey: %s\n r1cs: %s\n gnark pub_inputs: %s\n",
+			plonky2_proof_path, plonky2_public_inputs_path, proving_key_path, r1cs_path, gnark_public_inputs_path)
 		proof, _ := read_proof_from_file(plonky2_proof_path)
 		verifier_only, _ := read_verifier_data_from_file(verifier_only_path)
 		plonky2_public_inputs, _ := read_plonky2_public_inputs_from_file(plonky2_public_inputs_path)
