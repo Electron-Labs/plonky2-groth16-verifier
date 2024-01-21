@@ -14,6 +14,11 @@ type ExponentiationGate struct {
 }
 
 func NewExponentiationGate(id string) *ExponentiationGate {
+	splits := strings.Split(id, ", _phantom")
+	if splits[1] != ": PhantomData<plonky2_field::goldilocks_field::GoldilocksField> }" {
+		panic(fmt.Sprintln("Invalid gate id: ", id))
+	}
+	id = splits[0]
 	id = strings.Split(id, ", _phantom")[0]
 	id = strings.Join([]string{id, "}"}, "")
 	id = strings.TrimPrefix(id, "ExponentiationGate ")
@@ -44,29 +49,35 @@ func (gate *ExponentiationGate) EvalUnfiltered(api frontend.API, rangeChecker fr
 	constraints := make([]goldilocks.GoldilocksExtension2Variable, gate.numConstraints())
 
 	for i := 0; i < gate.NumPowerBits; i++ {
-		var prevIntermediateValue [D]frontend.Variable
+		var prevIntermediateValueNoReduce [D]frontend.Variable
+		var prevIntermediateValue goldilocks.GoldilocksExtension2Variable
 		if i == 0 {
-			prevIntermediateValue = goldilocks.BaseTo2ExtRaw(1)
+			prevIntermediateValue = goldilocks.BaseTo2Ext(goldilocks.GoldilocksVariable{Limb: 1})
 		} else {
-			prevIntermediateValue = goldilocks.MulExtNoReduce(api, intermediateValues[i-1], intermediateValues[i-1])
+			prevIntermediateValueNoReduce = goldilocks.MulExtNoReduce(api, intermediateValues[i-1], intermediateValues[i-1])
+			prevIntermediateValue = goldilocks.GoldilocksExtension2Variable{
+				A: goldilocks.Reduce(api, rangeChecker, prevIntermediateValueNoReduce[0], 131),
+				B: goldilocks.Reduce(api, rangeChecker, prevIntermediateValueNoReduce[1], 129),
+			}
 		}
+
+		prevIntermediateValueRaw := [D]frontend.Variable{prevIntermediateValue.A.Limb, prevIntermediateValue.B.Limb}
 
 		// power_bits is in LE order, but we accumulate in BE order.
 		curBit := powerBits[gate.NumPowerBits-i-1]
 		notCurBit := goldilocks.SubExtNoReduce(api, goldilocks.BaseTo2ExtRaw(1), curBit)
 		computedIntermediateValue := goldilocks.MulExtNoReduce(
 			api,
-			prevIntermediateValue,
+			prevIntermediateValueRaw,
 			goldilocks.AddExtNoReduce(
 				api,
 				goldilocks.MulExtNoReduce(api, curBit, base),
 				notCurBit,
 			),
 		)
-		// assumming computedIntermediateValue is always > intermediateValues[i]
 		constraintNoReduce := goldilocks.SubExtNoReduce(api, computedIntermediateValue, intermediateValues[i])
 		constraints[i] = goldilocks.GoldilocksExtension2Variable{
-			A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0], 198),
+			A: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[0], 199),
 			B: goldilocks.Reduce(api, rangeChecker, constraintNoReduce[1], 198),
 		}
 	}
