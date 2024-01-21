@@ -54,18 +54,32 @@ func read_proof_from_file(path string) (types.Proof, error) {
 	return proof, nil
 }
 
-func read_public_inputs_from_file(path string) (types.PublicInputs, error) {
+func read_plonky2_public_inputs_from_file(path string) (types.Plonky2PublicInputs, error) {
 	jsonPublicInputsData, err := ioutil.ReadFile(path)
 	if err != nil {
 		fmt.Println("Error reading verifier only json file:", err)
-		return types.PublicInputs{}, err
+		return types.Plonky2PublicInputs{}, err
 	}
-	var pub_inputs types.PublicInputs
+	var pub_inputs types.Plonky2PublicInputs
 	if err := json.Unmarshal(jsonPublicInputsData, &pub_inputs); err != nil {
 		fmt.Println("Error unmarshaling JSON:", err)
-		return types.PublicInputs{}, err
+		return types.Plonky2PublicInputs{}, err
 	}
 	return pub_inputs, nil
+}
+
+func read_gnark_public_inputs_from_file(path string) (types.GnarkPublicInputs, error) {
+	jsonPublicInputsData, err := ioutil.ReadFile(path)
+	if err != nil {
+		fmt.Println("Error reading verifier only json file:", err)
+		return types.GnarkPublicInputs{}, err
+	}
+	var pubInputs types.GnarkPublicInputs
+	if err := json.Unmarshal(jsonPublicInputsData, &pubInputs); err != nil {
+		fmt.Println("Error unmarshaling JSON:", err)
+		return types.GnarkPublicInputs{}, err
+	}
+	return pubInputs, nil
 }
 
 func getCircuitConstants(common_data types.CommonData) verifier.CircuitConstants {
@@ -116,7 +130,8 @@ func getCircuitConstants(common_data types.CommonData) verifier.CircuitConstants
 		LEVEL_EVALS:                 evals,
 		LEVEL_SIBLINGS:              siblings,
 		FINAL_POLY_COEFFS:           uint64((1 << int(common_data.FriParams.DegreeBits-sum))),
-		NUM_PUBLIC_INPUTS:           common_data.NumPublicInputs,
+		NUM_PLONKY2_PUBLIC_INPUTS:   common_data.NumPublicInputs,
+		NUM_GNARK_PUBLIC_INPUTS:     2,
 	}
 }
 

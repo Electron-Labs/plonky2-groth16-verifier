@@ -20,7 +20,6 @@ import (
 var plonkProofPath string
 var groth16proof_path string
 var vkey_path string
-var pub_inputs_path string
 
 // verifyCmd represents the verifyGroth16 command
 var verifyGroth16Cmd = &cobra.Command{
@@ -28,7 +27,7 @@ var verifyGroth16Cmd = &cobra.Command{
 	Short: "Verifies a gnark groth16 proof",
 	Long:  `Verifies a gnark groth16 proof`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("verify called:\n proof: %s\n vkey: %s\n pinputs: %s\n", groth16proof_path, vkey_path, pub_inputs_path)
+		fmt.Printf("verify called:\n proof: %s\n vkey: %s\n pinputs: %s\n", groth16proof_path, vkey_path, gnark_public_inputs_path)
 		g16p := groth16.NewProof(ecc.BN254)
 		g16p_file, err := os.Open(groth16proof_path)
 		if err != nil {
@@ -44,9 +43,9 @@ var verifyGroth16Cmd = &cobra.Command{
 			os.Exit(1)
 		}
 		vk.ReadFrom(vkFile)
-		public_inputs, _ := read_public_inputs_from_file(pub_inputs_path)
-		public_inputs_variable := public_inputs.GetVariable()
-		fmt.Println("public_inputs: ", public_inputs)
+		gnark_public_inputs, _ := read_gnark_public_inputs_from_file(gnark_public_inputs_path)
+		gnark_public_inputs_variable := gnark_public_inputs.GetVariable()
+		fmt.Println("gnark_public_inputs: ", gnark_public_inputs)
 
 		// ******************
 		// solidity contract inputs
@@ -59,7 +58,7 @@ var verifyGroth16Cmd = &cobra.Command{
 		// ******************
 
 		assignment := &verifier.Runner{
-			PubInputs: public_inputs_variable,
+			GnarkPubInputs: gnark_public_inputs_variable,
 		}
 		w, _ := frontend.NewWitness(assignment, ecc.BN254.ScalarField(), frontend.PublicOnly())
 		err = groth16.Verify(g16p, vk, w)
@@ -76,7 +75,7 @@ var verifyPlonkCmd = &cobra.Command{
 	Short: "Verifies a gnark plonk proof",
 	Long:  `Verifies a gnark plonk proof`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("verify called:\n proof: %s\n vkey: %s\n pinputs: %s\n", plonkProofPath, vkey_path, pub_inputs_path)
+		fmt.Printf("verify called:\n proof: %s\n vkey: %s\n pinputs: %s\n", plonkProofPath, vkey_path, gnark_public_inputs_path)
 		proofP := plonk.NewProof(ecc.BN254)
 		proofPFile, err := os.Open(plonkProofPath)
 		if err != nil {
@@ -93,11 +92,11 @@ var verifyPlonkCmd = &cobra.Command{
 		}
 		vk.ReadFrom(vkFile)
 
-		public_inputs, _ := read_public_inputs_from_file(pub_inputs_path)
-		public_inputs_variable := public_inputs.GetVariable()
-		fmt.Println("public_inputs: ", public_inputs)
+		gnark_public_inputs, _ := read_gnark_public_inputs_from_file(gnark_public_inputs_path)
+		gnark_public_inputs_variable := gnark_public_inputs.GetVariable()
+		fmt.Println("gnark_public_inputs: ", gnark_public_inputs)
 		assignment := &verifier.Runner{
-			PubInputs: public_inputs_variable,
+			GnarkPubInputs: gnark_public_inputs_variable,
 		}
 
 		// ******************
@@ -107,7 +106,7 @@ var verifyPlonkCmd = &cobra.Command{
 		p := proofP.(*plonk_bn254.Proof)
 		serializedProof := p.MarshalSolidity()
 		fmt.Println("serializedProof", serializedProof)
-		fmt.Println("public_inputs", public_inputs)
+		fmt.Println("gnark_public_inputs", gnark_public_inputs)
 		// ******************
 
 		w, _ := frontend.NewWitness(assignment, ecc.BN254.ScalarField(), frontend.PublicOnly())
@@ -125,15 +124,15 @@ func init() {
 	_ = verifyGroth16Cmd.MarkFlagRequired("groth16_proof_path")
 	verifyGroth16Cmd.Flags().StringVarP(&vkey_path, "vkey_path", "v", "", "File to groth16(gnark) vkey  generated in build phase")
 	_ = verifyGroth16Cmd.MarkFlagRequired("vkey_path")
-	verifyGroth16Cmd.Flags().StringVarP(&pub_inputs_path, "pub_inputs_path", "i", "", "JSON File path to plonky2 public inputs")
-	_ = verifyGroth16Cmd.MarkFlagRequired("pub_inputs_path")
+	verifyGroth16Cmd.Flags().StringVarP(&gnark_public_inputs_path, "gnark_public_inputs_path", "i", "", "JSON File path to gnark public inputs")
+	_ = verifyGroth16Cmd.MarkFlagRequired("gnark_public_inputs_path")
 	rootCmd.AddCommand(verifyGroth16Cmd)
 
 	verifyPlonkCmd.Flags().StringVarP(&plonkProofPath, "plonkProofPath", "p", "", "Path to plonk(gnark) proof generated in build phase")
 	_ = verifyPlonkCmd.MarkFlagRequired("plonkProofPath")
 	verifyPlonkCmd.Flags().StringVarP(&vkey_path, "vkey_path", "v", "", "File to plonk(gnark) vkey  generated in build phase")
 	_ = verifyPlonkCmd.MarkFlagRequired("vkey_path")
-	verifyPlonkCmd.Flags().StringVarP(&pub_inputs_path, "pub_inputs_path", "i", "", "JSON File path to plonky2 public inputs")
-	_ = verifyPlonkCmd.MarkFlagRequired("pub_inputs_path")
+	verifyPlonkCmd.Flags().StringVarP(&gnark_public_inputs_path, "gnark_public_inputs_path", "i", "", "JSON File path to gnark public inputs")
+	_ = verifyPlonkCmd.MarkFlagRequired("gnark_public_inputs_path")
 	rootCmd.AddCommand(verifyPlonkCmd)
 }

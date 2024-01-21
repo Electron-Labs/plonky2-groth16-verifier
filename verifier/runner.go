@@ -7,16 +7,17 @@ import (
 )
 
 type Runner struct {
-	Proof        types.ProofVariable
-	VerifierOnly types.VerifierOnlyVariable
-	PubInputs    types.PublicInputsVariable `gnark:",public"`
-	CommonData   types.CommonData
+	Proof            types.ProofVariable
+	VerifierOnly     types.VerifierOnlyVariable
+	Plonky2PubInputs types.Plonky2PublicInputsVariable
+	GnarkPubInputs   types.GnarkPublicInputsVariable `gnark:",public"`
+	CommonData       types.CommonData
 }
 
 func (circuit *Runner) Define(api frontend.API) error {
 	// verifier := verifier.createVerifier(api, circuit.common_data)
 	verifier := createVerifier(api, circuit.CommonData)
-	verifier.Verify(circuit.Proof, circuit.VerifierOnly, circuit.PubInputs)
+	verifier.Verify(circuit.Proof, circuit.VerifierOnly, circuit.Plonky2PubInputs, circuit.GnarkPubInputs)
 	return nil
 }
 
@@ -62,5 +63,6 @@ func (circuit *Runner) Make(constants CircuitConstants, commonData types.CommonD
 	circuit.Proof.OpeningProof.FinalPoly.Coeffs = make([]goldilocks.GoldilocksExtension2Variable, constants.FINAL_POLY_COEFFS)
 
 	circuit.VerifierOnly.ConstantSigmasCap = make(types.MerkleCapVariable, constants.CAP_LEN)
-	circuit.PubInputs = make(types.PublicInputsVariable, constants.NUM_PUBLIC_INPUTS)
+	circuit.Plonky2PubInputs = make(types.Plonky2PublicInputsVariable, constants.NUM_PLONKY2_PUBLIC_INPUTS)
+	circuit.GnarkPubInputs = make(types.GnarkPublicInputsVariable, constants.NUM_GNARK_PUBLIC_INPUTS)
 }

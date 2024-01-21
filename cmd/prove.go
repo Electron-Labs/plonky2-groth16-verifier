@@ -17,7 +17,8 @@ import (
 
 var plonky2_proof_path string
 var verifier_only_path string
-var public_inputs_path string
+var plonky2_public_inputs_path string
+var gnark_public_inputs_path string
 var proving_key_path string
 var r1cs_path string
 var vk_path string
@@ -28,20 +29,23 @@ var proveGroth16Cmd = &cobra.Command{
 	Short: "Generate groth16 proof",
 	Long:  `Generates a groth16 proof corresponding to a plonky2 proof and given public inputs.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("Proof gen called:\n proof: %s\n pub_inputs: %s\n pkey: %s\n r1cs: %s\n",
-			plonky2_proof_path, public_inputs_path, proving_key_path, r1cs_path)
+		fmt.Printf("Proof gen called:\n proof: %s\n plonky2 pub_inputs: %s\n pkey: %s\n r1cs: %s\n gnark pub_inputs: %s\n",
+			plonky2_proof_path, plonky2_public_inputs_path, proving_key_path, r1cs_path, gnark_public_inputs_path)
 		proof, _ := read_proof_from_file(plonky2_proof_path)
 		verifier_only, _ := read_verifier_data_from_file(verifier_only_path)
-		public_inputs, _ := read_public_inputs_from_file(public_inputs_path)
+		plonky2_public_inputs, _ := read_plonky2_public_inputs_from_file(plonky2_public_inputs_path)
+		gnark_public_inputs, _ := read_gnark_public_inputs_from_file(gnark_public_inputs_path)
 
 		proof_variable := proof.GetVariable()
 		vd_variable := verifier_only.GetVariable()
-		public_inputs_variable := public_inputs.GetVariable()
+		plonky2_public_inputs_variable := plonky2_public_inputs.GetVariable()
+		gnark_public_inputs_variable := gnark_public_inputs.GetVariable()
 
 		assignment := &verifier.Runner{
-			Proof:        proof_variable,
-			VerifierOnly: vd_variable,
-			PubInputs:    public_inputs_variable,
+			Proof:            proof_variable,
+			VerifierOnly:     vd_variable,
+			Plonky2PubInputs: plonky2_public_inputs_variable,
+			GnarkPubInputs:   gnark_public_inputs_variable,
 		}
 
 		witness, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField())
@@ -74,6 +78,7 @@ var proveGroth16Cmd = &cobra.Command{
 		}
 		vk.ReadFrom(vkFile)
 
+		fmt.Println("Prove started...")
 		g16p, err := groth16.Prove(r1cs, pk, witness)
 		if err != nil {
 			fmt.Println("proving error ", err)
@@ -99,19 +104,22 @@ var provePlonkCmd = &cobra.Command{
 	Long:  `Generates a plonk proof corresponding to a plonky2 proof and given public inputs.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("Proof gen called:\n proof: %s\n pub_inputs: %s\n pkey: %s\n r1cs: %s\n",
-			plonky2_proof_path, public_inputs_path, proving_key_path, r1cs_path)
+			plonky2_proof_path, plonky2_public_inputs_path, proving_key_path, r1cs_path)
 		proof, _ := read_proof_from_file(plonky2_proof_path)
 		verifier_only, _ := read_verifier_data_from_file(verifier_only_path)
-		public_inputs, _ := read_public_inputs_from_file(public_inputs_path)
+		plonky2_public_inputs, _ := read_plonky2_public_inputs_from_file(plonky2_public_inputs_path)
+		gnark_public_inputs, _ := read_gnark_public_inputs_from_file(gnark_public_inputs_path)
 
 		proof_variable := proof.GetVariable()
 		vd_variable := verifier_only.GetVariable()
-		public_inputs_variable := public_inputs.GetVariable()
+		plonky2_public_inputs_variable := plonky2_public_inputs.GetVariable()
+		gnark_public_inputs_variable := gnark_public_inputs.GetVariable()
 
 		assignment := &verifier.Runner{
-			Proof:        proof_variable,
-			VerifierOnly: vd_variable,
-			PubInputs:    public_inputs_variable,
+			Proof:            proof_variable,
+			VerifierOnly:     vd_variable,
+			Plonky2PubInputs: plonky2_public_inputs_variable,
+			GnarkPubInputs:   gnark_public_inputs_variable,
 		}
 
 		witness, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField())
@@ -136,6 +144,7 @@ var provePlonkCmd = &cobra.Command{
 		}
 		pk.ReadFrom(pkFile)
 
+		fmt.Println("Prove started...")
 		plonkP, err := plonk.Prove(r1cs, pk, witness)
 		if err != nil {
 			fmt.Println("proving error ", err)
@@ -159,8 +168,10 @@ func init() {
 	_ = proveGroth16Cmd.MarkFlagRequired("plonky2_proof_path")
 	proveGroth16Cmd.Flags().StringVarP(&verifier_only_path, "verifier_only_path", "v", "", "JSON File path to verifier only data")
 	_ = proveGroth16Cmd.MarkFlagRequired("verifier_only_path")
-	proveGroth16Cmd.Flags().StringVarP(&public_inputs_path, "public_inputs_path", "i", "", "JSON File path to public inputs")
-	_ = proveGroth16Cmd.MarkFlagRequired("public_inputs_path")
+	proveGroth16Cmd.Flags().StringVarP(&plonky2_public_inputs_path, "plonky2_public_inputs_path", "i", "", "JSON File path to plonky2 public inputs")
+	_ = proveGroth16Cmd.MarkFlagRequired("plonky2_public_inputs_path")
+	proveGroth16Cmd.Flags().StringVarP(&gnark_public_inputs_path, "gnark_public_inputs_path", "j", "", "JSON File path to gnark public inputs")
+	_ = proveGroth16Cmd.MarkFlagRequired("gnark_public_inputs_path")
 	proveGroth16Cmd.Flags().StringVarP(&proving_key_path, "proving_key_path", "k", "", "JSON File path to proving key")
 	_ = proveGroth16Cmd.MarkFlagRequired("proving_key_path")
 	proveGroth16Cmd.Flags().StringVarP(&r1cs_path, "r1cs_path", "r", "", "JSON File path to r1cs")
@@ -173,8 +184,10 @@ func init() {
 	_ = provePlonkCmd.MarkFlagRequired("plonky2_proof_path")
 	provePlonkCmd.Flags().StringVarP(&verifier_only_path, "verifier_only_path", "v", "", "JSON File path to verifier only data")
 	_ = provePlonkCmd.MarkFlagRequired("verifier_only_path")
-	provePlonkCmd.Flags().StringVarP(&public_inputs_path, "public_inputs_path", "i", "", "JSON File path to public inputs")
-	_ = provePlonkCmd.MarkFlagRequired("public_inputs_path")
+	provePlonkCmd.Flags().StringVarP(&plonky2_public_inputs_path, "plonky2_public_inputs_path", "i", "", "JSON File path to plonky2 public inputs")
+	_ = provePlonkCmd.MarkFlagRequired("plonky2_public_inputs_path")
+	provePlonkCmd.Flags().StringVarP(&gnark_public_inputs_path, "gnark_public_inputs_path", "j", "", "JSON File path to gnark public inputs")
+	_ = provePlonkCmd.MarkFlagRequired("gnark_public_inputs_path")
 	provePlonkCmd.Flags().StringVarP(&proving_key_path, "proving_key_path", "k", "", "JSON File path to proving key")
 	_ = provePlonkCmd.MarkFlagRequired("proving_key_path")
 	provePlonkCmd.Flags().StringVarP(&r1cs_path, "r1cs_path", "r", "", "JSON File path to r1cs")

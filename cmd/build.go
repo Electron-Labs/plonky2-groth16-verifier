@@ -35,12 +35,12 @@ var buildGroth16Cmd = &cobra.Command{
 			fmt.Println("Failed to read common data file:", err)
 			os.Exit(1)
 		}
-		circuitConstraints := getCircuitConstants(common_data)
+		circuitConstants := getCircuitConstants(common_data)
 
 		var myCircuit verifier.Runner
 
 		// Arrays are resized according to circuitConstants before compiling
-		myCircuit.Make(circuitConstraints, common_data)
+		myCircuit.Make(circuitConstants, common_data)
 
 		r1cs, _ := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &myCircuit)
 		pk, vk, _ := groth16.Setup(r1cs)
@@ -81,12 +81,12 @@ var buildPlonkCmd = &cobra.Command{
 			fmt.Println("Failed to read common data file:", err)
 			os.Exit(1)
 		}
-		circuitConstraints := getCircuitConstants(common_data)
+		circuitConstants := getCircuitConstants(common_data)
 
 		var myCircuit verifier.Runner
 
 		// Arrays are resized according to circuitConstants before compiling
-		myCircuit.Make(circuitConstraints, common_data)
+		myCircuit.Make(circuitConstants, common_data)
 
 		ccs, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &myCircuit)
 		// r1cs := ccs.(*cs.SparseR1CS)

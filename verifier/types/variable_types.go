@@ -143,7 +143,9 @@ type VerifierOnlyVariable struct {
 	CircuitDigest     PoseidonBn254HashOut
 }
 
-type PublicInputsVariable []goldilocks.GoldilocksVariable
+type Plonky2PublicInputsVariable []goldilocks.GoldilocksVariable
+
+type GnarkPublicInputsVariable []frontend.Variable
 
 type FriOpeningBatchVariable struct {
 	Values []goldilocks.GoldilocksExtension2Variable

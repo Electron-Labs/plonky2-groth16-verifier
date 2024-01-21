@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
+	"github.com/consensys/gnark/frontend"
 )
 
 type PoseidonGoldilocksHashOutType struct {
@@ -190,12 +191,23 @@ type VerifierOnly struct {
 	CircuitDigest     PoseidonBn254HashOutType `json:"circuit_digest"`
 }
 
-type PublicInputs []uint64
+type Plonky2PublicInputs []uint64
 
-func (public_inputs PublicInputs) GetVariable() PublicInputsVariable {
-	var public_inputs_variables PublicInputsVariable
+func (public_inputs Plonky2PublicInputs) GetVariable() Plonky2PublicInputsVariable {
+	var public_inputs_variables Plonky2PublicInputsVariable
 	for _, elm := range public_inputs {
 		e := goldilocks.GetGoldilocksVariable(elm)
+		public_inputs_variables = append(public_inputs_variables, e)
+	}
+	return public_inputs_variables
+}
+
+type GnarkPublicInputs []string
+
+func (public_inputs GnarkPublicInputs) GetVariable() GnarkPublicInputsVariable {
+	var public_inputs_variables GnarkPublicInputsVariable
+	for _, elm := range public_inputs {
+		e := frontend.Variable(elm)
 		public_inputs_variables = append(public_inputs_variables, e)
 	}
 	return public_inputs_variables

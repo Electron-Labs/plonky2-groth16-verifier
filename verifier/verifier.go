@@ -10,7 +10,9 @@ import (
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/plonk"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/plonk/gates"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
+	cSha256 "github.com/Electron-Labs/zk-benchmark/gnark/sha256"
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/std/math/uints"
 	"github.com/consensys/gnark/std/rangecheck"
 )
 
@@ -38,6 +40,8 @@ type CircuitConstants struct {
 	LEVEL_SIBLINGS              []uint64 //= [siblings_len_for_each_level (0..NUM_STEPS)]
 	FINAL_POLY_COEFFS           uint64
 	NUM_PUBLIC_INPUTS           uint64
+	NUM_PLONKY2_PUBLIC_INPUTS   uint64
+	NUM_GNARK_PUBLIC_INPUTS     uint64
 }
 
 type Verifier struct {
@@ -67,9 +71,9 @@ func modulus(api frontend.API, rangeChecker frontend.Rangechecker, a frontend.Va
 }
 
 // Range check everything is in goldilocks field
-func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proof types.ProofVariable, verifier_only types.VerifierOnlyVariable, pub_inputs types.PublicInputsVariable) error {
+func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proof types.ProofVariable, verifier_only types.VerifierOnlyVariable, plonky2PubInputs types.Plonky2PublicInputsVariable) error {
 	// 1. Inputs should all be within goldilocks field
-	for _, x := range pub_inputs {
+	for _, x := range plonky2PubInputs {
 		goldilocks.RangeCheck(api, rangeChecker, x.Limb)
 	}
 
@@ -131,7 +135,52 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 	return nil
 }
 
-func hashPublicInputs(api frontend.API, rangeChecker frontend.Rangechecker, publicInputs types.PublicInputsVariable) types.PoseidonGoldilocksHashOut {
+func VerifyGnarkPubInputs(api frontend.API, plonky2PubInputs types.Plonky2PublicInputsVariable, gnarkPubInputs types.GnarkPublicInputsVariable) error {
+	api.Println("gnarkPubInputs 0", gnarkPubInputs[0])
+	api.Println("gnarkPubInputs 1", gnarkPubInputs[1])
+
+	// TODO: make it 256*2+2*8 later
+	HASHES_LEN := 256 * 1
+	shaInput := make([]frontend.Variable, HASHES_LEN+2*8)
+	for i := 0; i < HASHES_LEN; i++ {
+		shaInput[i] = plonky2PubInputs[i].Limb
+	}
+
+	uapi, _ := uints.New[uints.U32](api)
+	for i := 0; i < 4; i++ {
+		limbBytes := uapi.ValueOf(plonky2PubInputs[HASHES_LEN+i].Limb)
+		for j := 0; j < 4; j++ {
+			api.Println("limbBytes[j]", limbBytes[j].Val)
+			shaInput[HASHES_LEN+i*4+j] = limbBytes[j].Val
+		}
+	}
+
+	sha256 := cSha256.New(api)
+	sha256.Write(shaInput)
+	result := sha256.Sum()
+
+	input1Bits := []frontend.Variable{}
+	for i := 0; i < 16; i++ {
+		input1Bits = append(input1Bits, api.ToBinary(result[i], 8)...)
+	}
+	input1 := api.FromBinary(input1Bits...)
+	// TODO: remove
+	api.Println("input1", input1)
+
+	input2Bits := []frontend.Variable{}
+	for i := 16; i < len(result); i++ {
+		input2Bits = append(input2Bits, api.ToBinary(result[i], 8)...)
+	}
+	input2 := api.FromBinary(input2Bits...)
+	// TODO: remove
+	api.Println("input2", input2)
+
+	api.AssertIsEqual(input1, gnarkPubInputs[0])
+	api.AssertIsEqual(input2, gnarkPubInputs[1])
+	return nil
+}
+
+func hashPublicInputs(api frontend.API, rangeChecker frontend.Rangechecker, publicInputs types.Plonky2PublicInputsVariable) types.PoseidonGoldilocksHashOut {
 	poseidon_goldilocks := &poseidonGoldilocks.PoseidonGoldilocks{}
 	hasher := hash.NewPoseidonGoldilocksHasher(api, rangeChecker, poseidon_goldilocks)
 	return hasher.HashNoPad(publicInputs)
@@ -291,13 +340,14 @@ func verifyWithChallenges(
 	)
 }
 
-func (circuit *Verifier) Verify(proof types.ProofVariable, verifier_only types.VerifierOnlyVariable, pub_inputs types.PublicInputsVariable) error {
+// TODO:
+func (circuit *Verifier) Verify(proof types.ProofVariable, verifier_only types.VerifierOnlyVariable, plonky2PubInputs types.Plonky2PublicInputsVariable, gnarkPubInputs types.GnarkPublicInputsVariable) error {
 	rangeChecker := rangecheck.New(circuit.api)
-	fieldCheckInputs(circuit.api, rangeChecker, proof, verifier_only, pub_inputs)
-	pubInputsHash := hashPublicInputs(circuit.api, rangeChecker, pub_inputs)
-	circuit.api.Println(pubInputsHash)
-	challenges := getChallenges(circuit.api, rangeChecker, proof, pubInputsHash, verifier_only.CircuitDigest)
-	circuit.api.Println(challenges)
-	verifyWithChallenges(circuit.api, rangeChecker, proof, pubInputsHash, challenges, verifier_only, circuit.commonData)
+	// rangeChecker := types.BitDecompChecker{Api: circuit.api}
+	fieldCheckInputs(circuit.api, rangeChecker, proof, verifier_only, plonky2PubInputs)
+	VerifyGnarkPubInputs(circuit.api, plonky2PubInputs, gnarkPubInputs)
+	plonk2PubInputsHash := hashPublicInputs(circuit.api, rangeChecker, plonky2PubInputs)
+	challenges := getChallenges(circuit.api, rangeChecker, proof, plonk2PubInputsHash, verifier_only.CircuitDigest)
+	verifyWithChallenges(circuit.api, rangeChecker, proof, plonk2PubInputsHash, challenges, verifier_only, circuit.commonData)
 	return nil
 }
