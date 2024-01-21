@@ -137,15 +137,15 @@ func read_verifier_data_from_file(path string) (types.VerifierOnly, error) {
 func TestVerifyFri(t *testing.T) {
 	assert := test.NewAssert(t)
 
-	commonData, err := read_common_data_from_file("../../data/goldilocks/common_data.json")
+	commonData, err := read_common_data_from_file("../../testdata/verify_fri/common_data.json")
 	if err != nil {
 		t.Fatal("Error in common data")
 	}
-	proof, err := read_proof_from_file("../../data/goldilocks/proof_with_pis.json")
+	proof, err := read_proof_from_file("../../testdata/verify_fri/proof_with_pis.json")
 	if err != nil {
 		t.Fatal("Error in reading proof")
 	}
-	verifierData, err := read_verifier_data_from_file("../../data/goldilocks/verifier_only.json")
+	verifierData, err := read_verifier_data_from_file("../../testdata/verify_fri/verifier_only.json")
 	if err != nil {
 		t.Fatal("Error in verifier data")
 	}
