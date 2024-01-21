@@ -25,7 +25,7 @@ func (hasher *PoseidonGoldilocksHasher) HashNoPad(inputs []goldilocks.Goldilocks
 	permutation := poseidonGoldilocks.NewPermutation(hasher.api, hasher.rangeChecker, hasher.poseidon)
 
 	numInputs := len(inputs)
-	numChunks := (numInputs-1)/poseidonGoldilocks.SPONGE_RATE + 1
+	numChunks := max(0, (numInputs-1)/poseidonGoldilocks.SPONGE_RATE+1)
 	for i := 0; i < numChunks; i++ {
 		start := i * poseidonGoldilocks.SPONGE_RATE
 		end := min((i+1)*poseidonGoldilocks.SPONGE_RATE, numInputs)

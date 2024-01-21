@@ -141,7 +141,7 @@ func MulExt(
 	cBNoReduce := api.Add(api.Mul(in1.A.Limb, in2.B.Limb), api.Mul(in1.B.Limb, in2.A.Limb))
 
 	return GoldilocksExtension2Variable{
-		A: Reduce(api, rangeChecker, cANoReduce, 131), // TODO: 132?
+		A: Reduce(api, rangeChecker, cANoReduce, 131),
 		B: Reduce(api, rangeChecker, cBNoReduce, 129),
 	}
 }

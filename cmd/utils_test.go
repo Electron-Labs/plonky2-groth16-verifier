@@ -8,8 +8,8 @@ import (
 
 func TestGetCircuitConstants(t *testing.T) {
 
-	commonDataPath := "../data/goldilocks/common_data.json"
-	proofPath := "../data/goldilocks/proof_with_pis.json"
+	commonDataPath := "../testdata/verify_fri/common_data.json"
+	proofPath := "../testdata/verify_fri/proof_with_pis.json"
 	proof, err := read_proof_from_file(proofPath)
 	if err != nil {
 		t.Fatal("Error in reading proof file: ", proofPath)
