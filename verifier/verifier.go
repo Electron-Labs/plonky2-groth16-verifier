@@ -136,11 +136,7 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 }
 
 func VerifyGnarkPubInputs(api frontend.API, plonky2PubInputs types.Plonky2PublicInputsVariable, gnarkPubInputs types.GnarkPublicInputsVariable) error {
-	api.Println("gnarkPubInputs 0", gnarkPubInputs[0])
-	api.Println("gnarkPubInputs 1", gnarkPubInputs[1])
-
-	// TODO: make it 256*2+2*8 later
-	HASHES_LEN := 256 * 1
+	HASHES_LEN := 256 * 2
 	shaInput := make([]frontend.Variable, HASHES_LEN+2*8)
 	for i := 0; i < HASHES_LEN; i++ {
 		shaInput[i] = plonky2PubInputs[i].Limb
@@ -148,9 +144,9 @@ func VerifyGnarkPubInputs(api frontend.API, plonky2PubInputs types.Plonky2Public
 
 	uapi, _ := uints.New[uints.U32](api)
 	for i := 0; i < 4; i++ {
+		// little endian
 		limbBytes := uapi.ValueOf(plonky2PubInputs[HASHES_LEN+i].Limb)
 		for j := 0; j < 4; j++ {
-			api.Println("limbBytes[j]", limbBytes[j].Val)
 			shaInput[HASHES_LEN+i*4+j] = limbBytes[j].Val
 		}
 	}
@@ -164,16 +160,12 @@ func VerifyGnarkPubInputs(api frontend.API, plonky2PubInputs types.Plonky2Public
 		input1Bits = append(input1Bits, api.ToBinary(result[i], 8)...)
 	}
 	input1 := api.FromBinary(input1Bits...)
-	// TODO: remove
-	api.Println("input1", input1)
 
 	input2Bits := []frontend.Variable{}
 	for i := 16; i < len(result); i++ {
 		input2Bits = append(input2Bits, api.ToBinary(result[i], 8)...)
 	}
 	input2 := api.FromBinary(input2Bits...)
-	// TODO: remove
-	api.Println("input2", input2)
 
 	api.AssertIsEqual(input1, gnarkPubInputs[0])
 	api.AssertIsEqual(input2, gnarkPubInputs[1])
