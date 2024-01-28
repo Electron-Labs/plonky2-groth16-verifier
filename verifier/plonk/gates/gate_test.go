@@ -873,3 +873,11 @@ func TestPoseidonGate(t *testing.T) {
 
 	assert.CheckCircuit(&circuit, test.WithValidAssignment(&assignment), test.WithCurves(ecc.BN254))
 }
+
+func TestU32Interleave(t *testing.T) {
+	CheckGate(
+		"../../../testdata/u32_interleave_constraints.json",
+		"U32InterleaveGate { num_ops: 3 }",
+		t,
+	)
+}

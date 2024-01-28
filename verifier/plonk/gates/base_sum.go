@@ -32,6 +32,9 @@ func NewBaseSumGate(id string) *BaseSumGate {
 }
 
 func (gate *BaseSumGate) EvalUnfiltered(api frontend.API, rangeChecker frontend.Rangechecker, vars EvaluationVars) []goldilocks.GoldilocksExtension2Variable {
+	if gate.Base != 2 {
+		panic(fmt.Sprintln("BaseSum gate::base must be 2"))
+	}
 	numLimbs := gate.NumLimbs
 	constraints := make([]goldilocks.GoldilocksExtension2Variable, 1+numLimbs)
 
