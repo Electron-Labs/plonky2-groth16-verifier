@@ -1,4 +1,4 @@
-package poseidon
+package poseidonGoldilocks
 
 import (
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"

@@ -4,7 +4,7 @@ import (
 	"math/bits"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
-	"github.com/Electron-Labs/plonky2-groth16-verifier/poseidon"
+	poseidonGoldilocks "github.com/Electron-Labs/plonky2-groth16-verifier/poseidon/goldilocks"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/fri"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/hash"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/plonk"
@@ -59,7 +59,7 @@ func modulus(api frontend.API, rangeChecker frontend.Rangechecker, a frontend.Va
 		panic(err)
 	}
 	api.AssertIsEqual(api.Add(api.Mul(result[0], b), result[1]), a)
-	rangeChecker.Check(result[0], 64-n) // 64 because we are calling modulus with `a` < goldilocks MODULUS
+	rangeChecker.Check(result[0], 64-n+1)
 	rangeChecker.Check(result[1], n)
 	goldilocks.LessThan(api, rangeChecker, result[1], b, n)
 
@@ -74,15 +74,6 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 	}
 
 	// 2. All proof elements should be within goldilocks field
-	for _, x := range proof.WiresCap {
-		x.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
-	}
-	for _, x := range proof.PlonkZsPartialProductsCap {
-		x.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
-	}
-	for _, x := range proof.QuotientPolysCap {
-		x.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
-	}
 
 	for _, x := range proof.Openings.Constants {
 		x.RangeCheck(api, rangeChecker)
@@ -112,20 +103,11 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 		x.RangeCheck(api, rangeChecker)
 	}
 
-	for _, x := range proof.OpeningProof.CommitPhaseMerkleCap {
-		for _, m := range x {
-			m.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
-		}
-	}
-
 	for _, q := range proof.OpeningProof.QueryRoundProofs {
 		// initial tree proof
 		for _, e := range q.InitialTreeProof.EvalsProofs {
 			for _, x := range e.X {
 				goldilocks.RangeCheck(api, rangeChecker, x.Limb)
-			}
-			for _, m := range e.Y.Siblings {
-				m.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
 			}
 		}
 
@@ -134,9 +116,6 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 			// evals
 			for _, e := range s.Evals {
 				e.RangeCheck(api, rangeChecker)
-			}
-			for _, m := range s.MerkleProof.Siblings {
-				m.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
 			}
 		}
 	}
@@ -148,17 +127,13 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 	goldilocks.RangeCheck(api, rangeChecker, proof.OpeningProof.PowWitness.Limb)
 
 	// 3. All verifier data elements should be in field too
-	for _, x := range verifier_only.ConstantSigmasCap {
-		x.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
-	}
-	verifier_only.CircuitDigest.ApplyRangeCheck(goldilocks.RangeCheck, api, rangeChecker)
 
 	return nil
 }
 
-func hashPublicInputs(api frontend.API, rangeChecker frontend.Rangechecker, publicInputs types.PublicInputsVariable) types.HashOutVariable {
-	poseidon_goldilocks := &poseidon.PoseidonGoldilocks{}
-	hasher := hash.NewHasher(api, rangeChecker, poseidon_goldilocks)
+func hashPublicInputs(api frontend.API, rangeChecker frontend.Rangechecker, publicInputs types.PublicInputsVariable) types.PoseidonGoldilocksHashOut {
+	poseidon_goldilocks := &poseidonGoldilocks.PoseidonGoldilocks{}
+	hasher := hash.NewPoseidonGoldilocksHasher(api, rangeChecker, poseidon_goldilocks)
 	return hasher.HashNoPad(publicInputs)
 }
 
@@ -172,7 +147,7 @@ func friChallenges(api frontend.API, rangeChecker frontend.Rangechecker, challen
 	friChallenges.FriAlpha = challenger.GetExtensionChallenge()
 	friChallenges.FriBetas = make([]goldilocks.GoldilocksExtension2Variable, len(openingProof.CommitPhaseMerkleCap))
 	for i, v := range openingProof.CommitPhaseMerkleCap {
-		challenger.ObserveCap(v)
+		challenger.ObserveCap(api, v)
 		friChallenges.FriBetas[i] = challenger.GetExtensionChallenge()
 	}
 
@@ -191,15 +166,15 @@ func friChallenges(api frontend.API, rangeChecker frontend.Rangechecker, challen
 	return friChallenges
 }
 
-func getChallenges(api frontend.API, rangeChecker frontend.Rangechecker, proof types.ProofVariable, publicInputHash types.HashOutVariable, circuitDigest types.HashOutVariable) types.ProofChallengesVariable {
+func getChallenges(api frontend.API, rangeChecker frontend.Rangechecker, proof types.ProofVariable, publicInputHash types.PoseidonGoldilocksHashOut, circuitDigest types.PoseidonBn254HashOut) types.ProofChallengesVariable {
 	var challenges types.ProofChallengesVariable
 	challenger := NewChallenger(api, rangeChecker)
 	hasLookup := len(proof.Openings.LookupZs) != 0
 
-	challenger.ObserveHash(circuitDigest)
-	challenger.ObserveHash(publicInputHash)
+	challenger.ObservePoseidonBn254Hash(api, circuitDigest)
+	challenger.ObservePoseidonGoldilocksHash(publicInputHash)
 
-	challenger.ObserveCap(proof.WiresCap)
+	challenger.ObserveCap(api, proof.WiresCap)
 
 	numChallenges := len(proof.Openings.PlonkZs)
 
@@ -224,10 +199,10 @@ func getChallenges(api frontend.API, rangeChecker frontend.Rangechecker, proof t
 		challenges.PlonkDeltas = make([]goldilocks.GoldilocksVariable, 0)
 	}
 
-	challenger.ObserveCap(proof.PlonkZsPartialProductsCap)
+	challenger.ObserveCap(api, proof.PlonkZsPartialProductsCap)
 	challenges.PlonkAlphas = challenger.GetNChallenges(numChallenges)
 
-	challenger.ObserveCap(proof.QuotientPolysCap)
+	challenger.ObserveCap(api, proof.QuotientPolysCap)
 	challenges.PlonkZeta = challenger.GetExtensionChallenge()
 
 	challenger.ObserveOpenings(fri.GetFriOpenings(proof.Openings))
@@ -241,7 +216,7 @@ func verifyWithChallenges(
 	api frontend.API,
 	rangeChecker frontend.Rangechecker,
 	proof types.ProofVariable,
-	public_inputs_hash types.HashOutVariable,
+	public_inputs_hash types.PoseidonGoldilocksHashOut,
 	challenges types.ProofChallengesVariable,
 	verifier_data types.VerifierOnlyVariable,
 	common_data types.CommonData,
@@ -290,7 +265,7 @@ func verifyWithChallenges(
 	num_chunks := (len(quotient_polys_zeta)-1)/chunk_size + 1
 	for i := 0; i < num_chunks; i++ {
 		chunk := quotient_polys_zeta[i*chunk_size : min((i+1)*chunk_size, len(quotient_polys_zeta))]
-		r_w_p := plonk.ReduceWithPowers(api, rangeChecker, chunk, zeta_pow_deg)
+		r_w_p := gates.ReduceWithPowers(api, rangeChecker, chunk, zeta_pow_deg)
 		rhs := goldilocks.MulExt(api, rangeChecker, z_h_zeta, r_w_p)
 		lhs := vanishing_polys_zeta[i]
 		api.AssertIsEqual(lhs.A.Limb, rhs.A.Limb)

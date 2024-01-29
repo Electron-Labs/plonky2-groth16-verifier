@@ -2,13 +2,13 @@ package verifier
 
 import (
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
-	"github.com/Electron-Labs/plonky2-groth16-verifier/poseidon"
+	poseidonGoldilocks "github.com/Electron-Labs/plonky2-groth16-verifier/poseidon/goldilocks"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
 	"github.com/consensys/gnark/frontend"
 )
 
 type Challenger struct {
-	spongeState  poseidon.Permutation
+	spongeState  poseidonGoldilocks.Permutation
 	inputBuffer  []goldilocks.GoldilocksVariable
 	inputIdx     int
 	outputBuffer []goldilocks.GoldilocksVariable
@@ -16,10 +16,10 @@ type Challenger struct {
 }
 
 func NewChallenger(api frontend.API, rangeChecker frontend.Rangechecker) Challenger {
-	poseidon_goldilocks := &poseidon.PoseidonGoldilocks{}
-	permutation := poseidon.NewPermutation(api, rangeChecker, poseidon_goldilocks)
-	inputBuffer := make([]goldilocks.GoldilocksVariable, poseidon.SPONGE_RATE)
-	outputBuffer := make([]goldilocks.GoldilocksVariable, poseidon.SPONGE_RATE)
+	poseidon_goldilocks := &poseidonGoldilocks.PoseidonGoldilocks{}
+	permutation := poseidonGoldilocks.NewPermutation(api, rangeChecker, poseidon_goldilocks)
+	inputBuffer := make([]goldilocks.GoldilocksVariable, poseidonGoldilocks.SPONGE_RATE)
+	outputBuffer := make([]goldilocks.GoldilocksVariable, poseidonGoldilocks.SPONGE_RATE)
 	return Challenger{
 		spongeState:  permutation,
 		inputBuffer:  inputBuffer,
@@ -32,7 +32,7 @@ func NewChallenger(api frontend.API, rangeChecker frontend.Rangechecker) Challen
 func (challenger *Challenger) ObserveElement(elm goldilocks.GoldilocksVariable) {
 	challenger.inputBuffer[challenger.inputIdx] = elm
 	challenger.inputIdx += 1
-	if challenger.inputIdx == poseidon.SPONGE_RATE {
+	if challenger.inputIdx == poseidonGoldilocks.SPONGE_RATE {
 		challenger.duplex()
 	}
 }
@@ -54,15 +54,20 @@ func (challenger *Challenger) ObserveExtensionElements(elms []goldilocks.Goldilo
 	}
 }
 
-func (challenger *Challenger) ObserveHash(hash types.HashOutVariable) {
+func (challenger *Challenger) ObservePoseidonGoldilocksHash(hash types.PoseidonGoldilocksHashOut) {
 	for _, elm := range hash.HashOut {
 		challenger.ObserveElement(elm)
 	}
 }
 
-func (challenger *Challenger) ObserveCap(cap types.MerkleCapVariable) {
+func (challenger *Challenger) ObservePoseidonBn254Hash(api frontend.API, hash types.PoseidonBn254HashOut) {
+	goldilocksElements := hash.ToVec(api)
+	challenger.ObserveElements(goldilocksElements)
+}
+
+func (challenger *Challenger) ObserveCap(api frontend.API, cap types.MerkleCapVariable) {
 	for _, hash := range cap {
-		challenger.ObserveHash(hash)
+		challenger.ObservePoseidonBn254Hash(api, hash)
 	}
 }
 
@@ -104,5 +109,5 @@ func (challenger *Challenger) duplex() {
 		challenger.outputBuffer[i] = v
 	}
 	challenger.inputIdx = 0
-	challenger.outputIdx = poseidon.SPONGE_RATE
+	challenger.outputIdx = poseidonGoldilocks.SPONGE_RATE
 }

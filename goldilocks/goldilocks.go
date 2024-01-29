@@ -3,6 +3,7 @@ package goldilocks
 import (
 	"math"
 	"math/big"
+	"slices"
 
 	"github.com/consensys/gnark/constraint/solver"
 	"github.com/consensys/gnark/frontend"
@@ -47,7 +48,7 @@ func init() {
 	solver.RegisterHint(GoldilocksRangeCheckHint)
 }
 
-func getGoldilocks(i frontend.Variable) GoldilocksVariable {
+func GetGoldilocks(i frontend.Variable) GoldilocksVariable {
 	return GoldilocksVariable{Limb: i}
 }
 
@@ -224,4 +225,26 @@ func PrimitveRootOfUnity(n_log int) GoldilocksVariable {
 	var root GoldilocksVariable
 	root.Limb = base_pow
 	return root
+}
+
+// TODO: not sure if we need to do this computation inside the circuit
+func TwoAdicSubgroup(api frontend.API, rangeChecker frontend.Rangechecker, nLog int) []GoldilocksVariable {
+	generator := PrimitveRootOfUnity(nLog)
+	powers := make([]GoldilocksVariable, 1<<nLog)
+
+	powers[0] = GoldilocksVariable{Limb: 1}
+	for i := 1; i < 1<<nLog; i++ {
+		powers[i] = Mul(api, rangeChecker, powers[i-1], generator)
+	}
+	return powers
+}
+
+func GetBytesLe(api frontend.API, elm GoldilocksVariable) []byte {
+	// TODO: handle when success is false
+	z, _ := api.Compiler().ConstantValue(elm.Limb)
+	bytes := make([]byte, 8)
+	z.FillBytes(bytes)
+
+	slices.Reverse(bytes)
+	return bytes
 }

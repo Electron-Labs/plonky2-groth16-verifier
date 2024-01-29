@@ -16,6 +16,8 @@ type Gate interface {
 	EvalUnfiltered(api frontend.API, rangeChecker frontend.Rangechecker, vars EvaluationVars) []goldilocks.GoldilocksExtension2Variable
 }
 
+const D = goldilocks.D
+
 func EvalFiltered(
 	api frontend.API,
 	rangeChecker frontend.Rangechecker,
@@ -45,47 +47,100 @@ func EvalFiltered(
 }
 
 func ParseGate(gate_id string) Gate {
-	if strings.Contains(gate_id, "ArithmeticGate") {
+	if strings.HasPrefix(gate_id, "ArithmeticGate") {
 
 		return NewArithmeticGate(gate_id)
 
 	} else if strings.Contains(gate_id, "ArithmeticExtensionGate") {
-		panic("todo")
+
+		return NewArithmeticExtensionGate(gate_id)
+
 	} else if strings.Contains(gate_id, "BaseSumGate") {
-		panic("todo")
+
+		return NewBaseSumGate(gate_id)
+
 	} else if strings.Contains(gate_id, "ConstantGate") {
 
 		return NewConstantGate(gate_id)
 
 	} else if strings.Contains(gate_id, "CosetInterpolationGate") {
-		panic("todo")
+
+		return NewCosetInterpolationGate(gate_id)
+
 	} else if strings.Contains(gate_id, "ExponentiationGate") {
-		panic("todo")
+
+		return NewExponentiationGate(gate_id)
+
 	} else if strings.Contains(gate_id, "LookupGate") {
-		panic("todo")
+
+		return NewLookupGate(gate_id)
+
 	} else if strings.Contains(gate_id, "LookupTableGate") {
-		panic("todo")
+
+		return NewLookupTableGate(gate_id)
+
 	} else if strings.Contains(gate_id, "MulExtensionGate") {
-		panic("todo")
+
+		return NewMulExtensionGate(gate_id)
+
 	} else if strings.Contains(gate_id, "NoopGate") {
-		panic("todo")
+
+		return NewNoopGate(gate_id)
+
 	} else if strings.Contains(gate_id, "PoseidonGate") {
 
 		return NewPoseidonGate(gate_id)
 
 	} else if strings.Contains(gate_id, "PoseidonMdsGate") {
-		panic("todo")
+
+		return NewPoseidonMdsGate(gate_id)
+
 	} else if strings.Contains(gate_id, "PublicInputGate") {
 
 		return NewPublicInputGate(gate_id)
 
 	} else if strings.Contains(gate_id, "RandomAccessGate") {
-		panic("todo")
+
+		return NewRandomAccessGate(gate_id)
+
 	} else if strings.Contains(gate_id, "ReducingGate") {
-		panic("todo")
+
+		return NewReducingGate(gate_id)
+
 	} else if strings.Contains(gate_id, "ReducingExtensionGate") {
-		panic("todo")
+
+		return NewReducingExtensionGate(gate_id)
+
+	} else if strings.Contains(gate_id, "ComparisonGate") {
+
+		return NewU32ComparisonGate(gate_id)
+
+	} else if strings.Contains(gate_id, "U32AddManyGate") {
+
+		return NewU32AddManyGate(gate_id)
+
+	} else if strings.HasPrefix(gate_id, "U32ArithmeticGate") {
+
+		return NewU32ArithmeticGate(gate_id)
+
+	} else if strings.HasPrefix(gate_id, "U32InterleaveGate") {
+
+		return NewU32InterleaveGate(gate_id)
+
+	} else if strings.HasPrefix(gate_id, "UninterleaveToU32Gate") {
+
+		return NewUninterleaveToU32Gate(gate_id)
+
+	} else if strings.HasPrefix(gate_id, "UninterleaveToB32Gate") {
+
+		return NewUninterleaveToB32Gate(gate_id)
+
+	} else if strings.HasPrefix(gate_id, "U32Subtraction") {
+
+		return NewU32SubtractionGate(gate_id)
+
 	} else {
+
 		panic(fmt.Sprintln("Unsupported gate:", gate_id))
 	}
 }
