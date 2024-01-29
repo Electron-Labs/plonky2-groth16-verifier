@@ -122,9 +122,14 @@ func ParseGate(gate_id string) Gate {
 	} else if strings.HasPrefix(gate_id, "U32ArithmeticGate") {
 
 		return NewU32ArithmeticGate(gate_id)
+
 	} else if strings.HasPrefix(gate_id, "U32InterleaveGate") {
 
 		return NewU32InterleaveGate(gate_id)
+
+	} else if strings.HasPrefix(gate_id, "UninterleaveToU32Gate") {
+
+		return NewUninterleaveToU32Gate(gate_id)
 
 	} else {
 
