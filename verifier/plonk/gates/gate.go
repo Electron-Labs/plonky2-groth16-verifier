@@ -123,6 +123,18 @@ func ParseGate(gate_id string) Gate {
 
 		return NewU32ArithmeticGate(gate_id)
 
+	} else if strings.HasPrefix(gate_id, "U32InterleaveGate") {
+
+		return NewU32InterleaveGate(gate_id)
+
+	} else if strings.HasPrefix(gate_id, "UninterleaveToU32Gate") {
+
+		return NewUninterleaveToU32Gate(gate_id)
+
+	} else if strings.HasPrefix(gate_id, "UninterleaveToB32Gate") {
+
+		return NewUninterleaveToB32Gate(gate_id)
+
 	} else {
 
 		panic(fmt.Sprintln("Unsupported gate:", gate_id))
