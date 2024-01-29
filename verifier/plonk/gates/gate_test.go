@@ -889,3 +889,11 @@ func TestUninterleaveToU32(t *testing.T) {
 		t,
 	)
 }
+
+func TestUninterleaveToB32(t *testing.T) {
+	CheckGate(
+		"../../../testdata/uninterleave_to_b32_constraints.json",
+		"UninterleaveToB32Gate { num_ops: 2 }",
+		t,
+	)
+}
