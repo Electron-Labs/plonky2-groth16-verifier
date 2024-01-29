@@ -897,3 +897,11 @@ func TestUninterleaveToB32(t *testing.T) {
 		t,
 	)
 }
+
+func TestU32Subtraction(t *testing.T) {
+	CheckGate(
+		"../../../testdata/u32_subtraction_constraints.json",
+		"U32SubtractionGate { num_ops: 6, _phantom: PhantomData<plonky2_field::goldilocks_field::GoldilocksField> }",
+		t,
+	)
+}

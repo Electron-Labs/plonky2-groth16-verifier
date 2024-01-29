@@ -108,7 +108,7 @@ func (gate *U32ArithmeticGate) EvalUnfiltered(api frontend.API, rangeChecker fro
 			if j < midpoint {
 				combinedLowLimbsNoReduce = goldilocks.AddExtNoReduce(api, goldilocks.MulExtNoReduce(api, base, combinedLowLimbs), thisLimb)
 				combinedLowLimbs = [D]frontend.Variable{
-					goldilocks.Reduce(api, rangeChecker, combinedLowLimbsNoReduce[0], 70).Limb,
+					goldilocks.Reduce(api, rangeChecker, combinedLowLimbsNoReduce[0], 67).Limb,
 					goldilocks.Reduce(api, rangeChecker, combinedLowLimbsNoReduce[1], 67).Limb,
 				}
 			} else {
