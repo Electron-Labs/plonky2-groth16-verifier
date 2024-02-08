@@ -10,9 +10,7 @@ import (
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/plonk"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/plonk/gates"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
-	cSha256 "github.com/Electron-Labs/zk-benchmark/gnark/sha256"
 	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/std/math/uints"
 	"github.com/consensys/gnark/std/rangecheck"
 )
 
@@ -136,34 +134,15 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 }
 
 func VerifyGnarkPubInputs(api frontend.API, plonky2PubInputs types.Plonky2PublicInputsVariable, gnarkPubInputs types.GnarkPublicInputsVariable) error {
-	HASHES_LEN := 256 * 2
-	shaInput := make([]frontend.Variable, HASHES_LEN+2*8)
-	for i := 0; i < HASHES_LEN; i++ {
-		shaInput[i] = plonky2PubInputs[i].Limb
-	}
-
-	uapi, _ := uints.New[uints.U32](api)
-	for i := 0; i < 4; i++ {
-		// little endian
-		limbBytes := uapi.ValueOf(plonky2PubInputs[HASHES_LEN+i].Limb)
-		for j := 0; j < 4; j++ {
-			shaInput[HASHES_LEN+i*4+j] = limbBytes[j].Val
-		}
-	}
-
-	sha256 := cSha256.New(api)
-	sha256.Write(shaInput)
-	result := sha256.Sum()
-
 	input1Bits := []frontend.Variable{}
-	for i := 0; i < 16; i++ {
-		input1Bits = append(input1Bits, api.ToBinary(result[i], 8)...)
+	for i := 0; i < 4; i++ {
+		input1Bits = append(input1Bits, api.ToBinary(plonky2PubInputs[i].Limb, 32)...)
 	}
 	input1 := api.FromBinary(input1Bits...)
 
 	input2Bits := []frontend.Variable{}
-	for i := 16; i < len(result); i++ {
-		input2Bits = append(input2Bits, api.ToBinary(result[i], 8)...)
+	for i := 4; i < len(plonky2PubInputs); i++ {
+		input2Bits = append(input2Bits, api.ToBinary(plonky2PubInputs[i].Limb, 32)...)
 	}
 	input2 := api.FromBinary(input2Bits...)
 
