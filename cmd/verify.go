@@ -43,7 +43,7 @@ var verifyGroth16Cmd = &cobra.Command{
 			os.Exit(1)
 		}
 		vk.ReadFrom(vkFile)
-		gnark_public_inputs, _ := read_gnark_public_inputs_from_file(gnark_public_inputs_path)
+		gnark_public_inputs, _ := ReadGnarkPublicInputsFromFile(gnark_public_inputs_path)
 		gnark_public_inputs_variable := gnark_public_inputs.GetVariable()
 		fmt.Println("gnark_public_inputs: ", gnark_public_inputs)
 
@@ -92,7 +92,7 @@ var verifyPlonkCmd = &cobra.Command{
 		}
 		vk.ReadFrom(vkFile)
 
-		gnark_public_inputs, _ := read_gnark_public_inputs_from_file(gnark_public_inputs_path)
+		gnark_public_inputs, _ := ReadGnarkPublicInputsFromFile(gnark_public_inputs_path)
 		gnark_public_inputs_variable := gnark_public_inputs.GetVariable()
 		fmt.Println("gnark_public_inputs: ", gnark_public_inputs)
 		assignment := &verifier.Runner{

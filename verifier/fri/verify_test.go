@@ -90,7 +90,7 @@ func (circuit *VerifyFriTest) Make(proof types.ProofVariable, fri_challenges typ
 
 }
 
-func read_proof_from_file(path string) (types.Proof, error) {
+func ReadProofFromFile(path string) (types.Proof, error) {
 	jsonProofData, err := ioutil.ReadFile(path)
 	if err != nil {
 		fmt.Println("Error reading verifier only json file:", err)
@@ -104,7 +104,7 @@ func read_proof_from_file(path string) (types.Proof, error) {
 	return proof, nil
 }
 
-func read_common_data_from_file(path string) (types.CommonData, error) {
+func ReadCommonDataFromFile(path string) (types.CommonData, error) {
 	jsonCommonData, err := ioutil.ReadFile(path)
 	if err != nil {
 		fmt.Println("Error reading JSON file:", err)
@@ -120,7 +120,7 @@ func read_common_data_from_file(path string) (types.CommonData, error) {
 	return commonData, nil
 }
 
-func read_verifier_data_from_file(path string) (types.VerifierOnly, error) {
+func ReadVerifierDataFromFile(path string) (types.VerifierOnly, error) {
 	jsonVerifierData, err := ioutil.ReadFile(path)
 	if err != nil {
 		fmt.Println("Error reading verifier only json file:", err)
@@ -137,15 +137,15 @@ func read_verifier_data_from_file(path string) (types.VerifierOnly, error) {
 func TestVerifyFri(t *testing.T) {
 	assert := test.NewAssert(t)
 
-	commonData, err := read_common_data_from_file("../../testdata/verify_fri/common_data.json")
+	commonData, err := ReadCommonDataFromFile("../../testdata/verify_fri/common_data.json")
 	if err != nil {
 		t.Fatal("Error in common data")
 	}
-	proof, err := read_proof_from_file("../../testdata/verify_fri/proof_with_pis.json")
+	proof, err := ReadProofFromFile("../../testdata/verify_fri/proof_with_pis.json")
 	if err != nil {
 		t.Fatal("Error in reading proof")
 	}
-	verifierData, err := read_verifier_data_from_file("../../testdata/verify_fri/verifier_only.json")
+	verifierData, err := ReadVerifierDataFromFile("../../testdata/verify_fri/verifier_only.json")
 	if err != nil {
 		t.Fatal("Error in verifier data")
 	}

@@ -31,10 +31,10 @@ var proveGroth16Cmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("Proof gen called:\n proof: %s\n plonky2 pub_inputs: %s\n pkey: %s\n r1cs: %s\n gnark pub_inputs: %s\n",
 			plonky2_proof_path, plonky2_public_inputs_path, proving_key_path, r1cs_path, gnark_public_inputs_path)
-		proof, _ := read_proof_from_file(plonky2_proof_path)
-		verifier_only, _ := read_verifier_data_from_file(verifier_only_path)
-		plonky2_public_inputs, _ := read_plonky2_public_inputs_from_file(plonky2_public_inputs_path)
-		gnark_public_inputs, _ := read_gnark_public_inputs_from_file(gnark_public_inputs_path)
+		proof, _ := ReadProofFromFile(plonky2_proof_path)
+		verifier_only, _ := ReadVerifierDataFromFile(verifier_only_path)
+		plonky2_public_inputs, _ := ReadPlonky2PublicInputsFromFile(plonky2_public_inputs_path)
+		gnark_public_inputs, _ := ReadGnarkPublicInputsFromFile(gnark_public_inputs_path)
 
 		proof_variable := proof.GetVariable()
 		vd_variable := verifier_only.GetVariable()
@@ -105,10 +105,10 @@ var provePlonkCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("Proof gen called:\n proof: %s\n plonky2 pub_inputs: %s\n pkey: %s\n r1cs: %s\n gnark pub_inputs: %s\n",
 			plonky2_proof_path, plonky2_public_inputs_path, proving_key_path, r1cs_path, gnark_public_inputs_path)
-		proof, _ := read_proof_from_file(plonky2_proof_path)
-		verifier_only, _ := read_verifier_data_from_file(verifier_only_path)
-		plonky2_public_inputs, _ := read_plonky2_public_inputs_from_file(plonky2_public_inputs_path)
-		gnark_public_inputs, _ := read_gnark_public_inputs_from_file(gnark_public_inputs_path)
+		proof, _ := ReadProofFromFile(plonky2_proof_path)
+		verifier_only, _ := ReadVerifierDataFromFile(verifier_only_path)
+		plonky2_public_inputs, _ := ReadPlonky2PublicInputsFromFile(plonky2_public_inputs_path)
+		gnark_public_inputs, _ := ReadGnarkPublicInputsFromFile(gnark_public_inputs_path)
 
 		proof_variable := proof.GetVariable()
 		vd_variable := verifier_only.GetVariable()

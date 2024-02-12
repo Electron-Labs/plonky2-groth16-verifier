@@ -10,15 +10,15 @@ func TestGetCircuitConstants(t *testing.T) {
 
 	commonDataPath := "../testdata/verify_fri/common_data.json"
 	proofPath := "../testdata/verify_fri/proof_with_pis.json"
-	proof, err := read_proof_from_file(proofPath)
+	proof, err := ReadProofFromFile(proofPath)
 	if err != nil {
 		t.Fatal("Error in reading proof file: ", proofPath)
 	}
-	commonData, err := read_common_data_from_file(commonDataPath)
+	commonData, err := ReadCommonDataFromFile(commonDataPath)
 	if err != nil {
 		t.Fatal("Error in reading common data file: ", commonDataPath)
 	}
-	circuitConstans := getCircuitConstants(commonData)
+	circuitConstans := GetCircuitConstants(commonData)
 
 	assert.Equal(t, len(proof.WiresCap), int(circuitConstans.CAP_LEN))
 	assert.Equal(t, len(proof.PlonkZsPartialProductsCap), int(circuitConstans.CAP_LEN))

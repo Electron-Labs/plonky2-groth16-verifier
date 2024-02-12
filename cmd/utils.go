@@ -3,15 +3,15 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math"
+	"os"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
 )
 
-func read_common_data_from_file(path string) (types.CommonData, error) {
-	jsonCommonData, err := ioutil.ReadFile(path)
+func ReadCommonDataFromFile(path string) (types.CommonData, error) {
+	jsonCommonData, err := os.ReadFile(path)
 	if err != nil {
 		fmt.Println("Error reading JSON file:", err)
 		return types.CommonData{}, err
@@ -26,8 +26,8 @@ func read_common_data_from_file(path string) (types.CommonData, error) {
 	return commonData, nil
 }
 
-func read_verifier_data_from_file(path string) (types.VerifierOnly, error) {
-	jsonVerifierData, err := ioutil.ReadFile(path)
+func ReadVerifierDataFromFile(path string) (types.VerifierOnly, error) {
+	jsonVerifierData, err := os.ReadFile(path)
 	if err != nil {
 		fmt.Println("Error reading verifier only json file:", err)
 		return types.VerifierOnly{}, err
@@ -40,8 +40,8 @@ func read_verifier_data_from_file(path string) (types.VerifierOnly, error) {
 	return verifier_only, nil
 }
 
-func read_proof_from_file(path string) (types.Proof, error) {
-	jsonProofData, err := ioutil.ReadFile(path)
+func ReadProofFromFile(path string) (types.Proof, error) {
+	jsonProofData, err := os.ReadFile(path)
 	if err != nil {
 		fmt.Println("Error reading verifier only json file:", err)
 		return types.Proof{}, err
@@ -54,8 +54,8 @@ func read_proof_from_file(path string) (types.Proof, error) {
 	return proof, nil
 }
 
-func read_plonky2_public_inputs_from_file(path string) (types.Plonky2PublicInputs, error) {
-	jsonPublicInputsData, err := ioutil.ReadFile(path)
+func ReadPlonky2PublicInputsFromFile(path string) (types.Plonky2PublicInputs, error) {
+	jsonPublicInputsData, err := os.ReadFile(path)
 	if err != nil {
 		fmt.Println("Error reading verifier only json file:", err)
 		return types.Plonky2PublicInputs{}, err
@@ -68,8 +68,8 @@ func read_plonky2_public_inputs_from_file(path string) (types.Plonky2PublicInput
 	return pub_inputs, nil
 }
 
-func read_gnark_public_inputs_from_file(path string) (types.GnarkPublicInputs, error) {
-	jsonPublicInputsData, err := ioutil.ReadFile(path)
+func ReadGnarkPublicInputsFromFile(path string) (types.GnarkPublicInputs, error) {
+	jsonPublicInputsData, err := os.ReadFile(path)
 	if err != nil {
 		fmt.Println("Error reading verifier only json file:", err)
 		return types.GnarkPublicInputs{}, err
@@ -82,7 +82,7 @@ func read_gnark_public_inputs_from_file(path string) (types.GnarkPublicInputs, e
 	return pubInputs, nil
 }
 
-func getCircuitConstants(common_data types.CommonData) verifier.CircuitConstants {
+func GetCircuitConstants(common_data types.CommonData) verifier.CircuitConstants {
 
 	s1 := common_data.NumConstants + common_data.Config.NumRoutedWires
 
