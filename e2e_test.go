@@ -5,6 +5,21 @@ import (
 	"testing"
 )
 
+func TestBuildPlonkCircuit(t *testing.T) {
+	commonDataPath := "data/tendermint/common_data_struct.json"
+	r1csPath := "data_write/r1cs.bin"
+	provingKeyPath := "data_write/pk.bin"
+	vkeyPath := "data_write/vk.bin"
+	result, msg := BuildPlonkCircuit(
+		commonDataPath,
+		r1csPath,
+		provingKeyPath,
+		vkeyPath,
+	)
+	fmt.Println("result", result)
+	fmt.Println("msg", msg)
+}
+
 // func TestGeneratePlonkProof(t *testing.T) {
 // 	r1csPath := "data_write/r1cs.bin"
 // 	provingKeyPath := "data_write/pk.bin"
