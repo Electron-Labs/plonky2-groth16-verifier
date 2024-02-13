@@ -1,4 +1,7 @@
 .DS_Store
 main
 data
-data_write
+data_write/**/*.sol
+data_write/**/*.bin
+main.so
+main.h

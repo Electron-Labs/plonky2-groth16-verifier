@@ -166,3 +166,23 @@ func GeneratePlonkProof(r1csPath string, provingKeyPath string, vkeyPath string,
 
 	return true, getCStr("success"), proofHex
 }
+
+func ExportPlonkSolidityVerifier(vkeyPath string, exportPath string) (result bool, msg *C.char) {
+	vk := plonk.NewVerifyingKey(ecc.BN254)
+	vkFile, err := os.Open(vkeyPath)
+	if err != nil {
+		return false, getCStr("Error reading VK file:" + err.Error())
+	}
+	vk.ReadFrom(vkFile)
+
+	f_sol, err := os.Create(exportPath)
+	if err != nil {
+		return false, getCStr("Error creating Verifier.sol file:" + err.Error())
+	}
+
+	err = vk.ExportSolidity(f_sol)
+	if err != nil {
+		return false, getCStr("Failed to export Solidity Verifier:" + err.Error())
+	}
+	return true, getCStr("success")
+}
