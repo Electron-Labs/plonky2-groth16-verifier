@@ -6,7 +6,7 @@ import (
 )
 
 func TestBuildPlonkCircuit(t *testing.T) {
-	commonDataPath := "data/tendermint/common_data_struct.json"
+	commonDataPath := "/home/ubuntu/tendermint-relayer-central-server/aggregation-layer/aggregation_data/circuit_data/common_data_struct.json"
 	r1csPath := "data_write/r1cs.bin"
 	provingKeyPath := "data_write/pk.bin"
 	vkeyPath := "data_write/vk.bin"

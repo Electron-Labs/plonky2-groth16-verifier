@@ -2,6 +2,7 @@ package verifier
 
 import (
 	"math/bits"
+	"slices"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
 	poseidonGoldilocks "github.com/Electron-Labs/plonky2-groth16-verifier/poseidon/goldilocks"
@@ -134,16 +135,29 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 }
 
 func VerifyGnarkPubInputs(api frontend.API, plonky2PubInputs types.Plonky2PublicInputsVariable, gnarkPubInputs types.GnarkPublicInputsVariable) error {
+	// api.ToBinary reads whole binary array in little endian; however, we have different endianness for byte order and bit order
 	input1Bits := []frontend.Variable{}
 	for i := 0; i < 4; i++ {
-		input1Bits = append(input1Bits, api.ToBinary(plonky2PubInputs[i].Limb, 32)...)
+		u32Bits := api.ToBinary(plonky2PubInputs[3-i].Limb, 32)
+		for j := 0; j < 4; j++ {
+			u8 := u32Bits[8*j : 8*(j+1)]
+			slices.Reverse(u8)
+			input1Bits = append(input1Bits, u8...)
+		}
 	}
+	slices.Reverse(input1Bits)
 	input1 := api.FromBinary(input1Bits...)
 
 	input2Bits := []frontend.Variable{}
-	for i := 4; i < len(plonky2PubInputs); i++ {
-		input2Bits = append(input2Bits, api.ToBinary(plonky2PubInputs[i].Limb, 32)...)
+	for i := 0; i < 4; i++ {
+		u32Bits := api.ToBinary(plonky2PubInputs[len(plonky2PubInputs)-1-i].Limb, 32)
+		for j := 0; j < 4; j++ {
+			u8 := u32Bits[8*j : 8*(j+1)]
+			slices.Reverse(u8)
+			input2Bits = append(input2Bits, u8...)
+		}
 	}
+	slices.Reverse(input2Bits)
 	input2 := api.FromBinary(input2Bits...)
 
 	api.AssertIsEqual(input1, gnarkPubInputs[0])

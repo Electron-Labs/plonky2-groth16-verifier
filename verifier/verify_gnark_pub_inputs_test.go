@@ -31,26 +31,10 @@ func TestVerifyGnarkPubInputs(t *testing.T) {
 
 	tests := []testData{
 		{
-			plonky2PubInputs: []uint64{562494473, 345105836, 3538186005, 55210987, 2570980487, 3989320921, 3855320462, 1713040165},
-			gnarkPubInputs:   []string{"4374265115876947378338808568327109641", "135721024657200305626643905099857792135"},
+			plonky2PubInputs: []uint64{4150607351, 4265771468, 830697859, 4192583370, 1883634718, 3447779555, 2810238612, 3521942354},
+			gnarkPubInputs:   []string{"269495255991966090313185470945718789623", "109764766545983247653870208403606619504"},
 		},
 	}
-
-	// to generate gnark pub inputs (in python)
-	// a = plonky2PubInputs[:4]
-	// b = plonky2PubInputs[4:8]
-	// p = [[s for s in (z).to_bytes(4, "little")] for z in a]
-	// q = [[s for s in (z).to_bytes(4, "little")] for z in b]
-	// int.from_bytes(bytearray(list(itertools.chain(*p))), "little")
-	// int.from_bytes(bytearray(list(itertools.chain(*q))), "little")
-
-	// a.extend([s for s in (12960957).to_bytes(4, "little")]) (create a like this)
-	// bytearray(a).hex()
-	// take sha
-	// b = [s for s in bytes.fromhex(sha)]
-	// b = [s for s in bytes.fromhex(sha)]
-	// int.from_bytes(bytearray(b[:16]), "little")
-	// int.from_bytes(bytearray(b[16:32]), "little")
 
 	nPlonky2PubInputs := 8
 
