@@ -91,7 +91,6 @@ struct GeneratePlonkProof_return {
 	GoUint8 r0; /* result */
 	char* r1; /* msg */
 	char* r2; /* proofHex */
-	GoUint64 r3; /* proofGenTime */
 };
 extern struct GeneratePlonkProof_return GeneratePlonkProof(GoString r1csPath, GoString provingKeyPath, GoString vkeyPath, GoString plonky2ProofPath, GoString verifierOnlyPath, GoString plonky2PublicInputsPath, GoString gnarkPublicInputsPath);
 

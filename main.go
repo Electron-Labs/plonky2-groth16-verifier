@@ -23,6 +23,7 @@ import (
 )
 import (
 	"encoding/hex"
+	"strconv"
 	"time"
 )
 
@@ -87,46 +88,45 @@ func BuildPlonkCircuit(commonDataPath string, r1csPath string, provingKeyPath st
 }
 
 //export GeneratePlonkProof
-func GeneratePlonkProof(r1csPath string, provingKeyPath string, vkeyPath string, plonky2ProofPath string, verifierOnlyPath string, plonky2PublicInputsPath string, gnarkPublicInputsPath string) (result bool, msg *C.char, proofHex *C.char, proofGenTime uint64) {
+func GeneratePlonkProof(r1csPath string, provingKeyPath string, vkeyPath string, plonky2ProofPath string, verifierOnlyPath string, plonky2PublicInputsPath string, gnarkPublicInputsPath string) (result bool, msg *C.char, proofHex *C.char) {
 	proofHex = getCStr("0x")
-	proofGenTime = 0
 
 	ccs := plonk.NewCS(ecc.BN254)
 	r1csFile, err := os.Open(r1csPath)
 	if err != nil {
-		return false, getCStr("Error reading CS file:" + err.Error()), proofHex, proofGenTime
+		return false, getCStr("Error reading CS file:" + err.Error()), proofHex
 	}
 	ccs.ReadFrom(r1csFile)
 
 	pk := plonk.NewProvingKey(ecc.BN254)
 	pkFile, err := os.Open(provingKeyPath)
 	if err != nil {
-		return false, getCStr("Error reading PK file:" + err.Error()), proofHex, proofGenTime
+		return false, getCStr("Error reading PK file:" + err.Error()), proofHex
 	}
 	pk.ReadFrom(pkFile)
 
 	vk := plonk.NewVerifyingKey(ecc.BN254)
 	vkFile, err := os.Open(vkeyPath)
 	if err != nil {
-		return false, getCStr("Error reading VK file:" + err.Error()), proofHex, proofGenTime
+		return false, getCStr("Error reading VK file:" + err.Error()), proofHex
 	}
 	vk.ReadFrom(vkFile)
 
 	proof, err := cmd.ReadProofFromFile(plonky2ProofPath)
 	if err != nil {
-		return false, getCStr("error reading proof file:" + err.Error()), proofHex, proofGenTime
+		return false, getCStr("error reading proof file:" + err.Error()), proofHex
 	}
 	verifierOnly, err := cmd.ReadVerifierDataFromFile(verifierOnlyPath)
 	if err != nil {
-		return false, getCStr("error reading verifier_only file:" + err.Error()), proofHex, proofGenTime
+		return false, getCStr("error reading verifier_only file:" + err.Error()), proofHex
 	}
 	plonky2PublicInputs, err := cmd.ReadPlonky2PublicInputsFromFile(plonky2PublicInputsPath)
 	if err != nil {
-		return false, getCStr("error reading plonky2 pub inputs:" + err.Error()), proofHex, proofGenTime
+		return false, getCStr("error reading plonky2 pub inputs:" + err.Error()), proofHex
 	}
 	gnarkPublicInputs, err := cmd.ReadGnarkPublicInputsFromFile(gnarkPublicInputsPath)
 	if err != nil {
-		return false, getCStr("error reading gnark pub inputs:" + err.Error()), proofHex, proofGenTime
+		return false, getCStr("error reading gnark pub inputs:" + err.Error()), proofHex
 	}
 
 	proofVariable := proof.GetVariable()
@@ -143,24 +143,24 @@ func GeneratePlonkProof(r1csPath string, provingKeyPath string, vkeyPath string,
 
 	witness, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField())
 	if err != nil {
-		return false, getCStr("new witness failed:" + err.Error()), proofHex, proofGenTime
+		return false, getCStr("new witness failed:" + err.Error()), proofHex
 	}
 
 	start := time.Now()
 	proofP, err := plonk.Prove(ccs, pk, witness)
-	proofGenTime = uint64(time.Since(start).Seconds())
+	proofGenTime := getCStr(strconv.Itoa(int(time.Since(start).Seconds())))
 	if err != nil {
-		return false, getCStr("proving error:" + err.Error()), proofHex, proofGenTime
+		return false, getCStr("proving error:" + err.Error()), proofHex
 	}
 
 	// verify
 	w, err := frontend.NewWitness(assignment, ecc.BN254.ScalarField(), frontend.PublicOnly())
 	if err != nil {
-		return false, getCStr("new witness failed:" + err.Error()), proofHex, proofGenTime
+		return false, getCStr("new witness failed:" + err.Error()), proofHex
 	}
 	err = plonk.Verify(proofP, vk, w)
 	if err != nil {
-		return false, getCStr("verification failed:" + err.Error()), proofHex, proofGenTime
+		return false, getCStr("verification failed:" + err.Error()), proofHex
 	}
 
 	// solidity contract inputs
@@ -170,7 +170,7 @@ func GeneratePlonkProof(r1csPath string, provingKeyPath string, vkeyPath string,
 	serializedProof := p.MarshalSolidity()
 	proofHex = getCStr(hex.EncodeToString(serializedProof))
 
-	return true, getCStr("success"), proofHex, proofGenTime
+	return true, proofGenTime, proofHex
 }
 
 func ExportPlonkSolidityVerifier(vkeyPath string, exportPath string) (result bool, msg *C.char) {
