@@ -1,3 +1,5 @@
 .DS_Store
 main
 data
+data_write/**/*.sol
+data_write/**/*.bin

@@ -52,8 +52,8 @@ func EvalVanishingPoly(
 			),
 		)
 		vanishing_z_1_terms = append(vanishing_z_1_terms, goldilocks.GoldilocksExtension2Variable{
-			A: goldilocks.Reduce(api, rangeChecker, vz1t[0], 131),
-			B: goldilocks.Reduce(api, rangeChecker, vz1t[1], 129),
+			A: goldilocks.Reduce(api, rangeChecker, vz1t[0], 132),
+			B: goldilocks.Reduce(api, rangeChecker, vz1t[1], 130),
 		})
 
 		if has_lookup {
@@ -126,7 +126,7 @@ func EvalVanishingPoly(
 		alphas_ext[i].A = v
 		alphas_ext[i].B.Limb = 0
 	}
-	return ReduceWithPowersMulti(api, rangeChecker, vanishing_terms, alphas_ext)
+	return gates.ReduceWithPowersMulti(api, rangeChecker, vanishing_terms, alphas_ext)
 }
 
 func check_partial_products(

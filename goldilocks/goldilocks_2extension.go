@@ -7,6 +7,7 @@ import (
 	"github.com/consensys/gnark/frontend"
 )
 
+const D = 2
 const W = 7
 const DTH_ROOT = 18446744069414584320
 const TWO_ADICITY_EXT2 = TWO_ADICITY + 1
@@ -281,7 +282,9 @@ func SelectGoldilocksExt2Lookup2(api frontend.API, b0 frontend.Variable, b1 fron
 }
 
 func SelectGoldilocksExt2Recursive(api frontend.API, b []frontend.Variable, in []GoldilocksExtension2Variable) []GoldilocksExtension2Variable {
-	if len(in)%4 == 0 {
+	if len(in) == 1 {
+		return in
+	} else if len(in)%4 == 0 {
 		two_bits_select := make([]GoldilocksExtension2Variable, len(in)/4)
 		for i := 0; i < len(two_bits_select); i++ {
 			two_bits_select[i] = SelectGoldilocksExt2Lookup2(api, b[0], b[1], in[4*i], in[4*i+1], in[4*i+2], in[4*i+3])
@@ -300,4 +303,19 @@ func Flatten(in []GoldilocksExtension2Variable) []GoldilocksVariable {
 		out[2*i+1] = v.B
 	}
 	return out
+}
+
+// TODO: make it FromBase afer moving to a sub-package 'quadratic'
+func BaseTo2ExtRaw(x frontend.Variable) [D]frontend.Variable {
+	return [D]frontend.Variable{x, 0}
+}
+func BaseTo2Ext(x GoldilocksVariable) GoldilocksExtension2Variable {
+	return GoldilocksExtension2Variable{
+		A: x,
+		B: GoldilocksVariable{Limb: 0},
+	}
+}
+
+func ZERO() [D]frontend.Variable {
+	return [D]frontend.Variable{0, 0}
 }

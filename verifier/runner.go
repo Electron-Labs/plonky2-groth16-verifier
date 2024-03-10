@@ -7,16 +7,17 @@ import (
 )
 
 type Runner struct {
-	Proof        types.ProofVariable
-	VerifierOnly types.VerifierOnlyVariable
-	PubInputs    types.PublicInputsVariable `gnark:",public"`
-	CommonData   types.CommonData
+	Proof            types.ProofVariable
+	VerifierOnly     types.VerifierOnlyVariable
+	Plonky2PubInputs types.Plonky2PublicInputsVariable
+	GnarkPubInputs   types.GnarkPublicInputsVariable `gnark:",public"`
+	CommonData       types.CommonData
 }
 
 func (circuit *Runner) Define(api frontend.API) error {
 	// verifier := verifier.createVerifier(api, circuit.common_data)
 	verifier := createVerifier(api, circuit.CommonData)
-	verifier.Verify(circuit.Proof, circuit.VerifierOnly, circuit.PubInputs)
+	verifier.Verify(circuit.Proof, circuit.VerifierOnly, circuit.Plonky2PubInputs, circuit.GnarkPubInputs)
 	return nil
 }
 
@@ -25,17 +26,8 @@ func (circuit *Runner) Define(api frontend.API) error {
 func (circuit *Runner) Make(constants CircuitConstants, commonData types.CommonData) {
 	circuit.CommonData = commonData
 	circuit.Proof.WiresCap = make(types.MerkleCapVariable, constants.CAP_LEN)
-	for i := range circuit.Proof.WiresCap {
-		circuit.Proof.WiresCap[i].Make()
-	}
 	circuit.Proof.PlonkZsPartialProductsCap = make(types.MerkleCapVariable, constants.CAP_LEN)
-	for i := range circuit.Proof.PlonkZsPartialProductsCap {
-		circuit.Proof.PlonkZsPartialProductsCap[i].Make()
-	}
 	circuit.Proof.QuotientPolysCap = make(types.MerkleCapVariable, constants.CAP_LEN)
-	for i := range circuit.Proof.QuotientPolysCap {
-		circuit.Proof.QuotientPolysCap[i].Make()
-	}
 
 	circuit.Proof.Openings.Constants = make([]goldilocks.GoldilocksExtension2Variable, constants.CONSTANTS)
 	circuit.Proof.Openings.PlonkSigmas = make([]goldilocks.GoldilocksExtension2Variable, constants.PLONK_SIGMAS)
@@ -50,9 +42,6 @@ func (circuit *Runner) Make(constants CircuitConstants, commonData types.CommonD
 	circuit.Proof.OpeningProof.CommitPhaseMerkleCap = make([]types.MerkleCapVariable, constants.COMMIT_PHASE_MERKLE_CAPS)
 	for i := range circuit.Proof.OpeningProof.CommitPhaseMerkleCap {
 		circuit.Proof.OpeningProof.CommitPhaseMerkleCap[i] = make(types.MerkleCapVariable, constants.CAP_LEN)
-		for j := range circuit.Proof.OpeningProof.CommitPhaseMerkleCap[i] {
-			circuit.Proof.OpeningProof.CommitPhaseMerkleCap[i][j].Make()
-		}
 	}
 
 	circuit.Proof.OpeningProof.QueryRoundProofs = make([]types.FriQueryRoundVariable, constants.NUM_QUERY_ROUNDS)
@@ -61,29 +50,19 @@ func (circuit *Runner) Make(constants CircuitConstants, commonData types.CommonD
 		circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs = make([]types.EvalProofVariable, constants.NUM_INITIAL_EVAL_PROOFS)
 		for j := range circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs {
 			circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].X = make([]goldilocks.GoldilocksVariable, num_evals[j])
-			circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings = make([]types.HashOutVariable, constants.INITIAL_EVAL_PROOF_SIBLINGS)
-			for k := range circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings {
-				circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings[k].Make()
-			}
+			circuit.Proof.OpeningProof.QueryRoundProofs[i].InitialTreeProof.EvalsProofs[j].Y.Siblings = make([]types.PoseidonBn254HashOut, constants.INITIAL_EVAL_PROOF_SIBLINGS)
 		}
 
 		circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps = make([]types.FriQueryStepVariable, constants.NUM_STEPS)
 		for j := range circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps {
 			circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps[j].Evals = make([]goldilocks.GoldilocksExtension2Variable, constants.LEVEL_EVALS[j])
-			circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps[j].MerkleProof.Siblings = make([]types.HashOutVariable, constants.LEVEL_SIBLINGS[j])
-			for k := range circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps[j].MerkleProof.Siblings {
-				circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps[j].MerkleProof.Siblings[k].Make()
-			}
+			circuit.Proof.OpeningProof.QueryRoundProofs[i].Steps[j].MerkleProof.Siblings = make([]types.PoseidonBn254HashOut, constants.LEVEL_SIBLINGS[j])
 		}
 	}
 
 	circuit.Proof.OpeningProof.FinalPoly.Coeffs = make([]goldilocks.GoldilocksExtension2Variable, constants.FINAL_POLY_COEFFS)
 
 	circuit.VerifierOnly.ConstantSigmasCap = make(types.MerkleCapVariable, constants.CAP_LEN)
-	for i := range circuit.VerifierOnly.ConstantSigmasCap {
-		circuit.VerifierOnly.ConstantSigmasCap[i].Make()
-	}
-	circuit.VerifierOnly.CircuitDigest.Make()
-
-	circuit.PubInputs = make(types.PublicInputsVariable, constants.NUM_PUBLIC_INPUTS)
+	circuit.Plonky2PubInputs = make(types.Plonky2PublicInputsVariable, constants.NUM_PLONKY2_PUBLIC_INPUTS)
+	circuit.GnarkPubInputs = make(types.GnarkPublicInputsVariable, constants.NUM_GNARK_PUBLIC_INPUTS)
 }

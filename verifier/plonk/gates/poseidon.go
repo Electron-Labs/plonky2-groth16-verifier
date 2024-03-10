@@ -4,25 +4,25 @@ import (
 	"fmt"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
-	"github.com/Electron-Labs/plonky2-groth16-verifier/poseidon"
+	poseidonGoldilocks "github.com/Electron-Labs/plonky2-groth16-verifier/poseidon/goldilocks"
 	"github.com/consensys/gnark/frontend"
 )
 
-const WIRE_SWAP = 2 * poseidon.SPONGE_WIDTH
-const START_DELTA = 2*poseidon.SPONGE_WIDTH + 1
+const WIRE_SWAP = 2 * poseidonGoldilocks.SPONGE_WIDTH
+const START_DELTA = 2*poseidonGoldilocks.SPONGE_WIDTH + 1
 const START_FULL_0 = START_DELTA + 4
-const START_PARTIAL = START_FULL_0 + poseidon.SPONGE_WIDTH*(poseidon.FULL_ROUNDS_HALF-1)
-const START_FULL_1 = START_PARTIAL + poseidon.PARTIAL_ROUNDS
+const START_PARTIAL = START_FULL_0 + poseidonGoldilocks.SPONGE_WIDTH*(poseidonGoldilocks.FULL_ROUNDS_HALF-1)
+const START_FULL_1 = START_PARTIAL + poseidonGoldilocks.PARTIAL_ROUNDS
 
 type PoseidonGate struct {
-	poseidon poseidon.Poseidon
+	poseidon poseidonGoldilocks.Poseidon
 }
 
 func NewPoseidonGate(id string) *PoseidonGate {
 	if id != "PoseidonGate(PhantomData<plonky2_field::goldilocks_field::GoldilocksField>)<WIDTH=12>" {
 		panic(fmt.Sprintln("Invalid gate id: ", id))
 	}
-	poseidon_goldilocks := &poseidon.PoseidonGoldilocks{}
+	poseidon_goldilocks := &poseidonGoldilocks.PoseidonGoldilocks{}
 	return &PoseidonGate{
 		poseidon: poseidon_goldilocks,
 	}
@@ -70,7 +70,7 @@ func (gate *PoseidonGate) EvalUnfiltered(api frontend.API, rangeChecker frontend
 			B: goldilocks.Reduce(api, rangeChecker, no_reduce_c[1], 130),
 		})
 	}
-	state := make([]goldilocks.GoldilocksExtension2Variable, poseidon.SPONGE_WIDTH)
+	state := make([]goldilocks.GoldilocksExtension2Variable, poseidonGoldilocks.SPONGE_WIDTH)
 	for i := 0; i < 4; i++ {
 		delta_i := vars.LocalWires[gate.wire_delta(i)]
 		input_lhs := vars.LocalWires[gate.wire_input(i)]
@@ -78,22 +78,22 @@ func (gate *PoseidonGate) EvalUnfiltered(api frontend.API, rangeChecker frontend
 		state[i] = goldilocks.AddExt(api, rangeChecker, input_lhs, delta_i)
 		state[i+4] = goldilocks.SubExt(api, rangeChecker, input_rhs, delta_i)
 	}
-	for i := 8; i < poseidon.SPONGE_WIDTH; i++ {
+	for i := 8; i < poseidonGoldilocks.SPONGE_WIDTH; i++ {
 		state[i] = vars.LocalWires[gate.wire_input(i)]
 	}
 
 	round_ctr := 0
 	// FULL ROUNDS
-	for r := 0; r < poseidon.FULL_ROUNDS_HALF; r++ {
+	for r := 0; r < poseidonGoldilocks.FULL_ROUNDS_HALF; r++ {
 		state = gate.poseidon.ConstantExt(api, rangeChecker, state, round_ctr)
 		if r != 0 {
-			for i := 0; i < poseidon.SPONGE_WIDTH; i++ {
+			for i := 0; i < poseidonGoldilocks.SPONGE_WIDTH; i++ {
 				sbox_in := vars.LocalWires[gate.wire_full_sbox_0(r, i)]
 				constraints = append(constraints, goldilocks.SubExt(api, rangeChecker, state[i], sbox_in))
 				state[i] = sbox_in
 			}
 		}
-		for i := 0; i < poseidon.SPONGE_WIDTH; i++ {
+		for i := 0; i < poseidonGoldilocks.SPONGE_WIDTH; i++ {
 			state[i] = gate.poseidon.SboxExt(api, rangeChecker, state[i])
 		}
 		state = gate.poseidon.MdsExt(api, rangeChecker, state)
@@ -103,35 +103,35 @@ func (gate *PoseidonGate) EvalUnfiltered(api frontend.API, rangeChecker frontend
 	// PARTIAL ROUNDS
 	state = gate.poseidon.PartialFirstConstantLayerExt(api, rangeChecker, state)
 	state = gate.poseidon.MdsPartialLayerInitExt(api, rangeChecker, state)
-	for r := 0; r < poseidon.PARTIAL_ROUNDS-1; r++ {
+	for r := 0; r < poseidonGoldilocks.PARTIAL_ROUNDS-1; r++ {
 		sbox_in := vars.LocalWires[gate.wire_partial_sbox(r)]
 		constraints = append(constraints, goldilocks.SubExt(api, rangeChecker, state[0], sbox_in))
 		state[0] = gate.poseidon.SboxExt(api, rangeChecker, sbox_in)
-		state[0].A = goldilocks.Add(api, rangeChecker, state[0].A, goldilocks.GoldilocksVariable{Limb: poseidon.FAST_PARTIAL_ROUND_CONSTANTS[r]})
+		state[0].A = goldilocks.Add(api, rangeChecker, state[0].A, goldilocks.GoldilocksVariable{Limb: poseidonGoldilocks.FAST_PARTIAL_ROUND_CONSTANTS[r]})
 		state = gate.poseidon.MdsPartialLayerFastExt(api, rangeChecker, state, r)
 	}
-	sbox_in := vars.LocalWires[gate.wire_partial_sbox(poseidon.PARTIAL_ROUNDS-1)]
+	sbox_in := vars.LocalWires[gate.wire_partial_sbox(poseidonGoldilocks.PARTIAL_ROUNDS-1)]
 	constraints = append(constraints, goldilocks.SubExt(api, rangeChecker, state[0], sbox_in))
 	state[0] = gate.poseidon.SboxExt(api, rangeChecker, sbox_in)
-	state = gate.poseidon.MdsPartialLayerFastExt(api, rangeChecker, state, poseidon.PARTIAL_ROUNDS-1)
-	round_ctr += poseidon.PARTIAL_ROUNDS
+	state = gate.poseidon.MdsPartialLayerFastExt(api, rangeChecker, state, poseidonGoldilocks.PARTIAL_ROUNDS-1)
+	round_ctr += poseidonGoldilocks.PARTIAL_ROUNDS
 
 	//FULL ROUNDS
-	for r := 0; r < poseidon.FULL_ROUNDS_HALF; r++ {
+	for r := 0; r < poseidonGoldilocks.FULL_ROUNDS_HALF; r++ {
 		state = gate.poseidon.ConstantExt(api, rangeChecker, state, round_ctr)
-		for i := 0; i < poseidon.SPONGE_WIDTH; i++ {
+		for i := 0; i < poseidonGoldilocks.SPONGE_WIDTH; i++ {
 			sbox_in := vars.LocalWires[gate.wire_full_sbox_1(r, i)]
 			constraints = append(constraints, goldilocks.SubExt(api, rangeChecker, state[i], sbox_in))
 			state[i] = sbox_in
 		}
-		for i := 0; i < poseidon.SPONGE_WIDTH; i++ {
+		for i := 0; i < poseidonGoldilocks.SPONGE_WIDTH; i++ {
 			state[i] = gate.poseidon.SboxExt(api, rangeChecker, state[i])
 		}
 		state = gate.poseidon.MdsExt(api, rangeChecker, state)
 		round_ctr += 1
 	}
 
-	for i := 0; i < poseidon.SPONGE_WIDTH; i++ {
+	for i := 0; i < poseidonGoldilocks.SPONGE_WIDTH; i++ {
 		constraints = append(constraints, goldilocks.SubExt(api, rangeChecker, state[i], vars.LocalWires[gate.wire_output(i)]))
 	}
 
@@ -139,7 +139,7 @@ func (gate *PoseidonGate) EvalUnfiltered(api frontend.API, rangeChecker frontend
 }
 
 func (gate *PoseidonGate) num_constraints() int {
-	return poseidon.SPONGE_WIDTH*(poseidon.FULL_ROUNDS_HALF*2-1) + poseidon.PARTIAL_ROUNDS + poseidon.SPONGE_WIDTH + 1 + 4
+	return poseidonGoldilocks.SPONGE_WIDTH*(poseidonGoldilocks.FULL_ROUNDS_HALF*2-1) + poseidonGoldilocks.PARTIAL_ROUNDS + poseidonGoldilocks.SPONGE_WIDTH + 1 + 4
 }
 
 func (gate *PoseidonGate) wire_input(i int) int {
@@ -151,11 +151,11 @@ func (gate *PoseidonGate) wire_delta(i int) int {
 }
 
 func (gate *PoseidonGate) wire_full_sbox_0(round int, i int) int {
-	return START_FULL_0 + poseidon.SPONGE_WIDTH*(round-1) + i
+	return START_FULL_0 + poseidonGoldilocks.SPONGE_WIDTH*(round-1) + i
 }
 
 func (gate *PoseidonGate) wire_output(i int) int {
-	return poseidon.SPONGE_WIDTH + i
+	return poseidonGoldilocks.SPONGE_WIDTH + i
 }
 
 func (gate *PoseidonGate) wire_partial_sbox(i int) int {
@@ -163,5 +163,5 @@ func (gate *PoseidonGate) wire_partial_sbox(i int) int {
 }
 
 func (gate *PoseidonGate) wire_full_sbox_1(round int, i int) int {
-	return START_FULL_1 + poseidon.SPONGE_WIDTH*round + i
+	return START_FULL_1 + poseidonGoldilocks.SPONGE_WIDTH*round + i
 }

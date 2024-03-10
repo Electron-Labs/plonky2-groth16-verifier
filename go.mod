@@ -8,7 +8,10 @@ require (
 	github.com/spf13/cobra v1.7.0
 )
 
-require golang.org/x/sync v0.3.0 // indirect
+require (
+	github.com/Electron-Labs/zk-benchmark v0.0.0-20240119091102-896883371e2f // indirect
+	golang.org/x/sync v0.3.0 // indirect
+)
 
 require (
 	github.com/bits-and-blooms/bitset v1.8.0 // indirect

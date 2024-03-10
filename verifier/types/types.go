@@ -4,25 +4,30 @@ import (
 	"encoding/json"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/goldilocks"
+	"github.com/consensys/gnark/frontend"
 )
 
-type HashOut struct {
+type PoseidonGoldilocksHashOutType struct {
 	HashOut []uint64 `json:"elements"`
 }
 
-func (hashout *HashOut) GetVariable() HashOutVariable {
-	var hashOutVariable HashOutVariable
+func (hashout *PoseidonGoldilocksHashOutType) GetVariable() PoseidonGoldilocksHashOut {
+	var hashOutVariable PoseidonGoldilocksHashOut
 	hashOutVariable.HashOut = goldilocks.GetGoldilocksVariableArr(hashout.HashOut)
 
 	return hashOutVariable
 }
 
-type MerkleCap []HashOut
+type PoseidonBn254HashOutType = string
+
+type MerkleCap []PoseidonBn254HashOutType
 
 func (merkle_cap *MerkleCap) GetVariable() MerkleCapVariable {
 	var merkleCapVariable MerkleCapVariable
 	for _, elm := range *merkle_cap {
-		e := elm.GetVariable()
+		e := PoseidonBn254HashOut{
+			HashOut: elm,
+		}
 		merkleCapVariable = append(merkleCapVariable, e)
 	}
 
@@ -30,13 +35,15 @@ func (merkle_cap *MerkleCap) GetVariable() MerkleCapVariable {
 }
 
 type MerkleProof struct {
-	Siblings []HashOut `json:"siblings"`
+	Siblings []PoseidonBn254HashOutType `json:"siblings"`
 }
 
 func (merkle_proof *MerkleProof) GetVariable() MerkleProofVariable {
 	var merkleProofVariable MerkleProofVariable
 	for _, elm := range merkle_proof.Siblings {
-		e := elm.GetVariable()
+		e := PoseidonBn254HashOut{
+			HashOut: elm,
+		}
 		merkleProofVariable.Siblings = append(merkleProofVariable.Siblings, e)
 	}
 
@@ -180,16 +187,27 @@ func (proof *Proof) GetVariable() ProofVariable {
 }
 
 type VerifierOnly struct {
-	ConstantSigmasCap MerkleCap `json:"constants_sigmas_cap"`
-	CircuitDigest     HashOut   `json:"circuit_digest"`
+	ConstantSigmasCap MerkleCap                `json:"constants_sigmas_cap"`
+	CircuitDigest     PoseidonBn254HashOutType `json:"circuit_digest"`
 }
 
-type PublicInputs []uint64
+type Plonky2PublicInputs []uint64
 
-func (public_inputs PublicInputs) GetVariable() PublicInputsVariable {
-	var public_inputs_variables PublicInputsVariable
+func (public_inputs Plonky2PublicInputs) GetVariable() Plonky2PublicInputsVariable {
+	var public_inputs_variables Plonky2PublicInputsVariable
 	for _, elm := range public_inputs {
 		e := goldilocks.GetGoldilocksVariable(elm)
+		public_inputs_variables = append(public_inputs_variables, e)
+	}
+	return public_inputs_variables
+}
+
+type GnarkPublicInputs []string
+
+func (public_inputs GnarkPublicInputs) GetVariable() GnarkPublicInputsVariable {
+	var public_inputs_variables GnarkPublicInputsVariable
+	for _, elm := range public_inputs {
+		e := frontend.Variable(elm)
 		public_inputs_variables = append(public_inputs_variables, e)
 	}
 	return public_inputs_variables
@@ -198,7 +216,9 @@ func (public_inputs PublicInputs) GetVariable() PublicInputsVariable {
 func (verifier_only *VerifierOnly) GetVariable() VerifierOnlyVariable {
 	var verifierOnlyVariable VerifierOnlyVariable
 	verifierOnlyVariable.ConstantSigmasCap = verifier_only.ConstantSigmasCap.GetVariable()
-	verifierOnlyVariable.CircuitDigest = verifier_only.CircuitDigest.GetVariable()
+	verifierOnlyVariable.CircuitDigest = PoseidonBn254HashOut{
+		HashOut: verifier_only.CircuitDigest,
+	}
 
 	return verifierOnlyVariable
 }
