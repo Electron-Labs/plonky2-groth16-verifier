@@ -20,4 +20,4 @@ Wraps up plonky2 verifier as a groth16 circuit
 
 
 # Developer chat
-In case you wish to contribute or collaborate, you can join our ZK builder chat at - https://t.me/+GRX2LF9YSEwyNjQ1
+In case you wish to contribute or collaborate, you can join our ZK builder chat at - https://t.me/+leHcoDWYoaFiZDM1
