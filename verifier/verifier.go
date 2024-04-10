@@ -134,11 +134,38 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 	return nil
 }
 
+// TODO: update its test in `verify_gnark_pub_inputs_test.go`
 func VerifyGnarkPubInputs(api frontend.API, plonky2PubInputs types.Plonky2PublicInputsVariable, gnarkPubInputs types.GnarkPublicInputsVariable) error {
+	if len(plonky2PubInputs)%8 != 0 {
+		panic("invalid size of plonky2PubInputs")
+	}
+	nReconstructed := len(plonky2PubInputs)%8 - 1 + 2
+	reconstructedInputs := make([]frontend.Variable, nReconstructed)
+	if nReconstructed != len(gnarkPubInputs) {
+		panic("invalid size of gnarkPubInputs")
+	}
+
 	// api.ToBinary reads whole binary array in little endian; however, we have different endianness for byte order and bit order
+
+	// reconstruct plonky2 pub inputs
+	for i := 0; i < nReconstructed-2; i++ {
+		inputBits := []frontend.Variable{}
+		for j := 0; j < 8; j++ {
+			u32Bits := api.ToBinary(plonky2PubInputs[i*8+7-j].Limb, 32)
+			for k := 0; k < 4; k++ {
+				u8 := u32Bits[8*k : 8*(k+1)]
+				slices.Reverse(u8)
+				inputBits = append(inputBits, u8...)
+			}
+		}
+		slices.Reverse(inputBits)
+		reconstructedInputs[i] = inputBits
+	}
+
+	// reconstruct plonky2 pub inputs for Tendermint chains
 	input1Bits := []frontend.Variable{}
 	for i := 0; i < 4; i++ {
-		u32Bits := api.ToBinary(plonky2PubInputs[3-i].Limb, 32)
+		u32Bits := api.ToBinary(plonky2PubInputs[(nReconstructed-2)*8+3-i].Limb, 32)
 		for j := 0; j < 4; j++ {
 			u8 := u32Bits[8*j : 8*(j+1)]
 			slices.Reverse(u8)
@@ -147,10 +174,12 @@ func VerifyGnarkPubInputs(api frontend.API, plonky2PubInputs types.Plonky2Public
 	}
 	slices.Reverse(input1Bits)
 	input1 := api.FromBinary(input1Bits...)
+	reconstructedInputs[nReconstructed-2] = input1
 
+	// reconstruct plonky2 pub inputs for Tendermint chains
 	input2Bits := []frontend.Variable{}
 	for i := 0; i < 4; i++ {
-		u32Bits := api.ToBinary(plonky2PubInputs[len(plonky2PubInputs)-1-i].Limb, 32)
+		u32Bits := api.ToBinary(plonky2PubInputs[(nReconstructed-2)*8+7-i].Limb, 32)
 		for j := 0; j < 4; j++ {
 			u8 := u32Bits[8*j : 8*(j+1)]
 			slices.Reverse(u8)
@@ -159,9 +188,12 @@ func VerifyGnarkPubInputs(api frontend.API, plonky2PubInputs types.Plonky2Public
 	}
 	slices.Reverse(input2Bits)
 	input2 := api.FromBinary(input2Bits...)
+	reconstructedInputs[nReconstructed-1] = input2
 
-	api.AssertIsEqual(input1, gnarkPubInputs[0])
-	api.AssertIsEqual(input2, gnarkPubInputs[1])
+	for i := 0; i < nReconstructed; i++ {
+		api.AssertIsEqual(reconstructedInputs[i], gnarkPubInputs[i])
+
+	}
 	return nil
 }
 
