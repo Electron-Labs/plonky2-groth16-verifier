@@ -131,7 +131,7 @@ func GetCircuitConstants(common_data types.CommonData) verifier.CircuitConstants
 		LEVEL_SIBLINGS:              siblings,
 		FINAL_POLY_COEFFS:           uint64((1 << int(common_data.FriParams.DegreeBits-sum))),
 		NUM_PLONKY2_PUBLIC_INPUTS:   common_data.NumPublicInputs,
-		NUM_GNARK_PUBLIC_INPUTS:     2,
+		NUM_GNARK_PUBLIC_INPUTS:     common_data.NumPublicInputs/8 - 1 + 2,
 	}
 }
 

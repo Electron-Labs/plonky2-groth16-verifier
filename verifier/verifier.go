@@ -139,7 +139,7 @@ func VerifyGnarkPubInputs(api frontend.API, plonky2PubInputs types.Plonky2Public
 	if len(plonky2PubInputs)%8 != 0 {
 		panic("invalid size of plonky2PubInputs")
 	}
-	nReconstructed := len(plonky2PubInputs)%8 - 1 + 2
+	nReconstructed := len(plonky2PubInputs)/8 - 1 + 2
 	reconstructedInputs := make([]frontend.Variable, nReconstructed)
 	if nReconstructed != len(gnarkPubInputs) {
 		panic("invalid size of gnarkPubInputs")
@@ -159,7 +159,8 @@ func VerifyGnarkPubInputs(api frontend.API, plonky2PubInputs types.Plonky2Public
 			}
 		}
 		slices.Reverse(inputBits)
-		reconstructedInputs[i] = inputBits
+		input := api.FromBinary(inputBits...)
+		reconstructedInputs[i] = input
 	}
 
 	// reconstruct plonky2 pub inputs for Tendermint chains
