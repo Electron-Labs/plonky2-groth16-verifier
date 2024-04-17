@@ -29,6 +29,38 @@ import (
 
 // must be empty
 func main() {
+	// commonDataPath := "/home/ubuntu/work/protocol-aggregator/aggregate_data/circuit_data/common_data_struct.json"
+	// r1csPath := "data_write/r1cs.bin"
+	// provingKeyPath := "data_write/pk.bin"
+	// vkeyPath := "data_write/vk.bin"
+	// result, msg := BuildPlonkCircuit(
+	// 	commonDataPath,
+	// 	r1csPath,
+	// 	provingKeyPath,
+	// 	vkeyPath,
+	// )
+	// fmt.Println("result", result)
+	// fmt.Println("msg", msg)
+
+	// r1csPath := "data_write/r1cs.bin"
+	// provingKeyPath := "data_write/pk.bin"
+	// vkeyPath := "data_write/vk.bin"
+	// plonky2ProofPath := "/home/ubuntu/work/protocol-aggregator/aggregate_data/proof_with_pis_struct.json"
+	// verifierOnlyPath := "/home/ubuntu/work/protocol-aggregator/aggregate_data/circuit_data/verifier_only_struct.json"
+	// plonky2PublicInputsPath := "/home/ubuntu/work/protocol-aggregator/aggregate_data/public_inputs_struct.json"
+	// gnarkPublicInputsPath := "/home/ubuntu/work/protocol-aggregator/aggregate_data/gnark_pub_inputs_struct.json"
+	// result, msg, proofHex := GeneratePlonkProof(
+	// 	r1csPath,
+	// 	provingKeyPath,
+	// 	vkeyPath,
+	// 	plonky2ProofPath,
+	// 	verifierOnlyPath,
+	// 	plonky2PublicInputsPath,
+	// 	gnarkPublicInputsPath,
+	// )
+	// fmt.Println("result", result)
+	// fmt.Println("msg", msg)
+	// fmt.Println("proofHex", proofHex)
 }
 
 // go build -o main.so -buildmode=c-shared main.go

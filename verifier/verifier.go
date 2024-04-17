@@ -149,17 +149,19 @@ func VerifyGnarkPubInputs(api frontend.API, plonky2PubInputs types.Plonky2Public
 
 	// reconstruct plonky2 pub inputs
 	for i := 0; i < nReconstructed-2; i++ {
-		inputBits := []frontend.Variable{}
+		// inputBits := []frontend.Variable{}
+		input := frontend.Variable(0)
 		for j := 0; j < 8; j++ {
-			u32Bits := api.ToBinary(plonky2PubInputs[i*8+7-j].Limb, 32)
-			for k := 0; k < 4; k++ {
-				u8 := u32Bits[8*k : 8*(k+1)]
-				slices.Reverse(u8)
-				inputBits = append(inputBits, u8...)
-			}
+			limb := api.Mul(plonky2PubInputs[i*8+7-j].Limb, 1)
+			input = api.MulAcc(limb, input, 1<<32)
+			// u32Bits := api.ToBinary(plonky2PubInputs[i*8+7-j].Limb, 32)
+			// for k := 0; k < 4; k++ {
+			// 	u8 := u32Bits[8*k : 8*(k+1)]
+			// 	slices.Reverse(u8)
+			// 	inputBits = append(inputBits, u8...)
+			// }
 		}
-		slices.Reverse(inputBits)
-		input := api.FromBinary(inputBits...)
+		// slices.Reverse(inputBits)
 		reconstructedInputs[i] = input
 	}
 

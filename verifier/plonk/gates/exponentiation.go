@@ -15,7 +15,7 @@ type ExponentiationGate struct {
 
 func NewExponentiationGate(id string) *ExponentiationGate {
 	splits := strings.Split(id, ", _phantom")
-	if splits[1] != ": PhantomData<plonky2_field::goldilocks_field::GoldilocksField> }" {
+	if !strings.HasPrefix(splits[1], ": PhantomData<plonky2_field::goldilocks_field::GoldilocksField> }") {
 		panic(fmt.Sprintln("Invalid gate id: ", id))
 	}
 	id = splits[0]
