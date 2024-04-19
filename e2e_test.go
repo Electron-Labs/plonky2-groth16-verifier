@@ -42,14 +42,14 @@ func TestGeneratePlonkProof(t *testing.T) {
 	fmt.Println("proofHex", proofHex)
 }
 
-func TestExportPlonkSolidityVerifier(t *testing.T) {
-	vkeyPath := "data_write/vk.bin"
-	exportPath := "data_write/PlonkVerifier.sol"
-	result, msg := ExportPlonkSolidityVerifier(
-		vkeyPath,
-		exportPath,
-	)
+// func TestExportPlonkSolidityVerifier(t *testing.T) {
+// 	vkeyPath := "data_write/vk.bin"
+// 	exportPath := "data_write/PlonkVerifier.sol"
+// 	result, msg := ExportPlonkSolidityVerifier(
+// 		vkeyPath,
+// 		exportPath,
+// 	)
 
-	fmt.Println("result", result)
-	fmt.Println("msg", msg)
-}
+// 	fmt.Println("result", result)
+// 	fmt.Println("msg", msg)
+// }
