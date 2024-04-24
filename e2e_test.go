@@ -6,10 +6,11 @@ import (
 )
 
 func TestBuildPlonkCircuit(t *testing.T) {
-	commonDataPath := "/home/ubuntu/tendermint-relayer-central-server/aggregation-layer/aggregation_data/circuit_data/common_data_struct.json"
-	r1csPath := "data_write/r1cs.bin"
-	provingKeyPath := "data_write/pk.bin"
-	vkeyPath := "data_write/vk.bin"
+	// build
+	commonDataPath := "/home/ubuntu/work/protocol-aggregator/aggregate_data/circuit_data/common_data_struct.json"
+	r1csPath := "data_write/plonk/r1cs.bin"
+	provingKeyPath := "data_write/plonk/pk.bin"
+	vkeyPath := "data_write/plonk/vk.bin"
 	result, msg := BuildPlonkCircuit(
 		commonDataPath,
 		r1csPath,
@@ -17,17 +18,17 @@ func TestBuildPlonkCircuit(t *testing.T) {
 		vkeyPath,
 	)
 	fmt.Println("result", result)
-	fmt.Println("msg", msg)
+	fmt.Println("msg", getGoStr(msg))
 }
 
 func TestGeneratePlonkProof(t *testing.T) {
-	r1csPath := "data_write/r1cs.bin"
-	provingKeyPath := "data_write/pk.bin"
-	vkeyPath := "data_write/vk.bin"
-	plonky2ProofPath := "data/tendermint/proof_with_pis_struct.json"
-	verifierOnlyPath := "data/tendermint/verifier_only_struct.json"
-	plonky2PublicInputsPath := "data/tendermint/plonky2_pub_inputs_struct.json"
-	gnarkPublicInputsPath := "data/tendermint/gnark_pub_inputs_struct.json"
+	r1csPath := "data_write/plonk/r1cs.bin"
+	provingKeyPath := "data_write/plonk/pk.bin"
+	vkeyPath := "data_write/plonk/vk.bin"
+	plonky2ProofPath := "data_write/proof/proof_with_pis_struct.json"
+	verifierOnlyPath := "data_write/proof/verifier_only_struct.json"
+	plonky2PublicInputsPath := "data_write/proof/public_inputs_struct.json"
+	gnarkPublicInputsPath := "data_write/proof/gnark_pub_inputs_struct.json"
 	result, msg, proofHex := GeneratePlonkProof(
 		r1csPath,
 		provingKeyPath,
@@ -37,19 +38,18 @@ func TestGeneratePlonkProof(t *testing.T) {
 		plonky2PublicInputsPath,
 		gnarkPublicInputsPath,
 	)
-	fmt.Println("result", result)
-	fmt.Println("msg", msg)
-	fmt.Println("proofHex", proofHex)
+	fmt.Println("result", getGoStr(result))
+	fmt.Println("msg", getGoStr(msg))
+	fmt.Println("proofHex", getGoStr(proofHex))
 }
 
 // func TestExportPlonkSolidityVerifier(t *testing.T) {
-// 	vkeyPath := "data_write/vk.bin"
-// 	exportPath := "data_write/PlonkVerifier.sol"
-// 	result, msg := ExportPlonkSolidityVerifier(
-// 		vkeyPath,
-// 		exportPath,
-// 	)
-
-// 	fmt.Println("result", result)
-// 	fmt.Println("msg", msg)
+// vkeyPath := "data_write/plonk/vk.bin"
+// exportPath := "data_write/plonk/PlonkVerifier.sol"
+// result, msg := ExportPlonkSolidityVerifier(
+// 	vkeyPath,
+// 	exportPath,
+// )
+// fmt.Println("result", result)
+// fmt.Println("msg", getGoStr(msg))
 // }

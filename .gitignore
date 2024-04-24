@@ -3,3 +3,4 @@ main
 data
 data_write/**/*.sol
 data_write/**/*.bin
+data_write/**/*.json

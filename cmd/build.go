@@ -5,18 +5,18 @@ package cmd
 
 import (
 	"fmt"
-	"math"
-	"math/big"
 	"os"
 
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier"
 	"github.com/consensys/gnark-crypto/ecc"
-	kzg_bn254 "github.com/consensys/gnark-crypto/ecc/bn254/kzg"
+
+	// kzg_bn254 "github.com/consensys/gnark-crypto/ecc/bn254/kzg"
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/backend/plonk"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/r1cs"
 	"github.com/consensys/gnark/frontend/cs/scs"
+	"github.com/consensys/gnark/test/unsafekzg"
 	"github.com/spf13/cobra"
 )
 
@@ -92,12 +92,13 @@ var buildPlonkCmd = &cobra.Command{
 		// r1cs := ccs.(*cs.SparseR1CS)
 		// scs := r1cs.(*cs.SparseR1CS)
 		// srs, err := test.NewKZGSRS(scs)
-		srs, err := kzg_bn254.NewSRS(uint64(math.Pow(2, 28)), big.NewInt(-1))
+		srs, srsLagrange, err := unsafekzg.NewSRS(ccs)
+		// srs, err := kzg_bn254.NewSRS(uint64(math.Pow(2, 28)), big.NewInt(-1))
 		if err != nil {
 			panic(err)
 		}
 		// pk, vk, _ := plonk.Setup(r1cs, srs)
-		pk, vk, _ := plonk.Setup(ccs, srs)
+		pk, vk, _ := plonk.Setup(ccs, srs, srsLagrange)
 
 		f_r1cs, err := os.Create("data/r1cs.bin")
 		if err != nil {
