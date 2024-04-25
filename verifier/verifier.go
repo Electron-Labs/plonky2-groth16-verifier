@@ -10,7 +10,9 @@ import (
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/plonk"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/plonk/gates"
 	"github.com/Electron-Labs/plonky2-groth16-verifier/verifier/types"
+	cSha256 "github.com/Electron-Labs/zk-benchmark/gnark/sha256"
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/std/math/uints"
 	"github.com/consensys/gnark/std/rangecheck"
 )
 
@@ -138,28 +140,39 @@ func VerifyGnarkPubInputs(api frontend.API, plonky2PubInputs types.Plonky2Public
 	if len(plonky2PubInputs)%8 != 0 {
 		panic("invalid size of plonky2PubInputs")
 	}
-	nReconstructed := len(plonky2PubInputs) / 8
-	reconstructedInputs := make([]frontend.Variable, nReconstructed)
-	if nReconstructed != len(gnarkPubInputs) {
-		panic("invalid size of gnarkPubInputs")
-	}
+	nShaInputsBytes := len(plonky2PubInputs) * 4 // each element is 32 bytes
+	shaInputsBytes := make([]frontend.Variable, nShaInputsBytes)
 
-	// api.ToBinary reads whole binary array in little endian; however, we have different endianness for byte order and bit order
-
-	// reconstruct plonky2 pub inputs
-	for i := 0; i < nReconstructed; i++ {
-		input := frontend.Variable(0)
+	for i := 0; i < len(plonky2PubInputs)/8; i++ {
 		for j := 0; j < 8; j++ {
-			limb := api.Mul(plonky2PubInputs[i*8+7-j].Limb, 1)
-			input = api.MulAcc(limb, input, 1<<32)
+			u32Elm := plonky2PubInputs[i*8+j].Limb
+			uapi, _ := uints.New[uints.U32](api)
+			u32Bytes := uapi.ValueOf(u32Elm)
+			for k := 0; k < 4; k++ {
+				shaInputsBytes[i*32+j*4+k] = u32Bytes[k].Val
+			}
 		}
-		reconstructedInputs[i] = input
 	}
 
-	for i := 0; i < nReconstructed; i++ {
-		api.AssertIsEqual(reconstructedInputs[i], gnarkPubInputs[i])
+	sha256 := cSha256.New(api)
+	sha256.Write(shaInputsBytes)
+	result := sha256.Sum()
 
+	pub1Bits := []frontend.Variable{}
+	for i := 0; i < 16; i++ {
+		pub1Bits = append(pub1Bits, api.ToBinary(result[i], 8)...)
 	}
+	pub1 := api.FromBinary(pub1Bits...)
+
+	pub2Bits := []frontend.Variable{}
+	for i := 16; i < len(result); i++ {
+		pub2Bits = append(pub2Bits, api.ToBinary(result[i], 8)...)
+	}
+	pub2 := api.FromBinary(pub2Bits...)
+
+	api.AssertIsEqual(pub1, gnarkPubInputs[0])
+	api.AssertIsEqual(pub2, gnarkPubInputs[1])
+
 	return nil
 }
 
