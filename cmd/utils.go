@@ -26,6 +26,22 @@ func ReadCommonDataFromFile(path string) (types.CommonData, error) {
 	return commonData, nil
 }
 
+func ReadNPisBreakdownFromFile(path string) ([]uint64, error) {
+	jsonData, err := os.ReadFile(path)
+	if err != nil {
+		fmt.Println("Error reading JSON file:", err)
+		return []uint64{}, err
+	}
+
+	var nPisBreakdown []uint64
+
+	if err := json.Unmarshal(jsonData, &nPisBreakdown); err != nil {
+		fmt.Println("Error unmarshaling JSON:", err)
+		return []uint64{}, err
+	}
+	return nPisBreakdown, nil
+}
+
 func ReadVerifierDataFromFile(path string) (types.VerifierOnly, error) {
 	jsonVerifierData, err := os.ReadFile(path)
 	if err != nil {

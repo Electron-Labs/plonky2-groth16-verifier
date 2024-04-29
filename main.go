@@ -37,8 +37,6 @@ import (
 func main() {
 }
 
-// go build -o main.so -buildmode=c-shared main.go
-
 func getCStr(str string) *C.char {
 	cStr := C.CString(str)
 	return cStr
@@ -49,9 +47,13 @@ func getGoStr(str *C.char) string {
 	return goStr
 }
 
-func BuildPlonkCircuit(commonDataPath string, r1csPath string, provingKeyPath string, vkeyPath string) (result bool, msg *C.char) {
-	commonData, err := cmd.ReadCommonDataFromFile(commonDataPath)
+func BuildPlonkCircuit(commonDataPath string, r1csPath string, provingKeyPath string, vkeyPath string, nPisBreakdownPath string) (result bool, msg *C.char) {
+	nPisBreakdown, err := cmd.ReadNPisBreakdownFromFile(nPisBreakdownPath)
+	if err != nil {
+		return false, getCStr("Failed to read NPisBreakdown file: " + err.Error())
+	}
 
+	commonData, err := cmd.ReadCommonDataFromFile(commonDataPath)
 	if err != nil {
 		return false, getCStr("Failed to read common data file: " + err.Error())
 	}
@@ -59,7 +61,7 @@ func BuildPlonkCircuit(commonDataPath string, r1csPath string, provingKeyPath st
 	var myCircuit verifier.Runner
 
 	// Arrays are resized according to circuitConstants before compiling
-	myCircuit.Make(circuitConstants, commonData)
+	myCircuit.Make(circuitConstants, commonData, nPisBreakdown)
 
 	ccs, err := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &myCircuit)
 	if err != nil {
@@ -88,7 +90,7 @@ func BuildPlonkCircuit(commonDataPath string, r1csPath string, provingKeyPath st
 	}
 	ccs.WriteTo(f_r1cs)
 
-	f_pd, _ := os.Create(provingKeyPath)
+	f_pd, err := os.Create(provingKeyPath)
 	if err != nil {
 		return false, getCStr("Failed to create pk file:" + err.Error())
 	}
@@ -103,7 +105,12 @@ func BuildPlonkCircuit(commonDataPath string, r1csPath string, provingKeyPath st
 	return true, getCStr("success")
 }
 
-func BuildGroth16Circuit(commonDataPath string, r1csPath string, provingKeyPath string, vkeyPath string) (result bool, msg *C.char) {
+func BuildGroth16Circuit(commonDataPath string, r1csPath string, provingKeyPath string, vkeyPath string, nPisBreakdownPath string) (result bool, msg *C.char) {
+	nPisBreakdown, err := cmd.ReadNPisBreakdownFromFile(nPisBreakdownPath)
+	if err != nil {
+		return false, getCStr("Failed to read NPisBreakdown file: " + err.Error())
+	}
+
 	commonData, err := cmd.ReadCommonDataFromFile(commonDataPath)
 
 	if err != nil {
@@ -113,7 +120,7 @@ func BuildGroth16Circuit(commonDataPath string, r1csPath string, provingKeyPath 
 	var myCircuit verifier.Runner
 
 	// Arrays are resized according to circuitConstants before compiling
-	myCircuit.Make(circuitConstants, commonData)
+	myCircuit.Make(circuitConstants, commonData, nPisBreakdown)
 
 	r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &myCircuit)
 	if err != nil {

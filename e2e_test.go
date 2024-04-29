@@ -7,7 +7,8 @@ import (
 
 func TestBuildPlonkCircuit(t *testing.T) {
 	// build
-	commonDataPath := "/home/ubuntu/work/protocol-aggregator/aggregate_data/circuit_data/common_data_struct.json"
+	nPisBreakdownPath := "data_write/proof/nPisBreakdown.json"
+	commonDataPath := "data_write/proof/common_data_struct.json"
 	r1csPath := "data_write/plonk/r1cs.bin"
 	provingKeyPath := "data_write/plonk/pk.bin"
 	vkeyPath := "data_write/plonk/vk.bin"
@@ -16,6 +17,7 @@ func TestBuildPlonkCircuit(t *testing.T) {
 		r1csPath,
 		provingKeyPath,
 		vkeyPath,
+		nPisBreakdownPath,
 	)
 	fmt.Println("result", result)
 	fmt.Println("msg", getGoStr(msg))
@@ -43,13 +45,13 @@ func TestGeneratePlonkProof(t *testing.T) {
 	fmt.Println("proofHex", getGoStr(proofHex))
 }
 
-// func TestExportPlonkSolidityVerifier(t *testing.T) {
-// vkeyPath := "data_write/plonk/vk.bin"
-// exportPath := "data_write/plonk/PlonkVerifier.sol"
-// result, msg := ExportPlonkSolidityVerifier(
-// 	vkeyPath,
-// 	exportPath,
-// )
-// fmt.Println("result", result)
-// fmt.Println("msg", getGoStr(msg))
-// }
+func TestExportPlonkSolidityVerifier(t *testing.T) {
+	vkeyPath := "data_write/plonk/vk.bin"
+	exportPath := "data_write/plonk/PlonkVerifier.sol"
+	result, msg := ExportPlonkSolidityVerifier(
+		vkeyPath,
+		exportPath,
+	)
+	fmt.Println("result", result)
+	fmt.Println("msg", getGoStr(msg))
+}

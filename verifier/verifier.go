@@ -45,14 +45,16 @@ type CircuitConstants struct {
 }
 
 type Verifier struct {
-	api        frontend.API
-	commonData types.CommonData
+	api           frontend.API
+	commonData    types.CommonData
+	nPisBreakdown []uint64
 }
 
-func createVerifier(api frontend.API, commonData types.CommonData) *Verifier {
+func createVerifier(api frontend.API, commonData types.CommonData, nPisBreakdown []uint64) *Verifier {
 	return &Verifier{
-		api:        api,
-		commonData: commonData,
+		api:           api,
+		commonData:    commonData,
+		nPisBreakdown: nPisBreakdown,
 	}
 }
 
@@ -135,27 +137,46 @@ func fieldCheckInputs(api frontend.API, rangeChecker frontend.Rangechecker, proo
 	return nil
 }
 
-// TODO: update its test in `verify_gnark_pub_inputs_test.go`
-func VerifyGnarkPubInputs(api frontend.API, plonky2PubInputs types.Plonky2PublicInputsVariable, gnarkPubInputs types.GnarkPublicInputsVariable) error {
+func VerifyGnarkPubInputs(api frontend.API, plonky2PubInputs types.Plonky2PublicInputsVariable, gnarkPubInputs types.GnarkPublicInputsVariable, nPisBreakdown []uint64) error {
 	if len(plonky2PubInputs)%8 != 0 {
 		panic("invalid size of plonky2PubInputs")
 	}
-	nShaInputsBytes := len(plonky2PubInputs) * 4 // each element is 32 bytes
-	shaInputsBytes := make([]frontend.Variable, nShaInputsBytes)
 
-	for i := 0; i < len(plonky2PubInputs)/8; i++ {
-		for j := 0; j < 8; j++ {
-			u32Elm := plonky2PubInputs[i*8+j].Limb
-			uapi, _ := uints.New[uints.U32](api)
-			u32Bytes := uapi.ValueOf(u32Elm)
-			for k := 0; k < 4; k++ {
-				shaInputsBytes[i*32+j*4+k] = u32Bytes[k].Val
+	nPlonky2PubInputs := 0
+	for _, n := range nPisBreakdown {
+		nPlonky2PubInputs += int(n)
+	}
+	nPlonky2PubInputs *= 8
+	if nPlonky2PubInputs != len(plonky2PubInputs) {
+		panic("invalid nPisBreakdown")
+	}
+
+	var pisHashes []frontend.Variable
+
+	start := uint64(0)
+	for _, n := range nPisBreakdown {
+		plonky2PubInputsBreak := plonky2PubInputs[start*8 : (start+n)*8]
+		nShaInputsBytes := len(plonky2PubInputsBreak) * 4 // each element is 32 bytes
+		shaInputsBytes := make([]frontend.Variable, nShaInputsBytes)
+		for i := 0; i < len(plonky2PubInputsBreak)/8; i++ {
+			for j := 0; j < 8; j++ {
+				u32Elm := plonky2PubInputsBreak[i*8+j].Limb
+				uapi, _ := uints.New[uints.U32](api)
+				u32Bytes := uapi.ValueOf(u32Elm)
+				for k := 0; k < 4; k++ {
+					shaInputsBytes[i*32+j*4+k] = u32Bytes[k].Val
+				}
 			}
 		}
+		sha256 := cSha256.New(api)
+		sha256.Write(shaInputsBytes)
+		result := sha256.Sum()
+		pisHashes = append(pisHashes, result...)
+		start += n
 	}
 
 	sha256 := cSha256.New(api)
-	sha256.Write(shaInputsBytes)
+	sha256.Write(pisHashes)
 	result := sha256.Sum()
 
 	pub1Bits := []frontend.Variable{}
@@ -336,12 +357,11 @@ func verifyWithChallenges(
 	)
 }
 
-// TODO:
 func (circuit *Verifier) Verify(proof types.ProofVariable, verifier_only types.VerifierOnlyVariable, plonky2PubInputs types.Plonky2PublicInputsVariable, gnarkPubInputs types.GnarkPublicInputsVariable) error {
 	rangeChecker := rangecheck.New(circuit.api)
 	// rangeChecker := types.BitDecompChecker{Api: circuit.api}
 	fieldCheckInputs(circuit.api, rangeChecker, proof, verifier_only, plonky2PubInputs)
-	VerifyGnarkPubInputs(circuit.api, plonky2PubInputs, gnarkPubInputs)
+	VerifyGnarkPubInputs(circuit.api, plonky2PubInputs, gnarkPubInputs, circuit.nPisBreakdown)
 	plonk2PubInputsHash := hashPublicInputs(circuit.api, rangeChecker, plonky2PubInputs)
 	challenges := getChallenges(circuit.api, rangeChecker, proof, plonk2PubInputsHash, verifier_only.CircuitDigest)
 	verifyWithChallenges(circuit.api, rangeChecker, proof, plonk2PubInputsHash, challenges, verifier_only, circuit.commonData)

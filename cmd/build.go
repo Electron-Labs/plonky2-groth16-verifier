@@ -21,6 +21,7 @@ import (
 )
 
 var common_data_path string
+var nPisBreakdownPath string
 
 // buildGroth16Cmd represents the buildGroth16
 var buildGroth16Cmd = &cobra.Command{
@@ -28,7 +29,13 @@ var buildGroth16Cmd = &cobra.Command{
 	Short: "Build gnark groth16 circuit",
 	Long:  `Builds gnark groth16 circuit corresponding to provided common_data and plonky2 config.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("build called:\n common data: %s\n ", common_data_path)
+		fmt.Printf("build called:\n common data: %s\nPisBreakdownPath: %s\n ", common_data_path, nPisBreakdownPath)
+
+		nPisBreakdown, err := ReadNPisBreakdownFromFile(nPisBreakdownPath)
+		if err != nil {
+			fmt.Println("Failed to read NPisBreakdown file:", err)
+			os.Exit(1)
+		}
 
 		common_data, err := ReadCommonDataFromFile(common_data_path)
 		if err != nil {
@@ -40,7 +47,7 @@ var buildGroth16Cmd = &cobra.Command{
 		var myCircuit verifier.Runner
 
 		// Arrays are resized according to circuitConstants before compiling
-		myCircuit.Make(circuitConstants, common_data)
+		myCircuit.Make(circuitConstants, common_data, nPisBreakdown)
 
 		r1cs, _ := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &myCircuit)
 		pk, vk, _ := groth16.Setup(r1cs)
@@ -74,7 +81,13 @@ var buildPlonkCmd = &cobra.Command{
 	Short: "Build gnark plonk circuit",
 	Long:  `Builds gnark plonk circuit corresponding to provided common_data and plonky2 config.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("build called:\n common data: %s\n ", common_data_path)
+		fmt.Printf("build called:\n common data: %s\nPisBreakdownPath: %s\n ", common_data_path, nPisBreakdownPath)
+
+		nPisBreakdown, err := ReadNPisBreakdownFromFile(nPisBreakdownPath)
+		if err != nil {
+			fmt.Println("Failed to read NPisBreakdown file:", err)
+			os.Exit(1)
+		}
 
 		common_data, err := ReadCommonDataFromFile(common_data_path)
 		if err != nil {
@@ -86,7 +99,7 @@ var buildPlonkCmd = &cobra.Command{
 		var myCircuit verifier.Runner
 
 		// Arrays are resized according to circuitConstants before compiling
-		myCircuit.Make(circuitConstants, common_data)
+		myCircuit.Make(circuitConstants, common_data, nPisBreakdown)
 
 		ccs, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &myCircuit)
 		// r1cs := ccs.(*cs.SparseR1CS)

@@ -12,18 +12,20 @@ type Runner struct {
 	Plonky2PubInputs types.Plonky2PublicInputsVariable
 	GnarkPubInputs   types.GnarkPublicInputsVariable `gnark:",public"`
 	CommonData       types.CommonData
+	nPisBreakdown       []uint64
 }
 
 func (circuit *Runner) Define(api frontend.API) error {
 	// verifier := verifier.createVerifier(api, circuit.common_data)
-	verifier := createVerifier(api, circuit.CommonData)
+	verifier := createVerifier(api, circuit.CommonData, circuit.nPisBreakdown)
 	verifier.Verify(circuit.Proof, circuit.VerifierOnly, circuit.Plonky2PubInputs, circuit.GnarkPubInputs)
 	return nil
 }
 
 // TODO: very ugly function; structure it better
 // TODO: requires intensive testing with various config/proofs combinations
-func (circuit *Runner) Make(constants CircuitConstants, commonData types.CommonData) {
+func (circuit *Runner) Make(constants CircuitConstants, commonData types.CommonData, nPisBreakdown []uint64) {
+	circuit.nPisBreakdown = nPisBreakdown
 	circuit.CommonData = commonData
 	circuit.Proof.WiresCap = make(types.MerkleCapVariable, constants.CAP_LEN)
 	circuit.Proof.PlonkZsPartialProductsCap = make(types.MerkleCapVariable, constants.CAP_LEN)
